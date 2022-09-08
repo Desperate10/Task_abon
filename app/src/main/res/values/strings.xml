@@ -1,0 +1,66 @@
+<resources>
+    <string name="app_name">Task_abon</string>
+    
+    <string-array name="reason_fields">
+        <item name="відсутній абонент"/>
+        <item name="абонент не відчинив"/>
+        <item name="відсутній лічильник"/>
+        <item name="Внесено помилково"/>
+        <item name="Заборгованість оплачено"/>
+        <item name="Абонент відмовився від підпису"/>
+    </string-array>
+    <!-- TODO: Add more sources -->
+    <string-array name="source_fields">
+        <item>-Не вибране-</item>
+        <item>Не мав доступу до лічильника</item>
+        <item>По телефону</item>
+        <item>Зі слів при відвіданні  АГ</item>
+        <item>Рейдова бригада</item>
+        <item>Тел.довідник</item>
+        <item>ВЕБ-сайт</item>
+    </string-array>
+
+    <string-array name="status_fields">
+        <item>Виконано</item>
+        <item>Не виконано</item>
+    </string-array>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="enter_password_hint">Введіть пароль</string>
+    <string name="noTask">Схоже, завдань немає...</string>
+    <string name="login_hint">Введіть пароль</string>
+    <string name="contr_pokaz">Показ. контр:</string>
+    <string name="enter_data_hint">Введіть дані</string>
+    <string name="clear_field_btn">Очистити поле</string>
+    <string name="add_filter">Додати умову</string>
+    <string name="find">Пошук</string>
+    <string name="not_done">Не виконано</string>
+    <string name="id_task">Id завдання:</string>
+    <string name="ended">Завершено:</string>
+    <string name="previous">Попередній</string>
+    <string name="next">Наступний</string>
+    <string name="date">Дата</string>
+    <string name="status">Статус</string>
+    <string name="source">Джерело</string>
+    <string name="phone_number">Номер тел.</string>
+    <string name="note">Записи</string>
+    <string name="new_phone_number">Новий номер телефону</string>
+    <string name="details_to">Характеристики ТО</string>
+    <string name="zone">Зона</string>
+    <string name="old">Старі</string>
+    <string name="use">Витрата</string>
+    <string name="new_index">Нові</string>
+    <string name="enter">Ввести</string>
+    <string name="info">Інфо</string>
+    <string name="add">Додати</string>
+    <string name="about">Про програму</string>
+    <string name="save">Зберегти</string>
+    <string name="upload_task">Вигрузити завдання</string>
+    <string name="delete_task">Видалити завдання</string>
+    <string name="cancel">Відміна</string>
+    <string name="yes">Так</string>
+    <string name="no">Ні</string>
+    <string name="app_info">Інформація про додаток</string>
+    <string name="add_task">Додати завдання</string>
+</resources>
