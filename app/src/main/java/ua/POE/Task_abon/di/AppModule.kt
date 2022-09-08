@@ -90,6 +90,16 @@ object AppModule {
     @Provides
     fun provideResultRepository(resultDao: ResultDao) = ResultRepository(resultDao)
 
+    @Singleton
+    @Provides
+    fun provideTimingDao(db: AppDatabase) : TimingDao {
+        return db.timingDao()
+    }
+
+    @Singleton
+    @Provides
+    fun provideTimingRepository(timingDao: TimingDao) = TimingRepository(timingDao)
+
 
 
 }

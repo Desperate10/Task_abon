@@ -35,12 +35,7 @@ data class Result(
     @ColumnInfo(name = "numbpers") var numbpers: String?,
     @ColumnInfo(name = "family") var family: String?,
     @ColumnInfo(name = "adress") var adress: String?,
-    @ColumnInfo(name = "photo") var photo: String?/*,
-    @ColumnInfo(name = "startTaskTime") var startTaskTime: String?,
-    @ColumnInfo(name = "firstEditDate") var firstEditDate: String?,
-    @ColumnInfo(name = "editCount", defaultValue = 0.toString()) var editCount: Int?,
-    @ColumnInfo(name = "editSeconds", defaultValue = 0.toString()) var editSeconds: Int?,
-    @ColumnInfo(name = "lastEditDate") var lastEditDate: String?*/
+    @ColumnInfo(name = "photo") var photo: String?
 ) {
 
 }

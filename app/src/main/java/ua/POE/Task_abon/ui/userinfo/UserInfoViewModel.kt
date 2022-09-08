@@ -1,5 +1,6 @@
 package ua.POE.Task_abon.ui.userinfo
 
+import android.util.Log
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,11 +12,13 @@ import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.entities.Directory
 import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.Task
+import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
+import ua.POE.Task_abon.data.repository.TimingRepository
 
-class UserInfoViewModel @ViewModelInject constructor(private val directoryRepository: DirectoryRepository,private val taskRepository: TaskRepository, private val testEntityRepository: TestEntityRepository, private val resultDao: ResultDao, private val catalogDao: CatalogDao) : ViewModel() {
+class UserInfoViewModel @ViewModelInject constructor(private val directoryRepository: DirectoryRepository,private val taskRepository: TaskRepository, private val testEntityRepository: TestEntityRepository, private val timingRepository: TimingRepository, private val resultDao: ResultDao, private val catalogDao: CatalogDao) : ViewModel() {
 
     private var _isTrueEdit = MutableLiveData<Boolean>()
     val isTrueEdit: MutableLiveData<Boolean> = _isTrueEdit
@@ -41,38 +44,38 @@ class UserInfoViewModel @ViewModelInject constructor(private val directoryReposi
         return testEntityRepository.getTextByFields("TD$taskId", tech, index)
     }
 
-    /*//save date when pressing saveResult
-    suspend fun saveStartEditDate(taskId: String, date: String) {
+    //save date when pressing saveResult
+    fun saveEditTiming(taskId: String, date: String) {
         viewModelScope.launch {
             _isTrueEdit.value = true
-            if (resultDao.checkStartTaskDate(taskId).isNullOrEmpty()) {
-                resultDao.saveStartTaskDate(date)
-                resultDao.saveEditCount(0)
-
-            } else if (resultDao.checkFirstEditDate(taskId).isNullOrEmpty()) {
-                resultDao.saveFirstEditDate(date)
-                resultDao.saveEditCount(1)
+            if (timingRepository.isStartTaskDateEmpty(taskId)) {
+                timingRepository.insertTiming(Timing(taskId, date, "", 0, 0, ""))
+            } else if (timingRepository.isFirstEditDateEmpty(taskId)) {
+                timingRepository.updateFirstEditDate(taskId, date)
+                timingRepository.updateEditCount(taskId, 1)
             } else {
                 //adding +1 to edit count
-                resultDao.upEditCount()
+                timingRepository.upEditCount(taskId)
             }
         }
     }
 
     //save date when finish editing task when onStop() userInfoFragment
-    suspend fun saveEndEditDate(taskId: String, date: String) {
+    fun saveEndEditDate(taskId: String, date: String) {
         viewModelScope.launch {
-            resultDao.saveLastEditDate(date)
+            if(!timingRepository.isFirstEditDateEmpty(taskId)) {
+                timingRepository.updateLastEditDate(taskId, date)
+            }
         }
     }
 
-    suspend fun saveEditTime(taskId: String, time: Int) {
+    fun saveEditTime(taskId: String, time: Int) {
         viewModelScope.launch {
-            val seconds: Int = resultDao.getEditTime(taskId)
+            val seconds: Int = timingRepository.getEditTime(taskId)
             val newEditTime = seconds + time
-            resultDao.saveEditTime(taskId, newEditTime)
+            timingRepository.updateEditSeconds(taskId, newEditTime)
         }
-    }*/
+    }
 
     suspend fun saveResults(taskId: String, index: Int, date: String, isDone: String, source: String, source2:String, zone1: String, zone2: String, zone3: String, note: String,phoneNumber: String, is_main: Int, type: String, counter: String, zoneCount: String, capacity: String, avgUsage: String,lat: String, lng:String, numbpers: String, family: String, adress: String, photo:String?) {
 

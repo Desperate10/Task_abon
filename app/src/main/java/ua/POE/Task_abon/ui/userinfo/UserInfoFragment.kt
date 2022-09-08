@@ -189,11 +189,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     override fun onStop() {
         super.onStop()
-        /*viewModel.isTrueEdit.observe(viewLifecycleOwner) {
+        viewModel.isTrueEdit.observe(viewLifecycleOwner) {
             if (it) {
-                viewModel.
+                viewModel.saveEditTime(taskId!!, time)
+                viewModel.saveEndEditDate(taskId!!, "fsadf")
+            } else {
+                time = 0
             }
-        }*/
+        }
         requireActivity().unregisterReceiver(updateTime)
         requireActivity().stopService(TimerService.getIntent(requireActivity(),time))
     }
@@ -1009,6 +1012,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             } else {
                 null
             }
+            viewModel.saveEditTiming(taskId!!, "test")
 
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.saveResults(

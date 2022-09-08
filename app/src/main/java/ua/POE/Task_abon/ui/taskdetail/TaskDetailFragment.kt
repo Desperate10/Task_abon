@@ -56,23 +56,23 @@ class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
         icons = resources.getRawTextFile(R.raw.icons)
 
         if(searchList.isNullOrEmpty()) {
-            viewModel.getUsers("TD$taskId").observe(viewLifecycleOwner, { list ->
+            viewModel.getUsers("TD$taskId").observe(viewLifecycleOwner) { list ->
                 adapter = PersonListAdapter(list, resources.getRawTextFile(R.raw.icons), this)
                 binding.recyclerview.adapter = adapter
                 adapter.notifyDataSetChanged()
                 userData = list
                 //Log.d("userData1", userData.toString())
                 taskId?.let {
-                    viewModel.getFinishedCount(it).observe(viewLifecycleOwner, { count ->
+                    viewModel.getFinishedCount(it).observe(viewLifecycleOwner) { count ->
                         binding.finished.text = "Виконано: $count/${userData.size} записів"
-                    })
+                    }
                 }
-            })
+            }
             firstTime = false
         }
 
             searchList?.let { it ->
-                viewModel.getSearchedUsers("$taskId", it).observe(viewLifecycleOwner, { list ->
+                viewModel.getSearchedUsers("$taskId", it).observe(viewLifecycleOwner) { list ->
                     list.let {
                         adapter = PersonListAdapter(
                             list,
@@ -83,14 +83,14 @@ class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
                         adapter.notifyDataSetChanged()
                         userData = list
                         taskId?.let {
-                            viewModel.getFinishedCount(it).observe(viewLifecycleOwner, { count ->
+                            viewModel.getFinishedCount(it).observe(viewLifecycleOwner) { count ->
                                 binding.finished.text = "Виконано: $count/${userData.size} записів"
-                            })
+                            }
                         }
                         //Log.d("userData2", userData.toString())
                         //adapter.updateList(list)
                     }
-                })
+                }
             }
 
         binding.isDoneCheckBox.setOnCheckedChangeListener { _, isChecked ->
@@ -98,13 +98,13 @@ class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
             if (isChecked) {
                 query = "Виконано"
             }
-            viewModel.getUsersNotFinished("TD$taskId", query).observe(viewLifecycleOwner, { list ->
+            viewModel.getUsersNotFinished("TD$taskId", query).observe(viewLifecycleOwner) { list ->
                 list.let {
                     adapter.updateList(it)
                     userData = list
                     //Log.d("userData3", userData.toString())
                 }
-            })
+            }
         }
 
 
