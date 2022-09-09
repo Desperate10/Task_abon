@@ -52,44 +52,54 @@ import kotlin.collections.ArrayList
 class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.OnClickListener,
     DatePickerDialog.OnDateSetListener {
 
-    private var binding : FragmentUserInfoBinding by autoCleared()
-    private val viewModel : UserInfoViewModel by viewModels()
-    private var taskId : String ?= "no"
-    private var filial : String? = "no"
-    private var num : String ?= "num"
-    private var index : Int? = 1
-    private var count : Int? = 1
-    private var positionOf : Int = 0
-    private val fieldsArray : ArrayList<String> = ArrayList()
+    private var binding: FragmentUserInfoBinding by autoCleared()
+    private val viewModel: UserInfoViewModel by viewModels()
+    private var taskId: String? = "no"
+    private var filial: String? = "no"
+    private var num: String? = "num"
+    private var index: Int? = 1
+    private var count: Int? = 1
+    private var positionOf: Int = 0
+    private val fieldsArray: ArrayList<String> = ArrayList()
     private val basicFieldsTxt = ArrayList<String>()
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
     private val sdformat = SimpleDateFormat(myFormat, Locale.US)
-    private var sourceSpinnerPosition : Int? = 0
-    private var statusSpinnerPosition : Int? = null
-    private var numbpers =""; var family=""; var adress=""; var numbersField = ""; var iconsLs = ""
+    private var statusSpinnerPosition: Int? = null
+    private var numbpers = ""
+    var family = ""
+    var adress = ""
+    var numbersField = ""
+    var iconsLs = ""
     private var isFirstLoad = false
-    private var type = ""; var counter = ""; var zoneCount = ""; var capacity = ""; var avgUsage =""; var source = ""
+    private var type = ""
+    var counter = ""
+    var zoneCount = ""
+    var capacity = ""
+    var avgUsage = ""
+    var source = ""
     private var source2 = ArrayList<String>()
     private var isResultSaved = false
     private var time = 0
     var massiv = ArrayList<String>()
     var massiv2 = ArrayList<KeyPairBoolData>()
-    private val operators by lazy {viewModel.getOperatorsList()}
-    lateinit var sourceAdapter : ArrayAdapter<String>
-  //  lateinit var sourceAdapter2 : ArrayAdapter<String>
-    lateinit var catalog : List<Catalog>
-    lateinit var catalog2 : List<Catalog>
+    private val operators by lazy { viewModel.getOperatorsList() }
+    lateinit var sourceAdapter: ArrayAdapter<String>
+
+    //  lateinit var sourceAdapter2 : ArrayAdapter<String>
+    lateinit var catalog: List<Catalog>
+    lateinit var catalog2: List<Catalog>
     lateinit var locationManager: LocationManager
     private val imageAdapter by lazy {
         ImageAdapter(requireContext(), items, uri)
     }
     private val items = ArrayList<Image>()
     private val uri = ArrayList<String>()
-    lateinit var tempImage : File
-    private var imageUri : Uri ?= null
+    lateinit var tempImage: File
+    private var imageUri: Uri? = null
     private var icons = ArrayList<Icons>()
-
+    private var isEdit: Boolean = false
+    private var firstEditDate: String = ""
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -97,7 +107,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         setHasOptionsMenu(true)
         (activity as MainActivity).supportActionBar?.title = "Інформація"
 
-        if(arguments !=null) {
+        if (arguments != null) {
             taskId = requireArguments().getString("taskId")
             filial = requireArguments().getString("filial")
             num = requireArguments().getString("num")
@@ -106,27 +116,40 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
 
-        if (savedInstanceState != null){
-            //Do whatever you need with the string here, like assign it to variable.
-                index = savedInstanceState.getInt("index")
+        if (savedInstanceState != null) {
+            index = savedInstanceState.getInt("index")
         }
+        firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
         //читаем иконки
         icons = resources.getRawTextFile(R.raw.icons)
 
         try {
             binding.results.newMeters1.doAfterTextChanged {
                 if (!binding.results.newMeters1.text.isNullOrEmpty())
-                    binding.results.difference1.text = (it.toString().toInt() - binding.results.previousMeters1.text.toString().toInt()).toString()
+                    binding.results.difference1.text =
+                        (it.toString().toInt() - binding.results.previousMeters1.text.toString()
+                            .toInt()).toString()
             }
             binding.results.newMeters2.doAfterTextChanged {
                 if (!binding.results.newMeters2.text.isNullOrEmpty())
-                    binding.results.difference2.text = (it.toString().toInt() - binding.results.previousMeters2.text.toString().toInt()).toString()
+                    binding.results.difference2.text =
+                        (it.toString().toInt() - binding.results.previousMeters2.text.toString()
+                            .toInt()).toString()
             }
             binding.results.newMeters3.doAfterTextChanged {
                 if (!binding.results.newMeters3.text.isNullOrEmpty())
-                    binding.results.difference3.text = (it.toString().toInt() - binding.results.previousMeters3.text.toString().toInt()).toString()
+                    binding.results.difference3.text =
+                        (it.toString().toInt() - binding.results.previousMeters3.text.toString()
+                            .toInt()).toString()
             }
-        } catch (e: NumberFormatException) {}
+        } catch (e: NumberFormatException) {
+        }
+
+        viewModel.isTrueEdit.observe(viewLifecycleOwner) {
+            //Log.d("testim", it.toString())
+            isEdit = it
+        }
 
         taskId?.let { getBasicInfo(it) }
         isFirstLoad = false
@@ -138,11 +161,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         val blockName: MutableList<String> = viewModel.getBlockNames()
         blockName.add(0, "Результати")
 
-        val adapter = context?.let { ArrayAdapter(
+        val adapter = context?.let {
+            ArrayAdapter(
                 it,
                 android.R.layout.simple_spinner_dropdown_item,
                 blockName
-        ) }
+            )
+        }
         spinner.adapter = adapter
         spinner.onItemSelectedListener = this
 
@@ -157,13 +182,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         binding.results.photoLayout.setOnItemClickListener { _, _, position, _ ->
             if (position == 0) {
-                if(items.size < 2) {
+                if (items.size < 2) {
                     takePhoto()
                 } else {
                     Toast.makeText(
-                            requireContext(),
-                            "Видалити фото, щоб створити нове",
-                            Toast.LENGTH_SHORT
+                        requireContext(),
+                        "Видалити фото, щоб створити нове",
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
             }
@@ -182,27 +207,27 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val updateTime: BroadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             time = intent.getIntExtra(TimerService.TIME_EXTRA, 0)
-            Log.d("testim", time.toString())
+                //Log.d("testim", time.toString())
         }
 
     }
 
     override fun onStop() {
         super.onStop()
-        viewModel.isTrueEdit.observe(viewLifecycleOwner) {
-            if (it) {
-                viewModel.saveEditTime(taskId!!, time)
-                viewModel.saveEndEditDate(taskId!!, "fsadf")
-            } else {
-                time = 0
-            }
-        }
+       /* if (isEdit) {
+            //viewModel.saveEditTime(taskId!!,index.toString(), time)
+            val currentDateAndTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            viewModel.saveEndEditDate(taskId!!, index.toString(), currentDateAndTime)
+        } else {
+            time = 0
+        }*/
         requireActivity().unregisterReceiver(updateTime)
-        requireActivity().stopService(TimerService.getIntent(requireActivity(),time))
+        requireActivity().stopService(TimerService.getIntent(requireActivity(), time))
     }
 
     private fun addAddButton() {
-        val selectedImage = Uri.parse("android.resource://" + requireActivity().packageName + "/" + R.drawable.ic_add_photo)
+        val selectedImage =
+            Uri.parse("android.resource://" + requireActivity().packageName + "/" + R.drawable.ic_add_photo)
         val i = Image()
         i.setURI(selectedImage)
         items.add(i)
@@ -222,14 +247,15 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun takePhoto() {
-        val filename = filial+"_"+numbpers+"_"
-        val storageDirectory: File? = requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val filename = filial + "_" + numbpers + "_"
+        val storageDirectory: File? =
+            requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         try {
             tempImage = File.createTempFile(filename, ".jpg", storageDirectory)
             imageUri = FileProvider.getUriForFile(
-                    requireContext(),
-                    "ua.POE.Task_abon.fileprovider",
-                    tempImage
+                requireContext(),
+                "ua.POE.Task_abon.fileprovider",
+                tempImage
             )
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
@@ -239,21 +265,21 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN -> {
                     val clip = ClipData.newUri(
-                            requireActivity().contentResolver,
-                            "A photo",
-                            imageUri
+                        requireActivity().contentResolver,
+                        "A photo",
+                        imageUri
                     )
                     intent.clipData = clip
                     intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
                 }
                 else -> {
                     val resInfoList: List<ResolveInfo> = requireActivity().packageManager
-                            .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+                        .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
                     for (resolveInfo in resInfoList) {
                         val packageName = resolveInfo.activityInfo.packageName
                         requireActivity().grantUriPermission(
-                                packageName, imageUri,
-                                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                            packageName, imageUri,
+                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                         )
                     }
                 }
@@ -261,7 +287,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             try {
                 startActivityForResult(intent, 1)
             } catch (e: ActivityNotFoundException) {
-                Toast.makeText(requireContext(), "Проблема з запуском камери", Toast.LENGTH_LONG).show()
+                Toast.makeText(requireContext(), "Проблема з запуском камери", Toast.LENGTH_LONG)
+                    .show()
                 requireActivity().finish()
             }
         } catch (e: java.lang.Exception) {
@@ -271,32 +298,34 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun checkPermissions() {
 
-        locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationManager =
+            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED ||
-                ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED) {
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED ||
+            ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.CAMERA
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             requestPermissions(
-                    arrayOf(
-                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                            Manifest.permission.READ_EXTERNAL_STORAGE,
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_FINE_LOCATION,
-                            Manifest.permission.CAMERA
-                    ), 1
+                arrayOf(
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                    Manifest.permission.READ_EXTERNAL_STORAGE,
+                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.CAMERA
+                ), 1
             )
         } else {
             locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 1000,
-                    1f, locationListener
+                LocationManager.GPS_PROVIDER, 1000,
+                1f, locationListener
             )
             if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                 onGPS()
@@ -318,12 +347,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun onGPS() {
         val builder = AlertDialog.Builder(requireContext())
         builder.setMessage("Ввімкнути GPS?").setCancelable(false)
-                .setPositiveButton(getString(R.string.yes)) { _: DialogInterface?, _: Int -> startActivity(
-                        Intent(
-                                Settings.ACTION_LOCATION_SOURCE_SETTINGS
-                        )
-                ) }
-                .setNegativeButton(getString(R.string.no)) { dialog: DialogInterface, _: Int -> dialog.cancel() }
+            .setPositiveButton(getString(R.string.yes)) { _: DialogInterface?, _: Int ->
+                startActivity(
+                    Intent(
+                        Settings.ACTION_LOCATION_SOURCE_SETTINGS
+                    )
+                )
+            }
+            .setNegativeButton(getString(R.string.no)) { dialog: DialogInterface, _: Int -> dialog.cancel() }
         val alertDialog = builder.create()
         alertDialog.show()
     }
@@ -336,15 +367,16 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     override fun onResume() {
         super.onResume()
         if (ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED) {
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
             locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 1000,
-                    1f, locationListener
+                LocationManager.GPS_PROVIDER, 1000,
+                1f, locationListener
             )
         }
     }
@@ -365,30 +397,30 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             requireActivity().sendBroadcast(mediaScanIntent)
 
         } else
-        super.onActivityResult(requestCode, resultCode, data)
+            super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onRequestPermissionsResult(
-            requestCode: Int,
-            permissions: Array<out String>,
-            grantResults: IntArray
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             1 -> if (grantResults.size > 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.checkSelfPermission(
-                                requireContext(),
-                                Manifest.permission.ACCESS_FINE_LOCATION
-                        ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                                requireContext(),
-                                Manifest.permission.ACCESS_COARSE_LOCATION
-                        ) != PackageManager.PERMISSION_GRANTED
+                        requireContext(),
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                        requireContext(),
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ) != PackageManager.PERMISSION_GRANTED
                 ) {
                     ActivityCompat.requestPermissions(
-                            requireActivity(), arrayOf(
+                        requireActivity(), arrayOf(
                             Manifest.permission.ACCESS_COARSE_LOCATION,
                             Manifest.permission.ACCESS_FINE_LOCATION
-                    ), 1
+                        ), 1
                     )
                     return
                 }
@@ -403,14 +435,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 // 100 ->
                 if (grantResults[2] == PackageManager.PERMISSION_GRANTED) {
                     Toast.makeText(
-                            requireContext(),
-                            "Отримано дозвіл на користування камерою",
-                            Toast.LENGTH_LONG
+                        requireContext(),
+                        "Отримано дозвіл на користування камерою",
+                        Toast.LENGTH_LONG
                     )
-                            .show()
+                        .show()
                 } else {
                     Toast.makeText(requireContext(), "camera permission denied", Toast.LENGTH_LONG)
-                            .show()
+                        .show()
                 }
             }
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -422,7 +454,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         massiv2.clear()
 
         //positionOf всегда 0?
-        catalog = if(positionOf == 0) {
+        catalog = if (positionOf == 0) {
             viewModel.getSourceList("2")
         } else {
             viewModel.getSourceList("3")
@@ -434,9 +466,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
 
         sourceAdapter = ArrayAdapter(
-                requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
-                massiv
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            massiv
         )
 
         binding.results.sourceSpinner.adapter = sourceAdapter
@@ -444,7 +476,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         catalog2 = viewModel.getSourceList("4")
 
-       // massiv2.add("-Не выбрано-")
+        // massiv2.add("-Не выбрано-")
         val result = if (!savedConditions.isNullOrEmpty()) {
             savedConditions.split(",").map { it.trim() }
         } else {
@@ -460,7 +492,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
 
-        val multipleSpinner  = binding.results.sourceSpinner2
+        val multipleSpinner = binding.results.sourceSpinner2
         multipleSpinner.isSearchEnabled = false
         multipleSpinner.isShowSelectAllButton = true
         multipleSpinner.isColorSeparation = false
@@ -473,12 +505,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         multipleSpinner.setClearText("Очистити все")
         multipleSpinner.setItems(
-                massiv2
+            massiv2
         ) { items ->
             source2.clear()
             for (i in items.indices) {
-                for(catalog in catalog2) {
-                    if(items[i].name == catalog.text) {
+                for (catalog in catalog2) {
+                    if (items[i].name == catalog.text) {
                         source2.add(catalog.code!!)
                     }
                 }
@@ -491,13 +523,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             android.R.layout.simple_spinner_dropdown_item,
             massiv2
         )*/
-       // binding.results.sourceSpinner2.adapter = sourceAdapter2
+        // binding.results.sourceSpinner2.adapter = sourceAdapter2
         //binding.results.sourceSpinner2.onItemSelectedListener = this
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         // Inflate the layout for this fragment
         binding = FragmentUserInfoBinding.inflate(inflater, container, false)
@@ -516,12 +548,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
             R.id.mybutton -> {
                 if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(3)
-                                .toString() !in operators || binding.results.phone.text.length < 10)
+                        .toString() !in operators || binding.results.phone.text.length < 10)
                 ) {
                     Toast.makeText(
-                            requireContext(),
-                            "Неправильний формат номера телефону",
-                            Toast.LENGTH_SHORT
+                        requireContext(),
+                        "Неправильний формат номера телефону",
+                        Toast.LENGTH_SHORT
                     ).show()
                 } else if (binding.lat.text != "0.0") {
                     saveResult()
@@ -539,13 +571,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
                     if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(
-                                    3
-                            ).toString() !in operators || binding.results.phone.text.length < 10)
+                            3
+                        ).toString() !in operators || binding.results.phone.text.length < 10)
                     ) {
                         Toast.makeText(
-                                requireContext(),
-                                "Неправильний формат номера телефону",
-                                Toast.LENGTH_SHORT
+                            requireContext(),
+                            "Неправильний формат номера телефону",
+                            Toast.LENGTH_SHORT
                         ).show()
                     } else {
                         saveResult()
@@ -559,31 +591,31 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
         builder.setMessage("Впевнені, що хочете зберегти без координат?").setPositiveButton(
-                getString(R.string.yes),
-                dialogClickListener
+            getString(R.string.yes),
+            dialogClickListener
         )
-                .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
 
     }
 
     override fun onClick(v: View) {
-        if(v.id == R.id.previous) {
-            if(!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+        if (v.id == R.id.previous) {
+            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
                 showSaveOrNotDialog(false)
             } else {
                 goPrevious()
             }
         } else if (v.id == R.id.next) {
-            if(!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
                 showSaveOrNotDialog(true)
             } else {
                 goNext()
             }
         } else if (v.id == R.id.date || v.id == R.id.new_date) {
             val dialog = DatePickerDialog(
-                    requireContext(), this,
-                    calendar[Calendar.YEAR], calendar[Calendar.MONTH],
-                    calendar[Calendar.DAY_OF_MONTH]
+                requireContext(), this,
+                calendar[Calendar.YEAR], calendar[Calendar.MONTH],
+                calendar[Calendar.DAY_OF_MONTH]
             )
             dialog.show()
         }
@@ -594,13 +626,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
                     if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(
-                                    3
-                            ).toString() !in operators || binding.results.phone.text.length < 10)
+                            3
+                        ).toString() !in operators || binding.results.phone.text.length < 10)
                     ) {
                         Toast.makeText(
-                                requireContext(),
-                                "Неправильний формат номера телефону",
-                                Toast.LENGTH_SHORT
+                            requireContext(),
+                            "Неправильний формат номера телефону",
+                            Toast.LENGTH_SHORT
                         ).show()
                     } else {
                         saveResult()
@@ -619,29 +651,46 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
 
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Зберегти зміни?").setPositiveButton(getString(R.string.yes), dialogClickListener)
-                .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+        builder.setMessage("Зберегти зміни?")
+            .setPositiveButton(getString(R.string.yes), dialogClickListener)
+            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+    }
+
+    private fun registerReceivers() {
+        requireActivity().startService(TimerService.getIntent(requireActivity(), time))
+        requireActivity().registerReceiver(updateTime, IntentFilter(TimerService.TIMER_UPDATED))
+    }
+
+    private fun unRegisterReceivers() {
+        requireActivity().unregisterReceiver(updateTime)
+        requireActivity().stopService(TimerService.getIntent(requireActivity(), time))
     }
 
     private fun goPrevious() {
+        time = 0
+        unRegisterReceivers()
+        registerReceivers()
         index = if (index != 1) {
             index!!.minus(1)
         } else {
             count
         }
         if (fieldsArray.isNotEmpty())
-        updateView(fieldsArray)
+            updateView(fieldsArray)
         taskId?.let { getBasicInfo(it) }
     }
 
     private fun goNext() {
+        time = 0
+        unRegisterReceivers()
+        registerReceivers()
         index = if (index != count) {
             index!!.plus(1)
         } else {
             1
         }
         if (fieldsArray.isNotEmpty())
-        updateView(fieldsArray)
+            updateView(fieldsArray)
         taskId?.let { getBasicInfo(it) }
     }
 
@@ -696,7 +745,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun updateSourceSpinner(position: Int) {
         massiv.clear()
-        catalog = if(position == 0) {
+        catalog = if (position == 0) {
             viewModel.getSourceList("2")
         } else {
             viewModel.getSourceList("3")
@@ -718,7 +767,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         val contr = StringBuilder()
 
-        techHash.forEach{ (key, value) ->
+        techHash.forEach { (key, value) ->
             when (key) {
                 "TimeZonalId" -> {
                     zoneCount = value
@@ -786,7 +835,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
 
 
-        binding.results.contrText.text = resources.getString(R.string.contr_pokaz) + contr.toString()
+        binding.results.contrText.text =
+            resources.getString(R.string.contr_pokaz) + contr.toString()
         binding.results.contrText.setTextColor(Color.YELLOW)
         binding.results.contrText.setTypeface(binding.results.contrText.typeface, Typeface.BOLD)
 
@@ -804,7 +854,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             binding.results.phone.setText(result.phoneNumber)
             binding.results.checkBox.isChecked = result.is_main == 1
             deletePhoto()
-            if(!result.photo.isNullOrEmpty()) {
+            if (!result.photo.isNullOrEmpty()) {
                 addAddButton(Uri.parse(result.photo))
             }
             val type = if (positionOf == 0) {
@@ -814,7 +864,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
 
             if (!result.dataSource.isNullOrEmpty()) {
-                val spinnerPosition: Int = sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
+                val spinnerPosition: Int =
+                    sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
                 //Log.d("errortestim", viewModel.getSourceName(result.dataSource!!, type))
                 //val spinnerPosition2 : Int = sourceAdapter2.getPosition(viewModel.getNoteName(result.point_condition!!))
                 binding.results.sourceSpinner.setSelection(spinnerPosition)
@@ -833,7 +884,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 binding.results.newDate.text = sdformat.format(calendar.time)
                 binding.results.statusSpinner.setSelection(0)
                 binding.results.sourceSpinner.setSelection(0)
-               // binding.results.sourceSpinner2.setSelection(0)
+                // binding.results.sourceSpinner2.setSelection(0)
                 binding.results.newMeters1.setText("", TextView.BufferType.EDITABLE)
                 binding.results.newMeters2.setText("", TextView.BufferType.EDITABLE)
                 binding.results.newMeters3.setText("", TextView.BufferType.EDITABLE)
@@ -860,7 +911,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun getBasicInfo(taskId: String) {
         binding.basicTable.removeAllViews()
-        val fields =  viewModel.getFieldsByBlockName("", taskId)
+        val fields = viewModel.getFieldsByBlockName("", taskId)
         for (element in fields) {
             element.fieldName?.let { basicFieldsTxt.add(it) }
         }
@@ -879,7 +930,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                         numbpers = value;
                     }
                     "Значки о/р" -> {
-                        if (!value.isNullOrEmpty()) {
+                        if (value.isNotEmpty()) {
                             var text = getNeededEmojis(icons, value)
                             createRow(numbersField, "$numbpers $text", true)
                         } else {
@@ -898,13 +949,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                         opora = "Оп.$value"
                     }
                     "Значки лічильника" -> {
-                        if (!value.isNullOrEmpty()) {
+                        if (value.isNotEmpty()) {
                             iconsLs = value
                         }
                     }
                     else -> {
                         if (!key.contains("Значки".toLowerCase()))
-                        stringBuilder.append("$value ")
+                            stringBuilder.append("$value ")
                     }
                 }
                 /*if (fieldCounter>3) {
@@ -916,7 +967,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
         createRow("Інше/Фiдер", stringBuilder.append(opora).toString(), true)
-        if(!isFirstLoad) {
+        if (!isFirstLoad) {
             loadResultTab()
         }
 
@@ -951,7 +1002,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 text.setOnClickListener {
                     try {
                         showIconsDialog(data.split(" ")[1])
-                    } catch (e: IndexOutOfBoundsException) {}
+                    } catch (e: IndexOutOfBoundsException) {
+                    }
                 }
             }
             name == "О/р" -> {
@@ -960,7 +1012,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 text.setOnClickListener {
                     try {
                         showIconsDialog(data.split(" ")[1])
-                    } catch (e: IndexOutOfBoundsException) {}
+                    } catch (e: IndexOutOfBoundsException) {
+                    }
                 }
             }
             name != "Телефон" -> {
@@ -975,8 +1028,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
 
-        if(!isBasic)
-        binding.infoTable.addView(row)
+        if (!isBasic)
+            binding.infoTable.addView(row)
         else binding.basicTable.addView(row)
     }
 
@@ -985,16 +1038,16 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         calendar.set(Calendar.MONTH, month)
         calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
 
-            binding.results.date.text = sdformat.format(calendar.time)
-            binding.results.newDate.text = sdformat.format(calendar.time)
+        binding.results.date.text = sdformat.format(calendar.time)
+        binding.results.newDate.text = sdformat.format(calendar.time)
     }
 
     private fun saveResult() {
 
 
-        if(binding.results.newMeters1.text.isNotEmpty() || (binding.results.statusSpinner.selectedItemPosition == 1 && binding.results.sourceSpinner.selectedItemPosition != 0)) {
+        if (binding.results.newMeters1.text.isNotEmpty() || (binding.results.statusSpinner.selectedItemPosition == 1 && binding.results.sourceSpinner.selectedItemPosition != 0)) {
             val date1: String = binding.results.newDate.text.toString()
-            val isDone : String = statusSpinnerPosition.toString()
+            val isDone: String = statusSpinnerPosition.toString()
             val zone1 = binding.results.newMeters1.text.toString()
             val zone2 = binding.results.newMeters2.text.toString()
             val zone3 = binding.results.newMeters3.text.toString()
@@ -1007,46 +1060,48 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             } else {
                 0
             }
-            val photo = if(imageUri.toString().length>4) {
+            val photo = if (imageUri.toString().length > 4) {
                 imageUri.toString()
             } else {
                 null
             }
-            viewModel.saveEditTiming(taskId!!, "test")
+            val currentDateAndTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            viewModel.saveEditTiming(taskId!!, index.toString(), time, firstEditDate, currentDateAndTime)
 
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.saveResults(
-                        taskId!!,
-                        index!!,
-                        date1,
-                        isDone,
-                        source,
-                        source2.joinToString(),
-                        zone1,
-                        zone2,
-                        zone3,
-                        note,
-                        phoneNumber,
-                        isMainPhone,
-                        type,
-                        counter,
-                        zoneCount,
-                        capacity,
-                        avgUsage,
-                        lat,
-                        lng,
-                        numbpers,
-                        family,
-                        adress,
-                        photo
+                    taskId!!,
+                    index!!,
+                    date1,
+                    isDone,
+                    source,
+                    source2.joinToString(),
+                    zone1,
+                    zone2,
+                    zone3,
+                    note,
+                    phoneNumber,
+                    isMainPhone,
+                    type,
+                    counter,
+                    zoneCount,
+                    capacity,
+                    avgUsage,
+                    lat,
+                    lng,
+                    numbpers,
+                    family,
+                    adress,
+                    photo
                 )
             }
             isResultSaved = true
             Toast.makeText(requireContext(), "Результати збережені", Toast.LENGTH_SHORT).show()
-        } else if(binding.results.statusSpinner.selectedItemPosition == 1 && binding.results.sourceSpinner.selectedItemPosition == 0) {
+        } else if (binding.results.statusSpinner.selectedItemPosition == 1 && binding.results.sourceSpinner.selectedItemPosition == 0) {
             Toast.makeText(requireContext(), "Ви забули вказати джерело", Toast.LENGTH_SHORT).show()
         } else {
-            Toast.makeText(requireContext(), "Ви не ввели нові показники", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Ви не ввели нові показники", Toast.LENGTH_SHORT)
+                .show()
         }
     }
 

@@ -75,7 +75,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
 
         binding.recyclerview.layoutManager = linearLayoutManager
-        viewModel.tasks.observe(viewLifecycleOwner, { tasks ->
+        viewModel.tasks.observe(viewLifecycleOwner) { tasks ->
             //Log.d("taska", tasks.toString())
             if (tasks.isNotEmpty()) {
                 binding.recyclerview.adapter = TaskListAdapter(tasks, this)
@@ -85,7 +85,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
                 binding.noTasks.visibility = View.VISIBLE
                 binding.recyclerview.visibility = View.GONE
             }
-        })
+        }
 
         binding.choose.setOnClickListener {
             chooseFile()
@@ -169,8 +169,8 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
                     //}
 
                 } catch (e: Exception) {
-                   // Toast.makeText(requireContext(), "Файл не найден", Toast.LENGTH_SHORT).show()
-                   // Log.d("test", e.toString())
+                    Toast.makeText(requireContext(), "Файл не найден", Toast.LENGTH_SHORT).show()
+                    Log.d("test", e.toString())
                 }
             }
         }

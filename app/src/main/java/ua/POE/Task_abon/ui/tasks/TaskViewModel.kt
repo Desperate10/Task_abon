@@ -13,10 +13,11 @@ import ua.POE.Task_abon.data.entities.TestEntity
 import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
+import ua.POE.Task_abon.data.repository.TimingRepository
 import ua.POE.Task_abon.utils.Resource
 import ua.POE.Task_abon.utils.XmlLoader
 
-class TaskViewModel @ViewModelInject constructor(private val repository: TaskRepository, private val testEntityRepository: TestEntityRepository, private val taskRepository: TaskRepository, private val directoryRepository: DirectoryRepository, val resultDao: ResultDao) : ViewModel() {
+class TaskViewModel @ViewModelInject constructor(private val repository: TaskRepository, private val testEntityRepository: TestEntityRepository, private val taskRepository: TaskRepository, private val directoryRepository: DirectoryRepository, val resultDao: ResultDao, private val timingRepository: TimingRepository) : ViewModel() {
 
 
     val tasks : LiveData<List<Task>> = repository.getTasks().asLiveData()
@@ -46,10 +47,13 @@ class TaskViewModel @ViewModelInject constructor(private val repository: TaskRep
 
     fun getPhotos(taskId: String) : List<String> = resultDao.getAllPhotos(taskId)
 
-    fun createXml(taskId: String) :String {
+    suspend fun createXml(taskId: String) :String {
         val result = getResult(taskId)
-        return repository.createXml(result)
+        val timing = getTiming(taskId)
+        return repository.createXml(result, timing)
     }
+
+    private fun getTiming(taskId: String) = timingRepository.getTiming(taskId)
 
 
 }

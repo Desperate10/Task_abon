@@ -45,35 +45,41 @@ class UserInfoViewModel @ViewModelInject constructor(private val directoryReposi
     }
 
     //save date when pressing saveResult
-    fun saveEditTiming(taskId: String, date: String) {
+    fun saveEditTiming(taskId: String, num:String, time:Int, firstEditDate: String, date: String) {
         viewModelScope.launch {
             _isTrueEdit.value = true
-            if (timingRepository.isStartTaskDateEmpty(taskId)) {
-                timingRepository.insertTiming(Timing(taskId, date, "", 0, 0, ""))
-            } else if (timingRepository.isFirstEditDateEmpty(taskId)) {
-                timingRepository.updateFirstEditDate(taskId, date)
-                timingRepository.updateEditCount(taskId, 1)
+            if (timingRepository.isStartTaskDateEmpty(taskId, num)) {
+                timingRepository.insertTiming(Timing(taskId, num, date,  "", 0, 0, ""))
+                saveEditTime(taskId, num, time)
+            } else if (timingRepository.isFirstEditDateEmpty(taskId, num)) {
+                timingRepository.updateFirstEditDate(taskId, num, firstEditDate)
+                timingRepository.updateEditCount(taskId, num, 1)
+                saveEndEditDate(taskId, num, date)
+                saveEditTime(taskId, num, time)
             } else {
                 //adding +1 to edit count
-                timingRepository.upEditCount(taskId)
+                saveEditTime(taskId, num, time)
+                saveEndEditDate(taskId, num, date)
+                timingRepository.upEditCount(taskId, num)
+
             }
         }
     }
 
     //save date when finish editing task when onStop() userInfoFragment
-    fun saveEndEditDate(taskId: String, date: String) {
+    private fun saveEndEditDate(taskId: String,num: String, date: String) {
         viewModelScope.launch {
-            if(!timingRepository.isFirstEditDateEmpty(taskId)) {
-                timingRepository.updateLastEditDate(taskId, date)
+            if(!timingRepository.isFirstEditDateEmpty(taskId, num)) {
+                timingRepository.updateLastEditDate(taskId, num, date)
             }
         }
     }
 
-    fun saveEditTime(taskId: String, time: Int) {
+    private fun saveEditTime(taskId: String, num: String, time: Int) {
         viewModelScope.launch {
-            val seconds: Int = timingRepository.getEditTime(taskId)
+            val seconds: Int = timingRepository.getEditTime(taskId, num)
             val newEditTime = seconds + time
-            timingRepository.updateEditSeconds(taskId, newEditTime)
+            timingRepository.updateEditSeconds(taskId, num, newEditTime)
         }
     }
 

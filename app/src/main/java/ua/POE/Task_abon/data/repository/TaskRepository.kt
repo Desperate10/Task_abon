@@ -8,6 +8,7 @@ import ua.POE.Task_abon.data.dao.TaskDao
 import ua.POE.Task_abon.data.dao.UserDataDao
 import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.Task
+import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.utils.XmlLoader
 import javax.inject.Inject
@@ -22,7 +23,7 @@ class TaskRepository @Inject constructor(private val xmlLoader: XmlLoader, priva
 
     suspend fun readFile(uri : Uri) = saveReadFile { xmlLoader.readXml(uri) }
 
-    fun createXml(results : List<Result>) = xmlLoader.createXml(results)
+    suspend fun createXml(results : List<Result>, timings: List<Timing>) = xmlLoader.createXml(results, timings)
 
     suspend fun deleteByTaskId(taskId: String) = taskDao.deleteById(taskId)
 
