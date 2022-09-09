@@ -13,7 +13,7 @@ interface TimingDao {
     @Insert(onConflict = IGNORE)
     suspend fun insertTiming(timing: Timing)
 
-    @Query("INSERT INTO timing VALUES (:taskId, :num, :startTaskTime ,null, 0, 0, null)")
+    @Query("INSERT INTO timing VALUES (:taskId, :num, :startTaskTime, null ,null, 0, 0, null)")
     fun addTimingForPerson(taskId: String, num: String, startTaskTime: String)
 
     @Query("SELECT * FROM timing WHERE task_id = :taskId")

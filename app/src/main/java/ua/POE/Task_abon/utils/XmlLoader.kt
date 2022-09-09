@@ -430,6 +430,11 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
              writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='50'/>")
              writeLine(sb, "</s:AttributeType>")
 
+             writeLine(sb, "<s:AttributeType name='endTaskTime' rs:number='35' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'")
+             writeLine(sb, "rs:basetable='task_result' rs:basecolumn='endTaskTime'>")
+             writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='50'/>")
+             writeLine(sb, "</s:AttributeType>")
+
              writeLine(sb, "<s:extends type='rs:rowbase'/>")
              writeLine(sb, "</s:ElementType>")
              writeLine(sb, "</s:Schema>")
