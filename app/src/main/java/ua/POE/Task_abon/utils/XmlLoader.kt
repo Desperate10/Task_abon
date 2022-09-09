@@ -512,6 +512,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
                                  " point_condition='$pointCondition'" +
                                  " photo='$photo'" +
                                  " startTaskTime='${timings[i].startTaskTime}'" +
+                                 " endTaskTime='${timings[i].endTaskTime}'" +
                                  " firstEditDate='${timings[i].firstEditDate}'" +
                                  " editCount='${timings[i].editCount}'" +
                                  " editSeconds='${timings[i].editSeconds}'" +
@@ -548,6 +549,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
                                  " point_condition='$pointCondition'" +
                                  " photo='$photo'" +
                                  " startTaskTime='${timings[i].startTaskTime}'" +
+                                 " endTaskTime='${timings[i].endTaskTime}'" +
                                  " firstEditDate='${timings[i].firstEditDate}'" +
                                  " editCount='${timings[i].editCount}'" +
                                  " editSeconds='${timings[i].editSeconds}'" +

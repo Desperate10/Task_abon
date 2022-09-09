@@ -668,6 +668,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun goPrevious() {
         time = 0
+        firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         unRegisterReceivers()
         registerReceivers()
         index = if (index != 1) {
@@ -682,6 +683,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun goNext() {
         time = 0
+        firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
         unRegisterReceivers()
         registerReceivers()
         index = if (index != count) {
@@ -1067,6 +1069,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
             val currentDateAndTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
             viewModel.saveEditTiming(taskId!!, index.toString(), time, firstEditDate, currentDateAndTime)
+            //TODO добавить сброс таймера или его обнуление если будем убирать сервис
+            unRegisterReceivers()
+            registerReceivers()
 
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.saveResults(

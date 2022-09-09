@@ -49,7 +49,7 @@ class UserInfoViewModel @ViewModelInject constructor(private val directoryReposi
         viewModelScope.launch {
             _isTrueEdit.value = true
             if (timingRepository.isStartTaskDateEmpty(taskId, num)) {
-                timingRepository.insertTiming(Timing(taskId, num, date,  "", 0, 0, ""))
+                timingRepository.insertTiming(Timing(taskId, num, firstEditDate, date,  "", 0, 0, ""))
                 saveEditTime(taskId, num, time)
             } else if (timingRepository.isFirstEditDateEmpty(taskId, num)) {
                 timingRepository.updateFirstEditDate(taskId, num, firstEditDate)
