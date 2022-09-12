@@ -118,8 +118,8 @@ abstract class AppDatabase : RoomDatabase() {
                             "endTaskTime TEXT, " +
                             "firstEditDate TEXT," +
                             "lastEditDate TEXT, " +
-                            "editCount INTEGER DEFAULT 0, " +
-                            "editSeconds INTEGER DEFAULT 0, " +
+                            "editCount INTEGER, " +
+                            "editSeconds INTEGER, " +
                             "PRIMARY KEY(task_id, Numb))"
                 )
             }
