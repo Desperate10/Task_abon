@@ -16,13 +16,7 @@ import ua.POE.Task_abon.data.entities.*
 @Database(
     entities = [TestEntity::class, Task::class, Directory::class, Catalog::class, UserData::class, Result::class, Timing::class],
     version = 9,
-    autoMigrations = [
-        AutoMigration(
-            from = 8,
-            to = 9
-        )
-    ],
-    exportSchema = true
+    exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
 
@@ -114,20 +108,22 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        /*private val MIGRATION_8_9 = object : Migration(8, 9) {
+        private val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(database: SupportSQLiteDatabase) {
 
                 database.execSQL(
-                    "CREATE TABLE timing (taskId INTEGER, " +
+                    "CREATE TABLE IF NOT EXISTS timing (task_id TEXT NOT NULL, " +
+                            "Numb TEXT NOT NULL, " +
                             "startTaskDate TEXT, " +
+                            "endTaskTime TEXT, " +
                             "firstEditDate TEXT," +
-                            "editCount TEXT," +
-                            "editSeconds TEXT," +
-                            "lastEditDate TEXT," +
-                            "PRIMARY KEY(taskId))"
+                            "lastEditDate TEXT, " +
+                            "editCount INTEGER DEFAULT 0, " +
+                            "editSeconds INTEGER DEFAULT 0, " +
+                            "PRIMARY KEY(task_id, Numb))"
                 )
             }
-        }*/
+        }
 
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase =
             INSTANCE ?: synchronized(this) {
@@ -143,7 +139,7 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_5_6,
                     MIGRATION_6_7,
                     MIGRATION_7_8,
-                  //  MIGRATION_8_9
+                    MIGRATION_8_9
                 )
                 .fallbackToDestructiveMigration()
                 .addCallback(AppDatabaseCallback(scope))
