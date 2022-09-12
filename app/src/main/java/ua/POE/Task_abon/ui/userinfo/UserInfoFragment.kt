@@ -147,7 +147,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
 
         viewModel.isTrueEdit.observe(viewLifecycleOwner) {
-            //Log.d("testim", it.toString())
             isEdit = it
         }
 
@@ -194,35 +193,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
 
-        //requireActivity().startService(TimerService.getIntent(requireActivity()))
-
-    }
-
-    override fun onStart() {
-        super.onStart()
-        requireActivity().startService(TimerService.getIntent(requireActivity(), time))
-        requireActivity().registerReceiver(updateTime, IntentFilter(TimerService.TIMER_UPDATED))
-    }
-
-    private val updateTime: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            time = intent.getIntExtra(TimerService.TIME_EXTRA, 0)
-                //Log.d("testim", time.toString())
-        }
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-       /* if (isEdit) {
-            //viewModel.saveEditTime(taskId!!,index.toString(), time)
-            val currentDateAndTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            viewModel.saveEndEditDate(taskId!!, index.toString(), currentDateAndTime)
-        } else {
-            time = 0
-        }*/
-        requireActivity().unregisterReceiver(updateTime)
-        requireActivity().stopService(TimerService.getIntent(requireActivity(), time))
     }
 
     private fun addAddButton() {
@@ -656,21 +626,16 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             .setNegativeButton(getString(R.string.no), dialogClickListener).show()
     }
 
-    private fun registerReceivers() {
-        requireActivity().startService(TimerService.getIntent(requireActivity(), time))
-        requireActivity().registerReceiver(updateTime, IntentFilter(TimerService.TIMER_UPDATED))
-    }
-
-    private fun unRegisterReceivers() {
-        requireActivity().unregisterReceiver(updateTime)
-        requireActivity().stopService(TimerService.getIntent(requireActivity(), time))
+    //сбрасываем таймер при переключении юзера
+    private fun resetTimer() {
+        viewModel.time = 0
     }
 
     private fun goPrevious() {
-        time = 0
+        resetTimer()
         firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        unRegisterReceivers()
-        registerReceivers()
+        //unRegisterReceivers()
+        //registerReceivers()
         index = if (index != 1) {
             index!!.minus(1)
         } else {
@@ -682,10 +647,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun goNext() {
-        time = 0
+        resetTimer()
         firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-        unRegisterReceivers()
-        registerReceivers()
         index = if (index != count) {
             index!!.plus(1)
         } else {
@@ -1068,10 +1031,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 null
             }
             val currentDateAndTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-            viewModel.saveEditTiming(taskId!!, index.toString(), time, firstEditDate, currentDateAndTime)
-            //TODO добавить сброс таймера или его обнуление если будем убирать сервис
-            unRegisterReceivers()
-            registerReceivers()
+            viewModel.saveEditTiming(taskId!!, index.toString(), firstEditDate, currentDateAndTime)
+            resetTimer()
 
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.saveResults(

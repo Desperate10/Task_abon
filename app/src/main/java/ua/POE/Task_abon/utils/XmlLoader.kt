@@ -417,7 +417,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
 
              writeLine(sb, "<s:AttributeType name='editCount' rs:number='32' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'")
              writeLine(sb, "rs:basetable='task_result' rs:basecolumn='editCount'>")
-             writeLine(sb, "<s:datatype dt:type='int' dt:maxLength='3' rs:precision='0' rs:fixedlength='true'/>")
+             writeLine(sb, "<s:datatype dt:type='int' dt:maxLength='10' rs:precision='0' rs:fixedlength='true'/>")
              writeLine(sb, "</s:AttributeType>")
 
              writeLine(sb, "<s:AttributeType name='editSeconds' rs:number='33' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'")
@@ -441,7 +441,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
              writeLine(sb, "<rs:data>")
 
              for (i in results.indices) {
-                 var uri: Uri ?= null
+                 var uri: Uri?
                  val photo = if(!results[i].photo.isNullOrEmpty()) {
                      uri = Uri.parse(results[i].photo)
                      "http://10.107.4.132/abon/"+results[i].filial+"/"+results[i].numbpers+"/"+uri.lastPathSegment
