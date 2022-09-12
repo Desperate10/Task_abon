@@ -111,7 +111,9 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_8_9 = object : Migration(8, 9) {
             override fun migrate(database: SupportSQLiteDatabase) {
 
-                database.execSQL(
+                database.execSQL( "DROP TABLE IF EXISTS 'TD$'")
+
+                /*database.execSQL(
                     "CREATE TABLE IF NOT EXISTS timing (task_id TEXT NOT NULL, " +
                             "Numb TEXT NOT NULL, " +
                             "startTaskDate TEXT, " +
@@ -121,7 +123,7 @@ abstract class AppDatabase : RoomDatabase() {
                             "editCount INTEGER, " +
                             "editSeconds INTEGER, " +
                             "PRIMARY KEY(task_id, Numb))"
-                )
+                )*/
             }
         }
 
