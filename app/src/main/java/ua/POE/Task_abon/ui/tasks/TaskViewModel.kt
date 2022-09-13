@@ -32,7 +32,9 @@ class TaskViewModel @ViewModelInject constructor(private val repository: TaskRep
     }
 
     fun clearTaskData(taskId: String) = viewModelScope.launch {
+        testEntityRepository.setUnDone(taskId)
         resultDao.delete(taskId)
+        timingRepository.deleteTiming(taskId)
     }
 
     fun deleteTask(taskId: String) = viewModelScope.launch {
@@ -40,6 +42,7 @@ class TaskViewModel @ViewModelInject constructor(private val repository: TaskRep
         testEntityRepository.deleteTable(taskId)
         directoryRepository.deleteDirectoryByTaskId(taskId)
         resultDao.delete(taskId)
+        timingRepository.deleteTiming(taskId)
         repository.deleteByTaskId(taskId)
     }
 

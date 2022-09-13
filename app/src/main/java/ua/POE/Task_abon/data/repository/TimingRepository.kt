@@ -33,4 +33,6 @@ class TimingRepository @Inject constructor(private val timingDao: TimingDao) {
 
     suspend fun insertTiming(timing: Timing) = timingDao.insertTiming(timing)
 
+    suspend fun deleteTiming(taskId: String) = timingDao.deleteByTaskId(taskId)
+
 }

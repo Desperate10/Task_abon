@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.data.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.OnConflictStrategy.IGNORE
@@ -45,5 +46,8 @@ interface TimingDao {
 
     @Query("UPDATE timing SET editCount = editCount+1 WHERE task_id = :taskId AND Numb = :num")
     fun upEditCount(taskId: String, num: String)
+
+    @Query("DELETE FROM timing WHERE task_id = :taskId")
+    fun deleteByTaskId(taskId: String)
 
 }

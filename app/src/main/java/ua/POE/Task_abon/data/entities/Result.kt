@@ -35,7 +35,8 @@ data class Result(
     @ColumnInfo(name = "numbpers") var numbpers: String?,
     @ColumnInfo(name = "family") var family: String?,
     @ColumnInfo(name = "adress") var adress: String?,
-    @ColumnInfo(name = "photo") var photo: String?
+    @ColumnInfo(name = "photo") var photo: String?,
+    @ColumnInfo(name = "counpleas") var counterPlace: String?
 ) {
 
 }

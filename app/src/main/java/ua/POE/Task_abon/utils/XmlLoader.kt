@@ -435,6 +435,11 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
              writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='50'/>")
              writeLine(sb, "</s:AttributeType>")
 
+             writeLine(sb, "<s:AttributeType name='counpleas' rs:number='36' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'")
+             writeLine(sb, "rs:basetable='task_result' rs:basecolumn='counpleas'>")
+             writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='50'/>")
+             writeLine(sb, "</s:AttributeType>")
+
              writeLine(sb, "<s:extends type='rs:rowbase'/>")
              writeLine(sb, "</s:ElementType>")
              writeLine(sb, "</s:Schema>")
@@ -521,7 +526,8 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
                                  " firstEditDate='${timings[i].firstEditDate}'" +
                                  " editCount='${timings[i].editCount}'" +
                                  " editSeconds='${timings[i].editSeconds}'" +
-                                 " lastEditDate='${timings[i].lastEditDate}'" +" />"
+                                 " lastEditDate='${timings[i].lastEditDate}'" +
+                                 " counpleas='${results[i].counterPlace}'" +" />"
                      )
                  } else {
                      writeLine(
@@ -558,7 +564,8 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
                                  " firstEditDate='${timings[i].firstEditDate}'" +
                                  " editCount='${timings[i].editCount}'" +
                                  " editSeconds='${timings[i].editSeconds}'" +
-                                 " lastEditDate='${timings[i].lastEditDate}'" +" />"
+                                 " lastEditDate='${timings[i].lastEditDate}'" +
+                                 " counpleas='${results[i].counterPlace}'" +" />"
 
                      )
                  }

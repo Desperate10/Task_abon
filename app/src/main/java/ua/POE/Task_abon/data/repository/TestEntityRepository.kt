@@ -33,6 +33,13 @@ class TestEntityRepository @Inject constructor(appDatabase: AppDatabase) {
 
     }
 
+    fun setUnDone(taskId: String) {
+        val values = ContentValues()
+        values.put("IsDone", "Не виконано")
+
+        sdbw.update("TD$taskId", OnConflictStrategy.REPLACE, values, "", null)
+    }
+
     fun deleteTable(taskId: String) {
         TestEntity.dropTable(sdbw, taskId)
     }

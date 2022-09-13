@@ -45,7 +45,7 @@ class UserInfoViewModel @ViewModelInject constructor(
             timer.scheduleAtFixedRate(object : TimerTask() {
                 override fun run() {
                     time++
-                    Log.d("testim", time.toString())
+                 //   Log.d("testim", time.toString())
                 }
             },0, 1000)
         }
@@ -146,7 +146,7 @@ class UserInfoViewModel @ViewModelInject constructor(
     ) {
 
         val task: Task = getTask(taskId)
-        val fields = listOf("num", "accountId", "Numbpers", "family", "Adress", "tel")
+        val fields = listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
         val user = testEntityRepository.getTextByFields("TD$taskId", fields, index)
 
         val result = Result(
@@ -179,7 +179,8 @@ class UserInfoViewModel @ViewModelInject constructor(
             numbpers,
             family,
             adress,
-            photo
+            photo,
+            user["counpleas"]
         )
         resultDao.insertNewData(result)
 

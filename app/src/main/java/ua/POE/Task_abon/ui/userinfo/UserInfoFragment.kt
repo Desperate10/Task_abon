@@ -19,7 +19,6 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.util.Linkify
-import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -35,17 +34,14 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.apache.commons.text.StringEscapeUtils
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.Catalog
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.ui.MainActivity
 import ua.POE.Task_abon.utils.*
 import java.io.File
-import java.io.UnsupportedEncodingException
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 @AndroidEntryPoint
@@ -119,7 +115,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         if (savedInstanceState != null) {
             index = savedInstanceState.getInt("index")
         }
-        firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         //читаем иконки
         icons = resources.getRawTextFile(R.raw.icons)
@@ -633,7 +629,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun goPrevious() {
         resetTimer()
-        firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
         //unRegisterReceivers()
         //registerReceivers()
         index = if (index != 1) {
@@ -648,7 +644,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun goNext() {
         resetTimer()
-        firstEditDate = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
         index = if (index != count) {
             index!!.plus(1)
         } else {
@@ -894,7 +890,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                         numbersField = key
                         numbpers = value;
                     }
-                    "Значки о/р" -> {
+                    "icons_account" -> {
                         if (value.isNotEmpty()) {
                             var text = getNeededEmojis(icons, value)
                             createRow(numbersField, "$numbpers $text", true)
@@ -913,7 +909,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     "Опора" -> {
                         opora = "Оп.$value"
                     }
-                    "Значки лічильника" -> {
+                    "icons_counter" -> {
                         if (value.isNotEmpty()) {
                             iconsLs = value
                         }
@@ -1030,7 +1026,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             } else {
                 null
             }
-            val currentDateAndTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            val currentDateAndTime = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             viewModel.saveEditTiming(taskId!!, index.toString(), firstEditDate, currentDateAndTime)
             resetTimer()
 
