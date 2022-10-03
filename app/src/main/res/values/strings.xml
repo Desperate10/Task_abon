@@ -63,4 +63,5 @@
     <string name="no">Ні</string>
     <string name="app_info">Інформація про додаток</string>
     <string name="add_task">Додати завдання</string>
+    <string name="marks">Позначки</string>
 </resources>

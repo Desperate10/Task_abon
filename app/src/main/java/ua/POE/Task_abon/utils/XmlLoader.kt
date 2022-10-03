@@ -52,7 +52,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
         var sdb: SupportSQLiteDatabase = database.openHelper.writableDatabase
         while (eventType != XmlPullParser.END_DOCUMENT) {
             val tagName = parser.name
-            println(tagName)
+            //println(tagName)
             when (eventType) {
                 XmlPullParser.START_TAG -> {
                     when (tagName) {
@@ -73,7 +73,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
                             var isJur = "0"
                             if (parser.attributeCount == 8) filial = parser.getAttributeValue(7)
                             if (parser.attributeCount == 9) isJur = parser.getAttributeValue(8)
-                            taskDao.insert(Task(taskId, name, date, count, filial, fileName, tableName, isJur))
+                            taskDao.insert(TaskEntity(taskId, name, date, count, filial, fileName, tableName, isJur))
                         }
                         "Field_inf" -> {
                             var newtable = "CREATE TABLE $tableName (_id integer primary key autoincrement"

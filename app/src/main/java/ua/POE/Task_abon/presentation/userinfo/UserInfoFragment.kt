@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.ui.userinfo
+package ua.POE.Task_abon.presentation.userinfo
 
 import android.Manifest
 import android.app.Activity
@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.Catalog
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
-import ua.POE.Task_abon.ui.MainActivity
+import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.utils.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -512,7 +512,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 requireActivity().onBackPressed()
                 return true
             }
-            R.id.mybutton -> {
+            R.id.save_customer_data -> {
                 if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(3)
                         .toString() !in operators || binding.results.phone.text.length < 10)
                 ) {

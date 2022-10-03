@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.ui.tasks
+package ua.POE.Task_abon.presentation.tasks
 
 import android.Manifest
 import android.app.Activity
@@ -24,7 +24,6 @@ import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable.cancel
 import kotlinx.coroutines.launch
 import okhttp3.MediaType
 import okhttp3.MultipartBody
@@ -33,12 +32,12 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.Task
+import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.databinding.FragmentTasksBinding
 import ua.POE.Task_abon.network.MyApi
 import ua.POE.Task_abon.network.UploadRequestBody
 import ua.POE.Task_abon.network.UploadResponse
-import ua.POE.Task_abon.ui.MainActivity
+import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.utils.*
 import java.io.*
 
@@ -182,7 +181,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         const val PICK_XML_FILE = 1
     }
 
-    override fun onItemClick(task: Task, position: Int) {
+    override fun onItemClick(task: TaskEntity, position: Int) {
         val bundle = bundleOf(
             "taskId" to task.id, "fileName" to task.fileName, "name" to task.name,
             "info" to "Id завдання: ${task.id} , Записи: ${task.count}, Дата створення: ${task.date}, Юр.особи: ${task.isJur}"
@@ -190,11 +189,11 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         findNavController().navigate(R.id.action_tasksFragment_to_taskDetailFragment, bundle)
     }
 
-    override fun onLongClick(task: Task, position: Int) {
+    override fun onLongClick(task: TaskEntity, position: Int) {
         createMenuDialog(task)
     }
 
-    private fun createMenuDialog(task: Task) {
+    private fun createMenuDialog(task: TaskEntity) {
         val options = arrayOf<CharSequence>(
             getString(R.string.upload_task),
             getString(R.string.clear_field_btn),
@@ -285,7 +284,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         binding.progressBar.progress = percentage
     }
 
-    private fun clearTaskData(task: Task) {
+    private fun clearTaskData(task: TaskEntity) {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
@@ -305,7 +304,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
 
     }
 
-    private fun deleteTask(task: Task) {
+    private fun deleteTask(task: TaskEntity) {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
@@ -325,7 +324,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
             .setNegativeButton(getString(R.string.no), dialogClickListener).show()
     }
 
-    private fun createDoc(task: Task) {
+    private fun createDoc(task: TaskEntity) {
         taskId = task.id
         val export = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)

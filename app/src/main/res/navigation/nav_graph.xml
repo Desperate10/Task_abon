@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/tasksFragment"
-        android:name="ua.POE.Task_abon.ui.tasks.TasksFragment"
+        android:name="ua.POE.Task_abon.presentation.tasks.TasksFragment"
         android:label="fragment_tasks"
         tools:layout="@layout/fragment_tasks" >
         <action
@@ -19,7 +19,7 @@
     </fragment>
     <fragment
         android:id="@+id/taskDetailFragment"
-        android:name="ua.POE.Task_abon.ui.taskdetail.TaskDetailFragment"
+        android:name="ua.POE.Task_abon.presentation.taskdetail.TaskDetailFragment"
         android:label="fragment_task_detail"
         tools:layout="@layout/fragment_task_detail" >
         <action
@@ -31,12 +31,12 @@
     </fragment>
     <fragment
         android:id="@+id/userInfoFragment"
-        android:name="ua.POE.Task_abon.ui.userinfo.UserInfoFragment"
+        android:name="ua.POE.Task_abon.presentation.userinfo.UserInfoFragment"
         android:label="fragment_user_info"
         tools:layout="@layout/fragment_user_info" />
     <fragment
         android:id="@+id/findUserFragment"
-        android:name="ua.POE.Task_abon.ui.finduser.FindUserFragment"
+        android:name="ua.POE.Task_abon.presentation.finduser.FindUserFragment"
         android:label="fragment_find_user"
         tools:layout="@layout/fragment_find_user" >
         <action

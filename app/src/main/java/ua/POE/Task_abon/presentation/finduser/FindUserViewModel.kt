@@ -1,9 +1,8 @@
-package ua.POE.Task_abon.ui.finduser
+package ua.POE.Task_abon.presentation.finduser
 
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
 import ua.POE.Task_abon.data.dao.DirectoryDao
-import ua.POE.Task_abon.data.entities.TestEntity
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 
 class FindUserViewModel @ViewModelInject constructor(val directoryDao: DirectoryDao, val testEntityRepository: TestEntityRepository) : ViewModel() {

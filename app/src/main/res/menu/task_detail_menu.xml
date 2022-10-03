@@ -2,11 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/mybutton"
+        android:id="@+id/find_user"
         android:title="@string/find"
         app:showAsAction="always"
         />
     <item
-        android:id="@+id/help"
-        android:title="@string/info" />
+        android:id="@+id/marks"
+        android:title="@string/marks" />
 </menu>

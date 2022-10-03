@@ -1,7 +1,7 @@
-package ua.POE.Task_abon.ui.taskdetail
+package ua.POE.Task_abon.presentation.taskdetail
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
 import android.view.*
@@ -17,21 +17,28 @@ import dagger.hilt.android.AndroidEntryPoint
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
-import ua.POE.Task_abon.ui.MainActivity
+import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.utils.*
 
 
 @AndroidEntryPoint
 class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
 
-    private var binding : FragmentTaskDetailBinding by autoCleared()
-    private val viewModel : TaskDetailViewModel by viewModels()
-    private var taskId : String? = null
-    private var searchList: HashMap<String, String> ? = null
-    private var userData : List<UserData> = ArrayList()
-    lateinit var adapter : PersonListAdapter
-    private var firstTime : Boolean = true
-    private lateinit var icons: List<Icons>
+    private var binding: FragmentTaskDetailBinding by autoCleared()
+    private val viewModel by viewModels<TaskDetailViewModel>()
+    private var adapter: PersonListAdapter by autoCleared()
+
+    private var taskId: String? = null
+    private var searchList = mutableMapOf<String, String>()
+    private var userData = listOf<UserData>()
+
+    private var icons = mutableListOf<Icons>()
+    private var userStatus = NOT_DONE
+
+    companion object {
+        private const val NOT_DONE = "Не виконано"
+        private const val DONE = "Виконано"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,69 +52,58 @@ class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
 
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
         binding.recyclerview.layoutManager = linearLayoutManager
-
         taskId = arguments?.getString("taskId")
-        searchList = arguments?.get("searchList") as HashMap<String, String>?
-       // if(searchList !=null) Log.d("test", searchList.toString())
+        searchList = arguments?.get("searchList") as MutableMap<String, String>
+
         binding.taskName.text = arguments?.getString("name")
         binding.fileName.text = arguments?.getString("fileName")
         binding.info.text = arguments?.getString("info")
 
         icons = resources.getRawTextFile(R.raw.icons)
 
-        if(searchList.isNullOrEmpty()) {
+        observeViewModel()
+
+        //заменить на ливдату из вьюмодели
+        binding.isDoneCheckBox.setOnCheckedChangeListener { _, isChecked ->
+            userStatus = if (isChecked) NOT_DONE
+            else DONE
+        }
+    }
+
+    private fun observeViewModel() {
+        if (searchList.isNullOrEmpty()) {
             viewModel.getUsers("TD$taskId").observe(viewLifecycleOwner) { list ->
-                adapter = PersonListAdapter(list, resources.getRawTextFile(R.raw.icons), this)
-                binding.recyclerview.adapter = adapter
-                adapter.notifyDataSetChanged()
                 userData = list
-                //Log.d("userData1", userData.toString())
                 taskId?.let {
                     viewModel.getFinishedCount(it).observe(viewLifecycleOwner) { count ->
                         binding.finished.text = "Виконано: $count/${userData.size} записів"
                     }
                 }
             }
-            firstTime = false
-        }
-
-            searchList?.let { it ->
-                viewModel.getSearchedUsers("$taskId", it).observe(viewLifecycleOwner) { list ->
-                    list.let {
-                        adapter = PersonListAdapter(
-                            list,
-                            icons,
-                            this
-                        )
-                        binding.recyclerview.adapter = adapter
-                        adapter.notifyDataSetChanged()
-                        userData = list
-                        taskId?.let {
-                            viewModel.getFinishedCount(it).observe(viewLifecycleOwner) { count ->
-                                binding.finished.text = "Виконано: $count/${userData.size} записів"
-                            }
+        } else {
+            viewModel.getSearchedUsers("$taskId", searchList).observe(viewLifecycleOwner) { list ->
+                userData = list
+                taskId?.let {
+                    viewModel.getFinishedCount(it).observe(viewLifecycleOwner) { count ->
+                        binding.finished.text = buildString {
+                            append("Виконано: ")
+                            append(count)
+                            append("/")
+                            append(userData.size)
+                            append(" записів")
                         }
-                        //Log.d("userData2", userData.toString())
-                        //adapter.updateList(list)
                     }
                 }
             }
-
-        binding.isDoneCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            var query = ""
-            if (isChecked) {
-                query = "Виконано"
-            }
-            viewModel.getUsersNotFinished("TD$taskId", query).observe(viewLifecycleOwner) { list ->
-                list.let {
-                    adapter.updateList(it)
-                    userData = list
-                    //Log.d("userData3", userData.toString())
-                }
-            }
         }
+        adapter = PersonListAdapter(userData, icons, this)
+        binding.recyclerview.adapter = adapter
+        adapter.notifyDataSetChanged()
 
-
+        viewModel.getUsersByStatus("TD$taskId", userStatus).observe(viewLifecycleOwner) { list ->
+            adapter.updateList(list)
+            userData = list
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -116,7 +112,7 @@ class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
                 findNavController().navigate(R.id.tasksFragment)
                 return true
             }
-            R.id.mybutton -> {
+            R.id.find_user -> {
                 val bundle = bundleOf(
                     "taskId" to taskId,
                     "fileName" to binding.fileName.text.toString(),
@@ -129,27 +125,28 @@ class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
                 )
                 return true
             }
-            R.id.help -> {
-                helpDialog()
+            R.id.marks -> {
+                showEmojiInfoDialog()
             }
         }
         return super.onOptionsItemSelected(item)
     }
 
-    private fun helpDialog() {
+    private fun showEmojiInfoDialog() {
         var message = ""
-        for (icon in icons) {
-            message += getEmojiByUnicode(icon.emoji!!) + " - " + icon.hint +"\n"
+
+        icons.forEach {
+            message += getEmojiByUnicode(it.emoji) + " - " + it.hint + "\n"
         }
 
         val dialog = AlertDialog.Builder(requireContext())
-                .setTitle("Умовні позначки")
-                .setMessage(message)
-                .setPositiveButton("Ок") { dialog, _ ->
-                    dialog.dismiss()
-                }
-                .setIcon(android.R.drawable.ic_dialog_info)
-                .show()
+            .setTitle("Умовні позначки")
+            .setMessage(message)
+            .setPositiveButton("Ок") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setIcon(android.R.drawable.ic_dialog_info)
+            .show()
         val textView = dialog.findViewById(android.R.id.message) as TextView
         textView.setScroller(Scroller(requireContext()))
         textView.isVerticalScrollBarEnabled = true
@@ -176,7 +173,7 @@ class TaskDetailFragment : Fragment(), PersonListAdapter.ItemCLickListener {
             "filial" to binding.fileName.text.substring(1, 5),
             "num" to userData[position].num,
             "id" to userData[position]._id,
-            "count" to binding.recyclerview.adapter!!.itemCount,
+            "count" to binding.recyclerview.adapter?.itemCount,
             "isFirstLoad" to true
         )
         findNavController().navigate(R.id.action_taskDetailFragment_to_userInfoFragment, bundle)

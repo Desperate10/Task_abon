@@ -1,24 +1,28 @@
 package ua.POE.Task_abon.utils
 
-import android.R
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.RawRes
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.BufferedReader
-import java.io.IOException
+import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 
+
+fun <T : Any> Fragment.autoCleared(initializer: (() -> T)? = null): AutoClearedValue<T> {
+    return AutoClearedValue(this, initializer)
+}
 
 fun Fragment.hideKeyboard() {
     view?.let { activity?.hideKeyboard(it) }
@@ -77,19 +81,7 @@ fun getNeededEmojis(iconsList: ArrayList<Icons>, neededIcons: String) : String {
     return text
 }
 
-fun getNeededEmojisWithHint(emoji : String, neededIcons: String) : String {
-    var text : String = ""
-    val mods = neededIcons.split(" ")
-    var i = 0
-    do {
-        if (getEmojiByUnicode(emoji) == mods[i])
-        text += mods[i] +
-        i++
-    } while (i < mods.size)
-    return text
-}
-
-fun getEmojiByUnicode(reactionCode: String): String {
+fun getEmojiByUnicode(reactionCode: String?): String {
     val code = reactionCode.substring(2).toInt(16)
     return String(Character.toChars(code))
 }
@@ -104,4 +96,20 @@ fun ContentResolver.getFileName(fileUri: Uri): String {
         returnCursor.close()
     }
     return name
+}
+
+suspend fun <T> saveReadFile(
+    readFile: suspend () -> T
+) : Resource<T> {
+    return withContext(Dispatchers.IO) {
+        try {
+            Resource.Success(readFile.invoke())
+        } catch (throwable: Throwable) {
+            when(throwable) {
+                is FileNotFoundException ->
+                    Resource.Error("Файл не найден")
+                else -> Resource.Error("Ошибка чтения файла")
+            }
+        }
+    }
 }

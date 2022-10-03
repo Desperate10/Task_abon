@@ -1,25 +1,14 @@
-package ua.POE.Task_abon.ui
+package ua.POE.Task_abon.presentation
 
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.viewModels
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.ActivityMainBinding
-import ua.POE.Task_abon.ui.userinfo.UserInfoViewModel
-import java.io.FileNotFoundException
-import java.io.PrintStream
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {

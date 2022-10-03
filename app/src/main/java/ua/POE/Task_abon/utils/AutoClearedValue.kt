@@ -10,36 +10,50 @@ import kotlin.reflect.KProperty
  *
  * Accessing this variable while the fragment's view is destroyed will throw NPE.
  */
-class AutoClearedValue<T : Any>(val fragment: Fragment) : ReadWriteProperty<Fragment, T> {
+class AutoClearedValue<T : Any>(
+    fragment: Fragment,
+    private val initializer: (() -> T)?
+) : ReadWriteProperty<Fragment, T> {
+
     private var _value: T? = null
 
     init {
         fragment.lifecycle.addObserver(object : DefaultLifecycleObserver {
-            val viewLifecycleOwnerLiveDataObserver =
-                Observer<LifecycleOwner?> {
-                    val viewLifecycleOwner = it ?: return@Observer
+            val viewLifecycleOwnerObserver = Observer<LifecycleOwner?> { viewLifecycleOwner ->
 
-                    viewLifecycleOwner.lifecycle.addObserver(object : DefaultLifecycleObserver {
-                        override fun onDestroy(owner: LifecycleOwner) {
-                            _value = null
-                        }
-                    })
-                }
+                viewLifecycleOwner?.lifecycle?.addObserver(object : DefaultLifecycleObserver {
+                    override fun onDestroy(owner: LifecycleOwner) {
+                        _value = null
+                    }
+                })
+            }
+
+            override fun onCreate(owner: LifecycleOwner) {
+                fragment.viewLifecycleOwnerLiveData.observeForever(viewLifecycleOwnerObserver)
+            }
+
+            override fun onDestroy(owner: LifecycleOwner) {
+                fragment.viewLifecycleOwnerLiveData.removeObserver(viewLifecycleOwnerObserver)
+            }
         })
     }
 
     override fun getValue(thisRef: Fragment, property: KProperty<*>): T {
-        return _value ?: throw IllegalStateException(
-            "should never call auto-cleared-value get when it might not be available"
-        )
+        val value = _value
+
+        if (value != null) {
+            return value
+        }
+
+        if (thisRef.viewLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.INITIALIZED)) {
+            return initializer?.invoke().also { _value = it }
+                ?: throw IllegalStateException("The value has not yet been set or no default initializer provided")
+        } else {
+            throw IllegalStateException("Fragment might have been destroyed or not initialized yet")
+        }
     }
 
     override fun setValue(thisRef: Fragment, property: KProperty<*>, value: T) {
         _value = value
     }
 }
-
-/**
- * Creates an [AutoClearedValue] associated with this fragment.
- */
-fun <T : Any> Fragment.autoCleared() = AutoClearedValue<T>(this)

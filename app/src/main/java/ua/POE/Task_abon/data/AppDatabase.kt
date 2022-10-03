@@ -14,7 +14,7 @@ import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
 
 @Database(
-    entities = [TestEntity::class, Task::class, Directory::class, Catalog::class, UserData::class, Result::class, Timing::class],
+    entities = [TestEntity::class, TaskEntity::class, Directory::class, Catalog::class, UserData::class, Result::class, Timing::class],
     version = 9,
     exportSchema = false
 )

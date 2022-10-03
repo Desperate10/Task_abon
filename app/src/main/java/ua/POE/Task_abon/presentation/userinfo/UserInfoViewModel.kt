@@ -1,6 +1,5 @@
-package ua.POE.Task_abon.ui.userinfo
+package ua.POE.Task_abon.presentation.userinfo
 
-import android.util.Log
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -10,7 +9,7 @@ import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.entities.Directory
 import ua.POE.Task_abon.data.entities.Result
-import ua.POE.Task_abon.data.entities.Task
+import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
@@ -145,7 +144,7 @@ class UserInfoViewModel @ViewModelInject constructor(
         photo: String?
     ) {
 
-        val task: Task = getTask(taskId)
+        val task: TaskEntity = getTask(taskId)
         val fields = listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
         val user = testEntityRepository.getTextByFields("TD$taskId", fields, index)
 

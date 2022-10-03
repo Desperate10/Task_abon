@@ -1,8 +1,7 @@
-package ua.POE.Task_abon.ui.finduser
+package ua.POE.Task_abon.presentation.finduser
 
 import android.content.DialogInterface
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -15,7 +14,7 @@ import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentFindUserBinding
-import ua.POE.Task_abon.ui.MainActivity
+import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.utils.autoCleared
 
 

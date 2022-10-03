@@ -1,13 +1,11 @@
 package ua.POE.Task_abon.utils
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.RowPersonBinding
-import ua.POE.Task_abon.databinding.RowTaskBinding
 import javax.inject.Inject
 
 class PersonListAdapter @Inject constructor(private var personList : List<UserData>, private var emojiList: List<Icons>, val mItemClickListener:ItemCLickListener) : RecyclerView.Adapter<PersonListAdapter.PersonListViewHolder>() {
@@ -27,7 +25,7 @@ class PersonListAdapter @Inject constructor(private var personList : List<UserDa
                 var i = 0
                 binding.text1.text = binding.text1.text as String + "   "
                 do {
-                    binding.text1.text = binding.text1.text as String + getEmojiByUnicode(emojiList[mods[i].toInt()-1].emoji!!)
+                    binding.text1.text = binding.text1.text as String + getEmojiByUnicode(emojiList[mods[i].toInt()-1].emoji)
                     i++
                 } while (i < mods.size)
             }

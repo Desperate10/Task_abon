@@ -1,11 +1,6 @@
 package ua.POE.Task_abon.di
 
 import android.content.Context
-import android.os.TestLooperManager
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.viewModelScope
-import androidx.room.PrimaryKey
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,10 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
-import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.data.repository.*
-import ua.POE.Task_abon.ui.tasks.TaskViewModel
-import ua.POE.Task_abon.ui.tasks.TasksFragment
 import ua.POE.Task_abon.utils.XmlLoader
 import javax.inject.Singleton
 

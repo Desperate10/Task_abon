@@ -24,8 +24,8 @@ class TaskDetailRepository @Inject constructor(private val testEntityDao: TestEn
                     .asLiveData()
     }
 
-    fun getNotDoneUser(table: String, query: String) : LiveData<List<UserData>> {
-        return testEntityDao.getUserList(SimpleSQLiteQuery("SELECT * FROM $table WHERE IsDone <> \"$query\"")).asLiveData()
+    fun getUserByStatus(table: String, query: String) : LiveData<List<UserData>> {
+        return testEntityDao.getUserList(SimpleSQLiteQuery("SELECT * FROM $table WHERE IsDone = \"$query\"")).asLiveData()
     }
 
     fun getSearchedFieldName(taskId: String, key:String) : String {
