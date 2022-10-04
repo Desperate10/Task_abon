@@ -1,11 +1,10 @@
-package ua.POE.Task_abon.utils
+package ua.POE.Task_abon.presentation.tasks
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.databinding.RowTaskBinding
-import ua.POE.Task_abon.presentation.tasks.TasksFragment
 import javax.inject.Inject
 
 class TaskListAdapter @Inject constructor(private val taskList: List<TaskEntity>, val mItemClickListener: TasksFragment) : RecyclerView.Adapter<TaskListAdapter.TaskListViewHolder>() {

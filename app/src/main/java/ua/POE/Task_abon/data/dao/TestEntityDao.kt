@@ -15,10 +15,10 @@ import ua.POE.Task_abon.data.entities.UserData
 interface TestEntityDao {
 
     @RawQuery(observedEntities = [UserData::class])
-    fun getUserList(query: SimpleSQLiteQuery) : Flow<List<UserData>>
+    fun getUserList(query: SimpleSQLiteQuery) : List<UserData>
 
     @RawQuery(observedEntities = [UserData::class])
-    fun getSearchedUsersList(query: SimpleSQLiteQuery) : Flow<List<UserData>>
+    fun getSearchedUsersList(query: SimpleSQLiteQuery) : List<UserData>
 
     @RawQuery
     fun checkField(query: SimpleSQLiteQuery): Int

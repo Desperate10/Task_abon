@@ -64,4 +64,8 @@
     <string name="app_info">Інформація про додаток</string>
     <string name="add_task">Додати завдання</string>
     <string name="marks">Позначки</string>
+    <string name="pillar">%1$s Опора: %2$s</string>
+    <string name="text1">"%1$s   "</string>
+    <string name="account_number">%1$s%2$s</string>
+    <string name="status_done">Виконано: %1$d/%2$d</string>
 </resources>

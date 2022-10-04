@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import ua.POE.Task_abon.domain.model.Icons
 import java.io.BufferedReader
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -82,8 +83,11 @@ fun getNeededEmojis(iconsList: ArrayList<Icons>, neededIcons: String) : String {
 }
 
 fun getEmojiByUnicode(reactionCode: String?): String {
-    val code = reactionCode.substring(2).toInt(16)
-    return String(Character.toChars(code))
+    val code = reactionCode?.substring(2)?.toInt(16)
+    code?.let {
+        return String(Character.toChars(code))
+    }
+    return ""
 }
 
 fun ContentResolver.getFileName(fileUri: Uri): String {

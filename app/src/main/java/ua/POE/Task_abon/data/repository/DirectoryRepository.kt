@@ -7,8 +7,8 @@ class DirectoryRepository @Inject constructor(private val directoryDao: Director
 
     fun getBlockNames() = directoryDao.getFieldNames()
 
-    fun getFieldsByBlockName(name:String, taskId : String) = directoryDao.getFieldsByBlockName(name, taskId)
+    fun getFieldsByBlockName(name:String, taskId : Int) = directoryDao.getFieldsByBlockName(name, taskId)
 
-    suspend fun deleteDirectoryByTaskId(taskId: String) = directoryDao.deleteByTaskId(taskId)
+    suspend fun deleteDirectoryByTaskId(taskId: Int) = directoryDao.deleteByTaskId(taskId)
 
 }

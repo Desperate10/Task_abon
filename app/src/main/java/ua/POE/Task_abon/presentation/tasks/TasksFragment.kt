@@ -17,7 +17,6 @@ import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -47,7 +46,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
 
      private var binding : FragmentTasksBinding by autoCleared()
      private val viewModel : TaskViewModel by viewModels()
-     private lateinit var taskId: String
+     private var taskId: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,9 +89,9 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
             chooseFile()
         }
 
-        viewModel.taskLoadingStatus.observe(viewLifecycleOwner, Observer {
-            when (it.status) {
-                Resource.Status.SUCCESS -> {
+        /*viewModel.taskLoadingStatus.observe(viewLifecycleOwner, Observer {
+            when (it.data) {
+                Resource.Success -> {
                     Toast.makeText(activity, "Завдання успішно вигружено", Toast.LENGTH_SHORT).show()
                 }
                 Resource.Status.ERROR -> {
@@ -102,7 +101,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
                     Toast.makeText(requireActivity(), "Вигрузка...", Toast.LENGTH_SHORT).show()
                 }
             }
-        })
+        })*/
     }
 
     override fun onCreateView(
@@ -120,7 +119,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.mybutton -> {
+            R.id.add_task -> {
                 chooseFile()
                 true
             }
@@ -183,7 +182,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
 
     override fun onItemClick(task: TaskEntity, position: Int) {
         val bundle = bundleOf(
-            "taskId" to task.id, "fileName" to task.fileName, "name" to task.name,
+            "taskId" to task.id, "fileName" to task.fileName, "taskName" to task.name,
             "info" to "Id завдання: ${task.id} , Записи: ${task.count}, Дата створення: ${task.date}, Юр.особи: ${task.isJur}"
         )
         findNavController().navigate(R.id.action_tasksFragment_to_taskDetailFragment, bundle)
@@ -222,10 +221,10 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
     }
 
     private fun prepareFilePart(partName: String, fileUri: Uri, body: UploadRequestBody): MultipartBody.Part {
-        val file = File(fileUri.path)
+        val file = fileUri.path?.let { File(it) }
 
         // MultipartBody.Part is used to send also the actual file name
-        return MultipartBody.Part.createFormData(partName, file.name, body)
+        return MultipartBody.Part.createFormData(partName, file?.name, body)
     }
 
     private fun uploadImage(uriStrings: List<String>) {

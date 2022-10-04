@@ -52,7 +52,7 @@ class UserInfoViewModel @ViewModelInject constructor(
 
     fun getBlockNames(): MutableList<String> = directoryRepository.getBlockNames()
 
-    fun getFieldsByBlockName(name: String, taskId: String): List<Directory> =
+    fun getFieldsByBlockName(name: String, taskId: Int): List<Directory> =
         directoryRepository.getFieldsByBlockName(name, taskId)
 
     fun getTextFieldsByBlockName(fields: List<String>, tableName: String, num: Int) =
@@ -60,7 +60,7 @@ class UserInfoViewModel @ViewModelInject constructor(
 
 //    fun getTextByFields(fields: List<String>, tableName: String, num : Int) = testEntityRepository.getTextByFields(tableName, fields, num)
 
-    fun getTechInfoTextByFields(taskId: String, index: Int): HashMap<String, String> {
+    fun getTechInfoTextByFields(taskId: Int, index: Int): HashMap<String, String> {
         val tech = ArrayList<String>()
         val fields = getFieldsByBlockName("Тех.информация", taskId)
         for (element in fields) {
@@ -70,7 +70,7 @@ class UserInfoViewModel @ViewModelInject constructor(
     }
 
     //save date when pressing saveResult
-    fun saveEditTiming(taskId: String, num: String, firstEditDate: String, date: String) {
+    fun saveEditTiming(taskId: Int, num: String, firstEditDate: String, date: String) {
         viewModelScope.launch {
             _isTrueEdit.value = true
             if (timingRepository.isStartTaskDateEmpty(taskId, num)) {
@@ -102,7 +102,7 @@ class UserInfoViewModel @ViewModelInject constructor(
     }
 
     //save date when finish editing task when onStop() userInfoFragment
-    private fun saveEndEditDate(taskId: String, num: String, date: String) {
+    private fun saveEndEditDate(taskId: Int, num: String, date: String) {
         viewModelScope.launch {
             if (!timingRepository.isFirstEditDateEmpty(taskId, num)) {
                 timingRepository.updateLastEditDate(taskId, num, date)
@@ -110,7 +110,7 @@ class UserInfoViewModel @ViewModelInject constructor(
         }
     }
 
-    private fun saveEditTime(taskId: String, num: String, time: Int) {
+    private fun saveEditTime(taskId: Int, num: String, time: Int) {
         viewModelScope.launch {
             val seconds: Int = timingRepository.getEditTime(taskId, num)
             val newEditTime = seconds + time
@@ -119,7 +119,7 @@ class UserInfoViewModel @ViewModelInject constructor(
     }
 
     suspend fun saveResults(
-        taskId: String,
+        taskId: Int,
         index: Int,
         date: String,
         isDone: String,
@@ -186,9 +186,9 @@ class UserInfoViewModel @ViewModelInject constructor(
         testEntityRepository.setDone(taskId, user["num"]!!)
     }
 
-    private suspend fun getTask(taskId: String) = taskRepository.getTask(taskId)
+    private suspend fun getTask(taskId: Int) = taskRepository.getTask(taskId)
 
-    fun getResult(taskId: String, index: Int) = resultDao.getResultUser(taskId, index)
+    fun getResult(taskId: Int, index: Int) = resultDao.getResultUser(taskId, index)
 
     fun getSourceList(type: String) = catalogDao.getSourceList(type)
 
@@ -198,7 +198,7 @@ class UserInfoViewModel @ViewModelInject constructor(
 
     fun getOperatorsList() = catalogDao.getOperatorsList()
 
-    fun getCheckedConditions(taskId: String, index: Int) =
+    fun getCheckedConditions(taskId: Int, index: Int) =
         testEntityRepository.getCheckedConditions(taskId, index)
 
 }

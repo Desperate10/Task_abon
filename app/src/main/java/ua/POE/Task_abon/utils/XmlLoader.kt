@@ -47,8 +47,8 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
                 )
         )
         var eventType = parser.eventType
-        var taskId: String = ""
-        var tableName: String = ""
+        var taskId = 0
+        var tableName = ""
         var sdb: SupportSQLiteDatabase = database.openHelper.writableDatabase
         while (eventType != XmlPullParser.END_DOCUMENT) {
             val tagName = parser.name
@@ -59,7 +59,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
                         "Task_st" -> {
                             val name = parser.getAttributeValue(0)
                             val date = parser.getAttributeValue(1)
-                            taskId = parser.getAttributeValue(2)
+                            taskId = parser.getAttributeValue(2).toInt()
                             tableName = "TD$taskId"
                             if (isTableExists(tableName)) {
                                 withContext(Dispatchers.Main) {

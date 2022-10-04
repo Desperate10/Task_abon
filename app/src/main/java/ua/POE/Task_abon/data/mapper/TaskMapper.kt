@@ -5,6 +5,7 @@ import ua.POE.Task_abon.domain.model.TaskInfo
 
 fun TaskEntity.toTaskInfo(): TaskInfo {
     return TaskInfo(
+        id = id,
         name = name,
         date = date,
         count = count,
@@ -15,12 +16,13 @@ fun TaskEntity.toTaskInfo(): TaskInfo {
 
 fun TaskInfo.toTask(): TaskEntity {
     return TaskEntity(
+        id = id,
         name = name,
         date = date,
         count = count,
         filial = "",
         fileName = fileName,
-        tableName = "TD$fileName",
+        tableName = "TD$id",
         isJur = isJur
     )
 }

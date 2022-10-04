@@ -19,20 +19,15 @@ import javax.inject.Inject
 
 class TaskDetailRepository @Inject constructor(private val testEntityDao: TestEntityDao,private val directoryDao: DirectoryDao, private val resultDao: ResultDao) {
 
-    fun getUsers(table: String) : LiveData<List<UserData>> {
-        return testEntityDao.getUserList(SimpleSQLiteQuery("SELECT * FROM $table"))
-                    .asLiveData()
+    fun getUserByStatus(table: String, query: String) : List<UserData> {
+        return testEntityDao.getUserList(SimpleSQLiteQuery("SELECT * FROM $table WHERE IsDone = \"$query\""))
     }
 
-    fun getUserByStatus(table: String, query: String) : LiveData<List<UserData>> {
-        return testEntityDao.getUserList(SimpleSQLiteQuery("SELECT * FROM $table WHERE IsDone = \"$query\"")).asLiveData()
-    }
-
-    fun getSearchedFieldName(taskId: String, key:String) : String {
+    fun getSearchedFieldName(taskId: Int, key:String) : String {
         return directoryDao.getSearchFieldNames(taskId, key)
     }
 
-    fun getSearchedUsers(taskId: String, keys: List<String>, values:ArrayList<String>) : LiveData<List<UserData>> {
+    fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>) : List<UserData> {
         val whereSize = keys.size
         var whereClause = StringBuilder()
         var query = "SELECT * FROM TD$taskId "
@@ -47,10 +42,10 @@ class TaskDetailRepository @Inject constructor(private val testEntityDao: TestEn
         }
         var st = query + whereClause.toString()
 
-        return testEntityDao.getSearchedUsersList(SimpleSQLiteQuery("$st")).asLiveData()
+        return testEntityDao.getSearchedUsersList(SimpleSQLiteQuery("$st"))
     }
 
-    fun getResultsCount(taskId : String) : LiveData<Int> {
+    fun getResultsCount(taskId : Int) : LiveData<Int> {
         return resultDao.getCount(taskId).asLiveData()
     }
 }

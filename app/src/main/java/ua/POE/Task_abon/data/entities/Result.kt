@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 data class Result(
     @ColumnInfo(name = "Task_name") var taskName: String?,
     @ColumnInfo(name = "Dt_Crt") var createDate: String?,
-    @ColumnInfo(name = "TSzdn_id") var taskId: String,
+    @ColumnInfo(name = "TSzdn_id") var taskId: Int,
     @ColumnInfo(name = "Filial") var filial: String?,
     @ColumnInfo(name = "Id") var index: Int?,
     @ColumnInfo(name = "Numb") var num: String,

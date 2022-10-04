@@ -123,7 +123,6 @@ abstract class AppDatabase : RoomDatabase() {
                     MIGRATION_6_7,
                     MIGRATION_7_8
                 )
-                .fallbackToDestructiveMigration()
                 .addCallback(AppDatabaseCallback(scope))
                 .allowMainThreadQueries()
                 .build()

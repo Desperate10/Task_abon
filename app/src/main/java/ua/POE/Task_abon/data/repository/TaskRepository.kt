@@ -15,13 +15,13 @@ class TaskRepository @Inject constructor(private val xmlLoader: XmlLoader, priva
 
     fun getTasks() : Flow<List<TaskEntity>> = taskDao.getAll()
 
-    fun getTask(taskId: String) = taskDao.getTask(taskId)
+    fun getTask(taskId: Int) = taskDao.getTask(taskId)
 
     suspend fun readFile(uri : Uri) = saveReadFile { xmlLoader.readXml(uri) }
 
     suspend fun createXml(results : List<Result>, timings: List<Timing>) = xmlLoader.createXml(results, timings)
 
-    suspend fun deleteByTaskId(taskId: String) = taskDao.deleteById(taskId)
+    suspend fun deleteByTaskId(taskId: Int) = taskDao.deleteById(taskId)
 
 
 

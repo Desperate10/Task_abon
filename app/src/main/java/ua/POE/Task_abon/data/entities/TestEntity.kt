@@ -79,9 +79,9 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
         }
 
         @Ignore
-        fun getCheckedConditions(sdb: SupportSQLiteDatabase, tableName: String, index: Int) :String{
+        fun getCheckedConditions(sdb: SupportSQLiteDatabase, taskId: Int, index: Int) :String{
             var isExist = false
-            val cursor1 = sdb.query("PRAGMA table_info('TD$tableName')", null)
+            val cursor1 = sdb.query("PRAGMA table_info('TD$taskId')", null)
             cursor1.moveToFirst()
             do {
                 val currentColumn = cursor1.getString(1)
@@ -91,7 +91,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             } while (cursor1.moveToNext())
             return if (isExist) {
                 val csr: Cursor =
-                    sdb.query("SELECT point_condition FROM TD$tableName WHERE _id = $index")
+                    sdb.query("SELECT point_condition FROM TD$taskId WHERE _id = $index")
                 csr.moveToFirst()
                 val data = csr.getString(csr.getColumnIndex("point_condition"))
                 csr.close()
@@ -134,7 +134,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
         }
 
         @Ignore
-        fun dropTable(sdb: SupportSQLiteDatabase, taskId : String) {
+        fun dropTable(sdb: SupportSQLiteDatabase, taskId : Int) {
             sdb.execSQL("DROP TABLE IF EXISTS TD$taskId")
         }
 
