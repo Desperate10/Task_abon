@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.userinfo
+package ua.POE.Task_abon.presentation.adapters
 
 import android.content.Context
 import android.view.LayoutInflater

@@ -3,9 +3,11 @@ package ua.POE.Task_abon.presentation.taskdetail
 import android.app.AlertDialog
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.view.*
 import android.widget.Scroller
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -18,11 +20,12 @@ import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
 import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.presentation.MainActivity
+import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
 import ua.POE.Task_abon.utils.*
 
 
 @AndroidEntryPoint
-class TaskDetailFragment : Fragment(), CustomerListAdapter.ItemCLickListener {
+class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListener {
 
     private var binding: FragmentTaskDetailBinding by autoCleared()
     private val viewModel by viewModels<TaskDetailViewModel>()
@@ -57,22 +60,23 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.ItemCLickListener {
         //read all icons from raw
         icons = resources.getRawTextFile(R.raw.icons)
         observeViewModel()
-        addCheckBoxClickListener()
+        addClickListeners()
 
 
     }
 
-    private fun addCheckBoxClickListener() {
+    private fun addClickListeners() {
         binding.isDoneCheckBox.setOnCheckedChangeListener { _, isChecked ->
             viewModel.customersFilterStatus.value = if (isChecked) NOT_FINISHED
             else ALL
         }
+        adapter.onCustomerClickListener = this
     }
 
     private fun createCustomerListAdapter() {
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
         binding.recyclerview.layoutManager = linearLayoutManager
-        adapter = CustomerListAdapter(requireContext(), userData, icons, this)
+        adapter = CustomerListAdapter(requireContext())
         binding.recyclerview.adapter = adapter
     }
 
@@ -99,7 +103,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.ItemCLickListener {
             } else {
                 viewModel.getUsersByStatus("TD$taskId", status)
             }
-            adapter.updateList(userData)
+            adapter.submitList(userData)
         }
         viewModel.getFinishedCount(taskId).observe(viewLifecycleOwner) { count ->
             binding.finished.text = getString(R.string.status_done, count, userData.size)
@@ -166,7 +170,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.ItemCLickListener {
         return binding.root
     }
 
-    override fun onItemClick(position: Int) {
+    override fun onCustomerClick(position: Int) {
         navigateToUserInfoFragment(position)
     }
 
@@ -174,9 +178,9 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.ItemCLickListener {
         val bundle = bundleOf(
             "taskId" to taskId,
             "filial" to extractFilialFromFileName(binding.fileName.text.toString()),
-            "num" to userData[position].num,
+            "num" to userData[position].num.toString(),
             "id" to userData[position]._id,
-            "count" to binding.recyclerview.adapter?.itemCount,
+            "count" to adapter.itemCount,
             "isFirstLoad" to true
         )
         findNavController().navigate(R.id.action_taskDetailFragment_to_userInfoFragment, bundle)

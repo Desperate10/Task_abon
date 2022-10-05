@@ -27,7 +27,7 @@ class TaskDetailViewModel @ViewModelInject constructor( val repository: TaskDeta
             for ((key, value) in params) {
                 val keyName : String = repository.getSearchedFieldName(taskId, key)
                 keys.add(keyName)
-                values.add("$value")
+                values.add(value)
             }
         }
 

@@ -19,6 +19,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -40,6 +41,7 @@ import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.domain.model.Image
 import ua.POE.Task_abon.presentation.MainActivity
+import ua.POE.Task_abon.presentation.adapters.ImageAdapter
 import ua.POE.Task_abon.utils.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -105,6 +107,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         setHasOptionsMenu(true)
         (activity as MainActivity).supportActionBar?.title = "Інформація"
 
+        if (savedInstanceState != null) {
+            index = savedInstanceState.getInt("index")
+        }
+
         if (arguments != null) {
             taskId = requireArguments().getInt("taskId")
             filial = requireArguments().getString("filial")
@@ -114,9 +120,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
 
-        if (savedInstanceState != null) {
-            index = savedInstanceState.getInt("index")
-        }
+
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         //читаем иконки
@@ -875,6 +879,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         for (element in fields) {
             element.fieldName?.let { basicFieldsTxt.add(it) }
         }
+        Log.d("testim", "$basicFieldsTxt TD$taskId $index")
         val tdHash = viewModel.getTextFieldsByBlockName(basicFieldsTxt, "TD$taskId", index!!)
 
         var fieldCounter = 1

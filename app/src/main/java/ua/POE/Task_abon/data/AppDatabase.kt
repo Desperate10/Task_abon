@@ -1,8 +1,6 @@
 package ua.POE.Task_abon.data
 
 import android.content.Context
-import android.util.Log
-import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -12,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
+import ua.POE.Task_abon.data.entities.UserData
 
 @Database(
     entities = [TestEntity::class, TaskEntity::class, Directory::class, Catalog::class, UserData::class, Result::class, Timing::class],

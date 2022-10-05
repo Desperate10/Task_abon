@@ -72,14 +72,9 @@ fun Resources.getRawTextFile(@RawRes id: Int) : ArrayList<Icons> {
 }
 
 fun getNeededEmojis(iconsList: ArrayList<Icons>, neededIcons: String) : String {
-    var text : String = ""
-    val mods = neededIcons.split("/")
-    var i = 0
-    do {
-        text += getEmojiByUnicode(iconsList[mods[i].toInt()-1].emoji!!)
-        i++
-    } while (i < mods.size)
-    return text
+    val mods = neededIcons.split("/", "\\")
+        return iconsList.filter { it.id in mods }
+        .joinToString { getEmojiByUnicode(it.emoji) }
 }
 
 fun getEmojiByUnicode(reactionCode: String?): String {

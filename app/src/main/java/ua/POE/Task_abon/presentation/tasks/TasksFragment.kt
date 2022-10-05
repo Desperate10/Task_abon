@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -37,6 +36,7 @@ import ua.POE.Task_abon.network.MyApi
 import ua.POE.Task_abon.network.UploadRequestBody
 import ua.POE.Task_abon.network.UploadResponse
 import ua.POE.Task_abon.presentation.MainActivity
+import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
 import ua.POE.Task_abon.utils.*
 import java.io.*
 
@@ -108,7 +108,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentTasksBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -145,7 +145,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         }
         startActivityForResult(intent, PICK_XML_FILE)
     }
-
+    
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == PICK_XML_FILE && resultCode == Activity.RESULT_OK) {
             CoroutineScope(Dispatchers.IO).launch {
@@ -168,7 +168,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
 
                 } catch (e: Exception) {
                     Toast.makeText(requireContext(), "Файл не найден", Toast.LENGTH_SHORT).show()
-                    Log.d("test", e.toString())
+                  //  Log.d("test", e.toString())
                 }
             }
         }

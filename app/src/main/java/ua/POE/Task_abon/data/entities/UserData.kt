@@ -6,8 +6,8 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class UserData(@PrimaryKey(autoGenerate = true) val number : Int,
-                    @ColumnInfo(name = "_id")val _id : Int,
-                    val num : String,
+                    @ColumnInfo(name = "_id")val _id : String,
+                    val num : Int,
                     @ColumnInfo(name = "Numbpers")val numbpers : String?,
                     val family : String?,
                     @ColumnInfo(name = "Adress") val address : String?,

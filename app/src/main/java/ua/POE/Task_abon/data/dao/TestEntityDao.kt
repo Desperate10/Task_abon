@@ -1,23 +1,20 @@
 package ua.POE.Task_abon.data.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.RawQuery
 import androidx.sqlite.db.SimpleSQLiteQuery
-import androidx.sqlite.db.SupportSQLiteQuery
-import kotlinx.coroutines.flow.Flow
 import ua.POE.Task_abon.data.entities.TestEntity
 import ua.POE.Task_abon.data.entities.UserData
 
 @Dao
 interface TestEntityDao {
 
-    @RawQuery(observedEntities = [UserData::class])
+    @RawQuery
     fun getUserList(query: SimpleSQLiteQuery) : List<UserData>
 
-    @RawQuery(observedEntities = [UserData::class])
+    @RawQuery
     fun getSearchedUsersList(query: SimpleSQLiteQuery) : List<UserData>
 
     @RawQuery
