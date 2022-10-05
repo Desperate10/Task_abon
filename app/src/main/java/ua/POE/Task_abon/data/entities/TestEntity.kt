@@ -12,16 +12,10 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
 
     companion object {
 
-    const val BASETABLE_NAME = "base"
     const val BASETABLE_COL_NAME = "name"
     const val BASETABLE_COL_VALUE = "value"
 
     const val BASETABLE_NAME_PLACEHOLDER = ":tablename:"
-
-    const val BASETABLE_CREATE_SQL = "CREATE TABLE IF NOT EXISTS $BASETABLE_NAME_PLACEHOLDER" +
-            "(" +
-              "$BASETABLE_COL_NAME TEXT PRIMARY KEY," +
-              "$BASETABLE_COL_VALUE TEXT)"
 
         @Ignore
         fun getFieldsByBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {

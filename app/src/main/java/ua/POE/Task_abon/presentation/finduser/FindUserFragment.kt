@@ -53,6 +53,10 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         initAdapterForSearchCriteria()
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+    }
+
     private fun readArguments() {
         taskId = arguments?.getInt("taskId")
             ?: throw NullPointerException("taskId is null in FindUserFragment")

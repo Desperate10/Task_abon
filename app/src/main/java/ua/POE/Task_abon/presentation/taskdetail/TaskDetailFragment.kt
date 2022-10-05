@@ -104,6 +104,9 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
                 viewModel.getUsersByStatus("TD$taskId", status)
             }
             adapter.submitList(userData)
+            with(binding.recyclerview) {
+                post { scrollToPosition(0)}
+            }
         }
         viewModel.getFinishedCount(taskId).observe(viewLifecycleOwner) { count ->
             binding.finished.text = getString(R.string.status_done, count, userData.size)

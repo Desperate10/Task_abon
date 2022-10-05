@@ -80,7 +80,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     var source = ""
     private var source2 = ArrayList<String>()
     private var isResultSaved = false
-    private var time = 0
     var massiv = ArrayList<String>()
     var massiv2 = ArrayList<KeyPairBoolData>()
     private val operators by lazy { viewModel.getOperatorsList() }
@@ -111,15 +110,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             index = savedInstanceState.getInt("index")
         }
 
-        if (arguments != null) {
-            taskId = requireArguments().getInt("taskId")
-            filial = requireArguments().getString("filial")
-            num = requireArguments().getString("num")
-            index = requireArguments().getInt("id")
-            count = requireArguments().getInt("count")
-            isFirstLoad = requireArguments().getBoolean("isFirstLoad")
+        arguments?.let {
+            taskId = arguments?.getInt("taskId") ?: 0
+            filial = arguments?.getString("filial")
+            num = arguments?.getString("num")
+            index = arguments?.getInt("id")
+            count = arguments?.getInt("count")
+            isFirstLoad = arguments?.getBoolean("isFirstLoad") ?: true
         }
-
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
