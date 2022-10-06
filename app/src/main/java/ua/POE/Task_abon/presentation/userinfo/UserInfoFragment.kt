@@ -64,7 +64,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val basicFieldsTxt = ArrayList<String>()
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
-    private val sdformat = SimpleDateFormat(myFormat, Locale.US)
+    private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
     private var statusSpinnerPosition: Int? = null
     private var numbpers = ""
     var family = ""
@@ -96,7 +96,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val uri = ArrayList<String>()
     lateinit var tempImage: File
     private var imageUri: Uri? = null
-    private var icons = ArrayList<Icons>()
+    private var icons : List<Icons>? = null
     private var isEdit: Boolean = false
     private var firstEditDate: String = ""
 
@@ -122,7 +122,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         //читаем иконки
-        icons = resources.getRawTextFile(R.raw.icons)
+        icons = resources.getRawTextFile(R.raw.icons).toMutableList()
 
         try {
             binding.results.newMeters1.doAfterTextChanged {
@@ -877,7 +877,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         for (element in fields) {
             element.fieldName?.let { basicFieldsTxt.add(it) }
         }
-        Log.d("testim", "$basicFieldsTxt TD$taskId $index")
         val tdHash = viewModel.getTextFieldsByBlockName(basicFieldsTxt, "TD$taskId", index!!)
 
         var fieldCounter = 1
@@ -1074,14 +1073,15 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         builder.setTitle("Повідомлення")
         var i = 0
         var message = ""
-
-        do {
-            val icon = getEmojiByUnicode(icons[i].emoji!!)
-            if (iconsText.contains(icon)) {
-                message += "$icon  ${icons[i].hint}\n"
-            }
-            i++
-        } while (i < icons.size)
+        icons?.let {
+            do {
+                val icon = getEmojiByUnicode(it[i].emoji!!)
+                if (iconsText.contains(icon)) {
+                    message += "$icon  ${it[i].hint}\n"
+                }
+                i++
+            } while (i < it.size)
+        }
         builder.setMessage(message)
 
         builder.setPositiveButton("Ок") { dialog, _ ->

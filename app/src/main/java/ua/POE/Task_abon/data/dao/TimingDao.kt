@@ -21,7 +21,7 @@ interface TimingDao {
     fun getTiming(taskId: Int): List<Timing>
 
     @Query("SELECT startTaskTime FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
-    fun getStartTaskDate(taskId: Int, num: String): String
+     fun getStartTaskDate(taskId: Int, num: String): String
 
     @Query("SELECT firstEditDate FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
     fun getFirstEditDate(taskId: Int, num: String): String
@@ -48,6 +48,6 @@ interface TimingDao {
     fun upEditCount(taskId: Int, num: String)
 
     @Query("DELETE FROM timing WHERE task_id = :taskId")
-    fun deleteByTaskId(taskId: Int)
+    suspend fun deleteByTaskId(taskId: Int)
 
 }

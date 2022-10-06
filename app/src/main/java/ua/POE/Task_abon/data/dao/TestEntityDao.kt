@@ -24,7 +24,7 @@ interface TestEntityDao {
     fun insertRow(entity: TestEntity) : Long
 
     @Query("INSERT INTO base (name) VALUES (:name)")
-    suspend fun insertColumnName(name : String)
+    fun insertColumnName(name : String)
 
  /*   @Query("UPDATE base SET value = :value WHERE name = :name")
     suspend fun insertColumnValue(tableName: String, name: String, value : String)

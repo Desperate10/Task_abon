@@ -11,19 +11,22 @@ import javax.inject.Inject
 
 class TestEntityRepository @Inject constructor(appDatabase: AppDatabase) {
 
-    private var sdb : SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
+    private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
 
-    fun getFieldsByBlock(tableName: String, fields: List<String>, num: Int) = TestEntity.getFieldsByBlock(sdb, tableName, fields, num)
+    fun getFieldsByBlock(tableName: String, fields: List<String>, num: Int) =
+        TestEntity.getFieldsByBlock(sdb, tableName, fields, num)
 
-    fun getTextByFields(tableName: String, fields: List<String>, num: Int) = TestEntity.getTextByFields(sdb, tableName, fields, num)
+    fun getTextByFields(tableName: String, fields: List<String>, num: Int) =
+        TestEntity.getTextByFields(sdb, tableName, fields, num)
 
-    fun getSearchedItemsByField(tableName: String, field : String) = TestEntity.getItemsByField(sdb, tableName, field)
+    fun getSearchedItemsByField(tableName: String, field: String) =
+        TestEntity.getItemsByField(sdb, tableName, field)
 
-    fun getCheckedConditions(taskId: Int, index: Int) = TestEntity.getCheckedConditions(sdb, taskId, index)
+    fun getCheckedConditions(taskId: Int, index: Int) =
+        TestEntity.getCheckedConditions(sdb, taskId, index)
 
 
-
-    private var sdbw : SupportSQLiteDatabase = appDatabase.openHelper.writableDatabase
+    private var sdbw: SupportSQLiteDatabase = appDatabase.openHelper.writableDatabase
 
     fun setDone(taskId: Int, num: String) {
         val values = ContentValues()

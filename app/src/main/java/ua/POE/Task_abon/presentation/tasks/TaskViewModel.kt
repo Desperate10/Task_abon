@@ -3,24 +3,28 @@ package ua.POE.Task_abon.presentation.tasks
 import android.net.Uri
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.entities.TaskEntity
+import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
+import ua.POE.Task_abon.domain.model.TaskInfo
 import ua.POE.Task_abon.utils.Resource
 
 class TaskViewModel @ViewModelInject constructor(private val repository: TaskRepository, private val testEntityRepository: TestEntityRepository, private val taskRepository: TaskRepository, private val directoryRepository: DirectoryRepository, val resultDao: ResultDao, private val timingRepository: TimingRepository) : ViewModel() {
 
 
-    val tasks : LiveData<List<TaskEntity>> = repository.getTasks().asLiveData()
-
-
-    /*private val _taskLoading : MutableLiveData<Resource<String>> = MutableLiveData()
-    val taskLoadingStatus: LiveData<Resource<String>>
-        get() = _taskLoading*/
+    val tasks : Flow<List<TaskInfo>> = repository.getTasks().map { listOfTasks ->
+        listOfTasks.map { taskEntity ->
+            taskEntity.toTaskInfo()
+        }
+    }.flowOn(Dispatchers.IO)
 
     fun insert(uri: Uri) = viewModelScope.launch {
             repository.readFile(uri)
@@ -41,9 +45,9 @@ class TaskViewModel @ViewModelInject constructor(private val repository: TaskRep
         repository.deleteByTaskId(taskId)
     }
 
-    private fun getResult(taskId: Int) = resultDao.getResultByTaskId(taskId)
+    private suspend fun getResult(taskId: Int) = resultDao.getResultByTaskId(taskId)
 
-    fun getPhotos(taskId: Int) : List<String> = resultDao.getAllPhotos(taskId)
+    suspend fun getPhotos(taskId: Int) : List<String> = resultDao.getAllPhotos(taskId)
 
     suspend fun createXml(taskId: Int) :String {
         val result = getResult(taskId)

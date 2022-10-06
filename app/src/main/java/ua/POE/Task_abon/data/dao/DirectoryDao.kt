@@ -48,6 +48,6 @@ interface DirectoryDao {
     fun getSearchFieldName(taskId: Int, field :String) : String
 
     @Query("SELECT fieldName FROM directory WHERE taskId = :taskId AND fieldSearch = :field ")
-    fun getSearchFieldNames(taskId: Int, field: String) : String
+     fun getSearchFieldNames(taskId: Int, field: String) : String
 
 }

@@ -38,7 +38,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private var taskName: String? = null
 
     private var userData = listOf<UserData>()
-    private var icons = mutableListOf<Icons>()
+    private var icons : List<Icons>? = null
 
     companion object {
         private const val NOT_FINISHED = "Не виконано"
@@ -58,7 +58,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         bindViews()
         createCustomerListAdapter()
         //read all icons from raw
-        icons = resources.getRawTextFile(R.raw.icons)
+        icons = resources.getRawTextFile(R.raw.icons).toMutableList()
         observeViewModel()
         addClickListeners()
 
@@ -76,7 +76,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun createCustomerListAdapter() {
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
         binding.recyclerview.layoutManager = linearLayoutManager
-        adapter = CustomerListAdapter(requireContext())
+        adapter = CustomerListAdapter(requireContext(),icons)
         binding.recyclerview.adapter = adapter
     }
 
@@ -144,7 +144,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun showEmojiInfoDialog() {
 
         val message =
-            icons.joinToString(separator = "") { getEmojiByUnicode(it.emoji) + " - " + it.hint + "\n" }
+            icons?.joinToString(separator = "") { getEmojiByUnicode(it.emoji) + " - " + it.hint + "\n" }
 
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Умовні позначки")
