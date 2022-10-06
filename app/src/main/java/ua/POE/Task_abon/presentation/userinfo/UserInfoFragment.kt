@@ -19,6 +19,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -37,7 +38,10 @@ import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.Catalog
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
+import ua.POE.Task_abon.domain.model.Icons
+import ua.POE.Task_abon.domain.model.Image
 import ua.POE.Task_abon.presentation.MainActivity
+import ua.POE.Task_abon.presentation.adapters.ImageAdapter
 import ua.POE.Task_abon.utils.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -50,7 +54,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private var binding: FragmentUserInfoBinding by autoCleared()
     private val viewModel: UserInfoViewModel by viewModels()
-    private var taskId: String? = "no"
+    private var taskId: Int = 0
     private var filial: String? = "no"
     private var num: String? = "num"
     private var index: Int? = 1
@@ -60,7 +64,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val basicFieldsTxt = ArrayList<String>()
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
-    private val sdformat = SimpleDateFormat(myFormat, Locale.US)
+    private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
     private var statusSpinnerPosition: Int? = null
     private var numbpers = ""
     var family = ""
@@ -76,7 +80,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     var source = ""
     private var source2 = ArrayList<String>()
     private var isResultSaved = false
-    private var time = 0
     var massiv = ArrayList<String>()
     var massiv2 = ArrayList<KeyPairBoolData>()
     private val operators by lazy { viewModel.getOperatorsList() }
@@ -93,7 +96,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val uri = ArrayList<String>()
     lateinit var tempImage: File
     private var imageUri: Uri? = null
-    private var icons = ArrayList<Icons>()
+    private var icons : List<Icons>? = null
     private var isEdit: Boolean = false
     private var firstEditDate: String = ""
 
@@ -103,22 +106,23 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         setHasOptionsMenu(true)
         (activity as MainActivity).supportActionBar?.title = "Інформація"
 
-        if (arguments != null) {
-            taskId = requireArguments().getString("taskId")
-            filial = requireArguments().getString("filial")
-            num = requireArguments().getString("num")
-            index = requireArguments().getInt("id")
-            count = requireArguments().getInt("count")
-            isFirstLoad = requireArguments().getBoolean("isFirstLoad")
-        }
-
         if (savedInstanceState != null) {
             index = savedInstanceState.getInt("index")
         }
+
+        arguments?.let {
+            taskId = arguments?.getInt("taskId") ?: 0
+            filial = arguments?.getString("filial")
+            num = arguments?.getString("num")
+            index = arguments?.getInt("id")
+            count = arguments?.getInt("count")
+            isFirstLoad = arguments?.getBoolean("isFirstLoad") ?: true
+        }
+
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         //читаем иконки
-        icons = resources.getRawTextFile(R.raw.icons)
+        icons = resources.getRawTextFile(R.raw.icons).toMutableList()
 
         try {
             binding.results.newMeters1.doAfterTextChanged {
@@ -146,7 +150,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             isEdit = it
         }
 
-        taskId?.let { getBasicInfo(it) }
+        getBasicInfo(taskId)
         isFirstLoad = false
 
         checkPermissions()
@@ -194,15 +198,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun addAddButton() {
         val selectedImage =
             Uri.parse("android.resource://" + requireActivity().packageName + "/" + R.drawable.ic_add_photo)
-        val i = Image()
-        i.setURI(selectedImage)
+        val i = Image(selectedImage)
         items.add(i)
         imageAdapter.notifyDataSetChanged()
     }
 
     private fun addAddButton(uri: Uri) {
-        val i = Image()
-        i.setURI(uri)
+        val i = Image(uri)
         items.add(i)
         imageAdapter.notifyDataSetChanged()
     }
@@ -352,8 +354,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
 
             //val imageUri = FileProvider.getUriForFile(requireContext(), "ua.POE.Task_abon.fileprovider", tempImage)
-            val i = Image()
-            i.setURI(imageUri)
+            val i = Image(imageUri)
+           // i.setURI(imageUri)
             items.add(i)
             uri.add(imageUri.toString())
             imageAdapter.notifyDataSetChanged()
@@ -446,7 +448,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         val result = if (!savedConditions.isNullOrEmpty()) {
             savedConditions.split(",").map { it.trim() }
         } else {
-            val array = viewModel.getCheckedConditions(taskId!!, index!!)
+            val array = viewModel.getCheckedConditions(taskId, index!!)
             array.split(",").map { it.trim() }
         }
 
@@ -639,7 +641,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
         if (fieldsArray.isNotEmpty())
             updateView(fieldsArray)
-        taskId?.let { getBasicInfo(it) }
+        getBasicInfo(taskId)
     }
 
     private fun goNext() {
@@ -652,7 +654,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
         if (fieldsArray.isNotEmpty())
             updateView(fieldsArray)
-        taskId?.let { getBasicInfo(it) }
+        getBasicInfo(taskId)
     }
 
     override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
@@ -661,10 +663,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             R.id.block_name -> {
                 if (selectedItem != "Результати") {
                     fieldsArray.clear()
-                    val fields = taskId?.let {
-                        viewModel.getFieldsByBlockName(selectedItem, it)
-                    }
-                    for (element in fields!!) {
+                    val fields = viewModel.getFieldsByBlockName(selectedItem, taskId)
+
+                    for (element in fields) {
                         element.fieldName?.let { fieldsArray.add(it) }
                     }
                     updateView(fieldsArray)
@@ -724,7 +725,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.date.setOnClickListener(this)
         binding.results.newDate.setOnClickListener(this)
 
-        val techHash = viewModel.getTechInfoTextByFields("$taskId", index!!)
+        val techHash = viewModel.getTechInfoTextByFields(taskId, index!!)
 
         val contr = StringBuilder()
 
@@ -802,8 +803,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.contrText.setTypeface(binding.results.contrText.typeface, Typeface.BOLD)
 
         try {
-            val result = viewModel.getResult(taskId!!, index!!)
-            positionOf = result.notDone!!.toInt()
+            val result = viewModel.getResult(taskId, index!!)
+            positionOf = result.notDone?.toInt() ?: 0
             binding.results.statusSpinner.setSelection(positionOf)
             loadSpinners(result.point_condition)
             binding.results.date.text = result.doneDate
@@ -870,7 +871,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         super.onSaveInstanceState(savedInstanceState)
     }
 
-    private fun getBasicInfo(taskId: String) {
+    private fun getBasicInfo(taskId: Int) {
         binding.basicTable.removeAllViews()
         val fields = viewModel.getFieldsByBlockName("", taskId)
         for (element in fields) {
@@ -1027,12 +1028,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 null
             }
             val currentDateAndTime = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-            viewModel.saveEditTiming(taskId!!, index.toString(), firstEditDate, currentDateAndTime)
+            viewModel.saveEditTiming(taskId, index.toString(), firstEditDate, currentDateAndTime)
             resetTimer()
 
             CoroutineScope(Dispatchers.IO).launch {
                 viewModel.saveResults(
-                    taskId!!,
+                    taskId,
                     index!!,
                     date1,
                     isDone,
@@ -1072,14 +1073,15 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         builder.setTitle("Повідомлення")
         var i = 0
         var message = ""
-
-        do {
-            val icon = getEmojiByUnicode(icons[i].emoji!!)
-            if (iconsText.contains(icon)) {
-                message += "$icon  ${icons[i].hint}\n"
-            }
-            i++
-        } while (i < icons.size)
+        icons?.let {
+            do {
+                val icon = getEmojiByUnicode(it[i].emoji!!)
+                if (iconsText.contains(icon)) {
+                    message += "$icon  ${it[i].hint}\n"
+                }
+                i++
+            } while (i < it.size)
+        }
         builder.setMessage(message)
 
         builder.setPositiveButton("Ок") { dialog, _ ->

@@ -28,6 +28,9 @@
         <action
             android:id="@+id/action_taskDetailFragment_to_findUserFragment"
             app:destination="@id/findUserFragment" />
+        <action
+            android:id="@+id/action_taskDetailFragment_to_tasksFragment"
+            app:destination="@id/tasksFragment" />
     </fragment>
     <fragment
         android:id="@+id/userInfoFragment"

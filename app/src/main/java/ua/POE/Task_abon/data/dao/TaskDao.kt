@@ -14,13 +14,13 @@ interface TaskDao {
     fun getAll(): Flow<List<TaskEntity>>
 
     @Query("SELECT * FROM task WHERE id = :taskId")
-    fun getTask(taskId : String) : TaskEntity
+    fun getTask(taskId : Int) : TaskEntity
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(task: TaskEntity)
 
     @Query("DELETE FROM task WHERE id = :taskId")
-    suspend fun deleteById(taskId: String)
+    suspend fun deleteById(taskId: Int)
 
     @Query("DELETE FROM task")
     suspend fun deleteAll()

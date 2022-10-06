@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import ua.POE.Task_abon.domain.model.Icons
 import java.io.BufferedReader
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -49,8 +50,8 @@ fun View.snackbar(message: String) {
     }.show()
 }
 
-fun Resources.getRawTextFile(@RawRes id: Int) : ArrayList<Icons> {
-    var iconsList = ArrayList<Icons>()
+fun Resources.getRawTextFile(@RawRes id: Int) : List<Icons> {
+    val iconsList = mutableListOf<Icons>()
     val inputStream: InputStream = openRawResource(id)
 
     val reader = BufferedReader(InputStreamReader(inputStream, Charset.forName("UTF-8")))
@@ -70,20 +71,18 @@ fun Resources.getRawTextFile(@RawRes id: Int) : ArrayList<Icons> {
     return iconsList
 }
 
-fun getNeededEmojis(iconsList: ArrayList<Icons>, neededIcons: String) : String {
-    var text : String = ""
-    val mods = neededIcons.split("/")
-    var i = 0
-    do {
-        text += getEmojiByUnicode(iconsList[mods[i].toInt()-1].emoji!!)
-        i++
-    } while (i < mods.size)
-    return text
+fun getNeededEmojis(iconsList: List<Icons>?, neededIcons: String) : String? {
+    val mods = neededIcons.split("/", "\\")
+        return iconsList?.filter { it.id in mods }
+        ?.joinToString { getEmojiByUnicode(it.emoji) }
 }
 
 fun getEmojiByUnicode(reactionCode: String?): String {
-    val code = reactionCode.substring(2).toInt(16)
-    return String(Character.toChars(code))
+    val code = reactionCode?.substring(2)?.toInt(16)
+    code?.let {
+        return String(Character.toChars(code))
+    }
+    return ""
 }
 
 fun ContentResolver.getFileName(fileUri: Uri): String {

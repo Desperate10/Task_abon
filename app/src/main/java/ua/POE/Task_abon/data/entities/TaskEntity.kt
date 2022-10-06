@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Entity(tableName = "task")
-data class TaskEntity(@PrimaryKey val id : String?= null,
+data class TaskEntity(@PrimaryKey val id : Int = 0,
                       val name : String,
                       val date : String,
                       val count : String,

@@ -11,21 +11,24 @@ import javax.inject.Inject
 
 class TestEntityRepository @Inject constructor(appDatabase: AppDatabase) {
 
-    private var sdb : SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
+    private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
 
-    fun getFieldsByBlock(tableName: String, fields: List<String>, num: Int) = TestEntity.getFieldsByBlock(sdb, tableName, fields, num)
+    fun getFieldsByBlock(tableName: String, fields: List<String>, num: Int) =
+        TestEntity.getFieldsByBlock(sdb, tableName, fields, num)
 
-    fun getTextByFields(tableName: String, fields: List<String>, num: Int) = TestEntity.getTextByFields(sdb, tableName, fields, num)
+    fun getTextByFields(tableName: String, fields: List<String>, num: Int) =
+        TestEntity.getTextByFields(sdb, tableName, fields, num)
 
-    fun getSearchedItemsByField(tableName: String, field : String) = TestEntity.getItemsByField(sdb, tableName, field)
+    fun getSearchedItemsByField(tableName: String, field: String) =
+        TestEntity.getItemsByField(sdb, tableName, field)
 
-    fun getCheckedConditions(taskId: String, index: Int) = TestEntity.getCheckedConditions(sdb, taskId, index)
+    fun getCheckedConditions(taskId: Int, index: Int) =
+        TestEntity.getCheckedConditions(sdb, taskId, index)
 
 
+    private var sdbw: SupportSQLiteDatabase = appDatabase.openHelper.writableDatabase
 
-    private var sdbw : SupportSQLiteDatabase = appDatabase.openHelper.writableDatabase
-
-    fun setDone(taskId: String, num: String) {
+    fun setDone(taskId: Int, num: String) {
         val values = ContentValues()
         values.put("IsDone", "Виконано")
 
@@ -33,14 +36,14 @@ class TestEntityRepository @Inject constructor(appDatabase: AppDatabase) {
 
     }
 
-    fun setUnDone(taskId: String) {
+    fun setUnDone(taskId: Int) {
         val values = ContentValues()
         values.put("IsDone", "Не виконано")
 
         sdbw.update("TD$taskId", OnConflictStrategy.REPLACE, values, "", null)
     }
 
-    fun deleteTable(taskId: String) {
+    fun deleteTable(taskId: Int) {
         TestEntity.dropTable(sdbw, taskId)
     }
 }

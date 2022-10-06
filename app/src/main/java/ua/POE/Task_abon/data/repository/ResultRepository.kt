@@ -6,8 +6,8 @@ import javax.inject.Inject
 
 class ResultRepository @Inject constructor(private val resultDao: ResultDao) {
 
-    suspend fun getResultTask(taskId: String) = resultDao.getResultByTaskId(taskId)
+    suspend fun getResultTask(taskId: Int) = resultDao.getResultByTaskId(taskId)
 
-    suspend fun deleteResults(taskId: String) = resultDao.delete(taskId)
+    suspend fun deleteResults(taskId: Int) = resultDao.delete(taskId)
 
 }

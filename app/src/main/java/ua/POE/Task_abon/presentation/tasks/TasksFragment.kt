@@ -17,14 +17,16 @@ import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
@@ -32,22 +34,28 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.databinding.FragmentTasksBinding
+import ua.POE.Task_abon.domain.model.TaskInfo
 import ua.POE.Task_abon.network.MyApi
 import ua.POE.Task_abon.network.UploadRequestBody
 import ua.POE.Task_abon.network.UploadResponse
 import ua.POE.Task_abon.presentation.MainActivity
-import ua.POE.Task_abon.utils.*
+import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
+import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
+import ua.POE.Task_abon.utils.autoCleared
+import ua.POE.Task_abon.utils.getFileName
+import ua.POE.Task_abon.utils.snackbar
 import java.io.*
 
 
 @AndroidEntryPoint
-class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadRequestBody.UploadCallback{
+class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
+    UploadRequestBody.UploadCallback {
 
-     private var binding : FragmentTasksBinding by autoCleared()
-     private val viewModel : TaskViewModel by viewModels()
-     private lateinit var taskId: String
+    private var binding: FragmentTasksBinding by autoCleared()
+    private val viewModel: TaskViewModel by viewModels()
+    private var adapter: TaskListAdapter by autoCleared()
+    private var taskId: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,12 +64,13 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         requestPermission()
 
         // This callback will only be called when MyFragment is at least Started.
-        val callback: OnBackPressedCallback = object : OnBackPressedCallback(true /* enabled by default */) {
-            override fun handleOnBackPressed() {
-                requireActivity().finishAffinity()
-                requireActivity().finish()
+        val callback: OnBackPressedCallback =
+            object : OnBackPressedCallback(true /* enabled by default */) {
+                override fun handleOnBackPressed() {
+                    requireActivity().finishAffinity()
+                    requireActivity().finish()
+                }
             }
-        }
         requireActivity().onBackPressedDispatcher.addCallback(this, callback)
     }
 
@@ -69,20 +78,22 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
         (activity as MainActivity).supportActionBar?.title = "Список завдань"
-        //hideKeyboard()
 
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
-
+        adapter = TaskListAdapter(requireContext())
+        binding.recyclerview.adapter = adapter
+        adapter.onTaskClickListener = this
         binding.recyclerview.layoutManager = linearLayoutManager
-        viewModel.tasks.observe(viewLifecycleOwner) { tasks ->
-            //Log.d("taska", tasks.toString())
-            if (tasks.isNotEmpty()) {
-                binding.recyclerview.adapter = TaskListAdapter(tasks, this)
-                binding.noTasks.visibility = View.GONE
-                binding.recyclerview.visibility = View.VISIBLE
-            } else {
-                binding.noTasks.visibility = View.VISIBLE
-                binding.recyclerview.visibility = View.GONE
+        lifecycleScope.launchWhenStarted {
+            viewModel.tasks.collectLatest { tasks  ->
+                if (tasks.isNotEmpty()) {
+                    adapter.submitList(tasks)
+                    binding.noTasks.visibility = View.GONE
+                    binding.recyclerview.visibility = View.VISIBLE
+                } else {
+                    binding.noTasks.visibility = View.VISIBLE
+                    binding.recyclerview.visibility = View.GONE
+                }
             }
         }
 
@@ -90,9 +101,9 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
             chooseFile()
         }
 
-        viewModel.taskLoadingStatus.observe(viewLifecycleOwner, Observer {
-            when (it.status) {
-                Resource.Status.SUCCESS -> {
+        /*viewModel.taskLoadingStatus.observe(viewLifecycleOwner, Observer {
+            when (it.data) {
+                Resource.Success -> {
                     Toast.makeText(activity, "Завдання успішно вигружено", Toast.LENGTH_SHORT).show()
                 }
                 Resource.Status.ERROR -> {
@@ -102,14 +113,14 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
                     Toast.makeText(requireActivity(), "Вигрузка...", Toast.LENGTH_SHORT).show()
                 }
             }
-        })
+        })*/
     }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentTasksBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -120,7 +131,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
-            R.id.mybutton -> {
+            R.id.add_task -> {
                 chooseFile()
                 true
             }
@@ -150,50 +161,54 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == PICK_XML_FILE && resultCode == Activity.RESULT_OK) {
             CoroutineScope(Dispatchers.IO).launch {
-                data?.data?.also { uri ->  viewModel.insert(uri)}
+                data?.data?.also { uri -> viewModel.insert(uri) }
             }
-        } else if(requestCode ==2) {
+        } else if (requestCode == 2) {
             CoroutineScope(Dispatchers.IO).launch {
                 val uri1 = data?.data
                 try {
                     val os = requireActivity().contentResolver.openOutputStream(uri1!!)
                     val w: Writer = BufferedWriter(OutputStreamWriter(os, "windows-1251"))
                     val sb = viewModel.createXml(taskId)
-                    w.write(sb)
-                    w.flush()
-                    w.close()
+                    withContext(Dispatchers.IO) {
+                        w.write(sb)
+                        w.flush()
+                        w.close()
+                    }
+
                     val photosUris = viewModel.getPhotos(taskId)
-                        //for (photo in photosUris.indices) {
-                        uploadImage(photosUris)
+                    //for (photo in photosUris.indices) {
+                    uploadImage(photosUris)
                     //}
 
-                } catch (e: Exception) {
+                } catch (e: IOException) {
                     Toast.makeText(requireContext(), "Файл не найден", Toast.LENGTH_SHORT).show()
-                    Log.d("test", e.toString())
+                    //  Log.d("test", e.toString())
                 }
             }
         }
     }
 
 
-
     companion object {
         const val PICK_XML_FILE = 1
     }
 
-    override fun onItemClick(task: TaskEntity, position: Int) {
+    override fun onClick(task: TaskInfo) {
+        Log.d("testim", "click")
         val bundle = bundleOf(
-            "taskId" to task.id, "fileName" to task.fileName, "name" to task.name,
-            "info" to "Id завдання: ${task.id} , Записи: ${task.count}, Дата створення: ${task.date}, Юр.особи: ${task.isJur}"
+            "taskId" to task.id, "fileName" to task.fileName, "taskName" to task.name,
+            "info" to "Id завдання: ${task.id} , Записи: ${task.count}, " +
+                    "Дата створення: ${task.date}, Юр.особи: ${task.isJur}"
         )
         findNavController().navigate(R.id.action_tasksFragment_to_taskDetailFragment, bundle)
     }
 
-    override fun onLongClick(task: TaskEntity, position: Int) {
+    override fun onLongClick(task: TaskInfo) {
         createMenuDialog(task)
     }
 
-    private fun createMenuDialog(task: TaskEntity) {
+    private fun createMenuDialog(task: TaskInfo) {
         val options = arrayOf<CharSequence>(
             getString(R.string.upload_task),
             getString(R.string.clear_field_btn),
@@ -221,11 +236,13 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         builder.show()
     }
 
-    private fun prepareFilePart(partName: String, fileUri: Uri, body: UploadRequestBody): MultipartBody.Part {
-        val file = File(fileUri.path)
-
-        // MultipartBody.Part is used to send also the actual file name
-        return MultipartBody.Part.createFormData(partName, file.name, body)
+    private fun prepareFilePart(
+        partName: String,
+        fileUri: Uri,
+        body: UploadRequestBody
+    ): MultipartBody.Part {
+        val file = fileUri.path?.let { File(it) }
+        return MultipartBody.Part.createFormData(partName, file?.name, body)
     }
 
     private fun uploadImage(uriStrings: List<String>) {
@@ -235,7 +252,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         //}
 
         var list: ArrayList<MultipartBody.Part> = ArrayList()
-        for(i in uriStrings.indices) {
+        for (i in uriStrings.indices) {
 
             val parcelFileDescriptor =
                 requireActivity().contentResolver.openFileDescriptor(
@@ -284,7 +301,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
         binding.progressBar.progress = percentage
     }
 
-    private fun clearTaskData(task: TaskEntity) {
+    private fun clearTaskData(task: TaskInfo) {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
@@ -300,11 +317,11 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
             getString(R.string.yes),
             dialogClickListener
         )
-                .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
 
     }
 
-    private fun deleteTask(task: TaskEntity) {
+    private fun deleteTask(task: TaskInfo) {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
@@ -324,7 +341,7 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
             .setNegativeButton(getString(R.string.no), dialogClickListener).show()
     }
 
-    private fun createDoc(task: TaskEntity) {
+    private fun createDoc(task: TaskInfo) {
         taskId = task.id
         val export = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -356,22 +373,22 @@ class TasksFragment : Fragment(), TaskListAdapter.ItemCLickListener, UploadReque
     private fun showInfo() {
 
         AlertDialog.Builder(requireContext())
-                //set icon
-                .setIcon(android.R.drawable.ic_dialog_alert)
-                //set title
-                .setTitle(getString(R.string.app_info))
-                //set message
-                .setMessage(
-                    "Додаток створено для контролерів АТ ПОЛТАВАОБЛЕНЕРГО\nРозробник: Громов Євгеній, тел.510-557\nВерсія: " + getAppVersion(
-                        requireContext()
-                    )
+            //set icon
+            .setIcon(android.R.drawable.ic_dialog_alert)
+            //set title
+            .setTitle(getString(R.string.app_info))
+            //set message
+            .setMessage(
+                "Додаток створено для контролерів АТ ПОЛТАВАОБЛЕНЕРГО\nРозробник: Громов Євгеній, тел.510-557\nВерсія: " + getAppVersion(
+                    requireContext()
                 )
-                //set negative button
-                .setNegativeButton("Oк") { _, _ ->
-                    //set what should happen when negative button is clicked
-                    //Toast.makeText(requireContext(), "Nothing Happened", Toast.LENGTH_LONG).show()
-                }
-                .show()
+            )
+            //set negative button
+            .setNegativeButton("Oк") { _, _ ->
+                //set what should happen when negative button is clicked
+                //Toast.makeText(requireContext(), "Nothing Happened", Toast.LENGTH_LONG).show()
+            }
+            .show()
     }
 
 
