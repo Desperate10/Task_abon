@@ -17,7 +17,9 @@ import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -42,9 +44,7 @@ import ua.POE.Task_abon.network.UploadResponse
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
 import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
-import ua.POE.Task_abon.utils.autoCleared
-import ua.POE.Task_abon.utils.getFileName
-import ua.POE.Task_abon.utils.snackbar
+import ua.POE.Task_abon.utils.*
 import java.io.*
 
 
@@ -84,15 +84,18 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
         binding.recyclerview.adapter = adapter
         adapter.onTaskClickListener = this
         binding.recyclerview.layoutManager = linearLayoutManager
-        lifecycleScope.launchWhenStarted {
-            viewModel.tasks.collectLatest { tasks  ->
-                if (tasks.isNotEmpty()) {
-                    adapter.submitList(tasks)
-                    binding.noTasks.visibility = View.GONE
-                    binding.recyclerview.visibility = View.VISIBLE
-                } else {
-                    binding.noTasks.visibility = View.VISIBLE
-                    binding.recyclerview.visibility = View.GONE
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.tasks.collectLatest { tasks  ->
+                    if (tasks.isNotEmpty()) {
+                        adapter.submitList(tasks)
+                        binding.noTasks.visibility = View.GONE
+                        binding.recyclerview.visibility = View.VISIBLE
+                    } else {
+                        binding.noTasks.visibility = View.VISIBLE
+                        binding.recyclerview.visibility = View.GONE
+                    }
                 }
             }
         }
@@ -195,7 +198,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
     }
 
     override fun onClick(task: TaskInfo) {
-        Log.d("testim", "click")
         val bundle = bundleOf(
             "taskId" to task.id, "fileName" to task.fileName, "taskName" to task.name,
             "info" to "Id завдання: ${task.id} , Записи: ${task.count}, " +

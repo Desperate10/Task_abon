@@ -46,6 +46,7 @@ import ua.POE.Task_abon.utils.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 @AndroidEntryPoint
@@ -71,7 +72,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     var adress = ""
     var numbersField = ""
     var iconsLs = ""
-    private var isFirstLoad = false
     private var type = ""
     var counter = ""
     var zoneCount = ""
@@ -96,7 +96,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val uri = ArrayList<String>()
     lateinit var tempImage: File
     private var imageUri: Uri? = null
-    private var icons : List<Icons>? = null
+    private var icons = ArrayList<Icons>()
     private var isEdit: Boolean = false
     private var firstEditDate: String = ""
 
@@ -116,42 +116,20 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             num = arguments?.getString("num")
             index = arguments?.getInt("id")
             count = arguments?.getInt("count")
-            isFirstLoad = arguments?.getBoolean("isFirstLoad") ?: true
         }
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         //читаем иконки
-        icons = resources.getRawTextFile(R.raw.icons).toMutableList()
+        icons = resources.getRawTextFile(R.raw.icons)
 
-        try {
-            binding.results.newMeters1.doAfterTextChanged {
-                if (!binding.results.newMeters1.text.isNullOrEmpty())
-                    binding.results.difference1.text =
-                        (it.toString().toInt() - binding.results.previousMeters1.text.toString()
-                            .toInt()).toString()
-            }
-            binding.results.newMeters2.doAfterTextChanged {
-                if (!binding.results.newMeters2.text.isNullOrEmpty())
-                    binding.results.difference2.text =
-                        (it.toString().toInt() - binding.results.previousMeters2.text.toString()
-                            .toInt()).toString()
-            }
-            binding.results.newMeters3.doAfterTextChanged {
-                if (!binding.results.newMeters3.text.isNullOrEmpty())
-                    binding.results.difference3.text =
-                        (it.toString().toInt() - binding.results.previousMeters3.text.toString()
-                            .toInt()).toString()
-            }
-        } catch (e: NumberFormatException) {
-        }
+        registerTextChangedListeners()
 
         viewModel.isTrueEdit.observe(viewLifecycleOwner) {
             isEdit = it
         }
 
         getBasicInfo(taskId)
-        isFirstLoad = false
 
         checkPermissions()
 
@@ -193,6 +171,29 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
 
+    }
+
+    private fun registerTextChangedListeners() {
+        try {
+            binding.results.newMeters1.doAfterTextChanged {
+                if (!binding.results.newMeters1.text.isNullOrEmpty())
+                    binding.results.difference1.text =
+                        (it.toString().toInt() - binding.results.previousMeters1.text.toString()
+                            .toInt()).toString()
+            }
+            binding.results.newMeters2.doAfterTextChanged {
+                if (!binding.results.newMeters2.text.isNullOrEmpty())
+                    binding.results.difference2.text =
+                        (it.toString().toInt() - binding.results.previousMeters2.text.toString()
+                            .toInt()).toString()
+            }
+            binding.results.newMeters3.doAfterTextChanged {
+                if (!binding.results.newMeters3.text.isNullOrEmpty())
+                    binding.results.difference3.text =
+                        (it.toString().toInt() - binding.results.previousMeters3.text.toString()
+                            .toInt()).toString()
+            }
+        } catch (_: NumberFormatException) {}
     }
 
     private fun addAddButton() {
@@ -795,8 +796,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
 
-
-
         binding.results.contrText.text =
             resources.getString(R.string.contr_pokaz) + contr.toString()
         binding.results.contrText.setTextColor(Color.YELLOW)
@@ -929,9 +928,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
         createRow("Інше/Фiдер", stringBuilder.append(opora).toString(), true)
-        if (!isFirstLoad) {
             loadResultTab()
-        }
+
 
         basicFieldsTxt.clear()
         tdHash.clear()
@@ -963,7 +961,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 text.text = data
                 text.setOnClickListener {
                     try {
-                        showIconsDialog(data.split(" ")[1])
+                        showIconsDialog(data.substringAfter(" "))
+
                     } catch (e: IndexOutOfBoundsException) {
                     }
                 }
@@ -973,7 +972,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 text.text = data
                 text.setOnClickListener {
                     try {
-                        showIconsDialog(data.split(" ")[1])
+                        showIconsDialog(data.substringAfter(" "))
                     } catch (e: IndexOutOfBoundsException) {
                     }
                 }

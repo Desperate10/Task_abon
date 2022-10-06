@@ -50,8 +50,8 @@ fun View.snackbar(message: String) {
     }.show()
 }
 
-fun Resources.getRawTextFile(@RawRes id: Int) : List<Icons> {
-    val iconsList = mutableListOf<Icons>()
+fun Resources.getRawTextFile(@RawRes id: Int): ArrayList<Icons> {
+    val iconsList = ArrayList<Icons>()
     val inputStream: InputStream = openRawResource(id)
 
     val reader = BufferedReader(InputStreamReader(inputStream, Charset.forName("UTF-8")))
@@ -71,10 +71,10 @@ fun Resources.getRawTextFile(@RawRes id: Int) : List<Icons> {
     return iconsList
 }
 
-fun getNeededEmojis(iconsList: List<Icons>?, neededIcons: String) : String? {
+fun getNeededEmojis(iconsList: ArrayList<Icons>, neededIcons: String): String {
     val mods = neededIcons.split("/", "\\")
-        return iconsList?.filter { it.id in mods }
-        ?.joinToString { getEmojiByUnicode(it.emoji) }
+    return iconsList.filter { it.id in mods }
+        .joinToString { getEmojiByUnicode(it.emoji) }
 }
 
 fun getEmojiByUnicode(reactionCode: String?): String {
@@ -99,12 +99,12 @@ fun ContentResolver.getFileName(fileUri: Uri): String {
 
 suspend fun <T> saveReadFile(
     readFile: suspend () -> T
-) : Resource<T> {
+): Resource<T> {
     return withContext(Dispatchers.IO) {
         try {
             Resource.Success(readFile.invoke())
         } catch (throwable: Throwable) {
-            when(throwable) {
+            when (throwable) {
                 is FileNotFoundException ->
                     Resource.Error("Файл не найден")
                 else -> Resource.Error("Ошибка чтения файла")

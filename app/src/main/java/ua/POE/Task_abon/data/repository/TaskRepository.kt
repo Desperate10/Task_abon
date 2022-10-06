@@ -7,6 +7,7 @@ import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.utils.Resource
 import ua.POE.Task_abon.utils.XmlLoader
 import ua.POE.Task_abon.utils.saveReadFile
 import javax.inject.Inject

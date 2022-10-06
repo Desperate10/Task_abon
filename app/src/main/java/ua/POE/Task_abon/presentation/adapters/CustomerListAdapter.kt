@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 class CustomerListAdapter @Inject constructor(
     private val context: Context,
-    private val iconsList: List<Icons>?
+    private val iconsList: ArrayList<Icons>
 ) : ListAdapter<UserData, CustomerListViewHolder>(CustomerListDiffUtil) {
 
     var onCustomerClickListener: OnCustomerClickListener? = null
@@ -36,9 +36,7 @@ class CustomerListAdapter @Inject constructor(
                 index.text = num.toString()
                 accountNumber.text = String.format(accountTemplate, numbpers)
                 if (!icons_account.isNullOrBlank()) {
-                    val emojis = iconsList?.let {
-                        getNeededEmojis(iconsList, icons_account)
-                    }
+                    val emojis = getNeededEmojis(iconsList, icons_account)
 
                     accountNumber.text = String.format(
                         accountAndCounterFinalTemplate,
@@ -55,9 +53,7 @@ class CustomerListAdapter @Inject constructor(
                 )
                 counter.text = String.format(counterTemplate, counterNumb)
                 if (!icons_counter.isNullOrBlank()) {
-                    val emojis = iconsList?.let {
-                        getNeededEmojis(iconsList, icons_counter)
-                    }
+                    val emojis = getNeededEmojis(iconsList, icons_counter)
 
                     counter.text =
                         String.format(accountAndCounterFinalTemplate, counter.text, emojis)

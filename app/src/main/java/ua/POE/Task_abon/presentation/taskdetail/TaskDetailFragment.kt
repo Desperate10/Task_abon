@@ -38,7 +38,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private var taskName: String? = null
 
     private var userData = listOf<UserData>()
-    private var icons : List<Icons>? = null
+    private var icons = ArrayList<Icons>()
 
     companion object {
         private const val NOT_FINISHED = "Не виконано"
@@ -56,9 +56,10 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         hideKeyboard()
         readBundle()
         bindViews()
-        createCustomerListAdapter()
         //read all icons from raw
-        icons = resources.getRawTextFile(R.raw.icons).toMutableList()
+        icons = resources.getRawTextFile(R.raw.icons)
+        createCustomerListAdapter()
+
         observeViewModel()
         addClickListeners()
 
@@ -144,7 +145,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun showEmojiInfoDialog() {
 
         val message =
-            icons?.joinToString(separator = "") { getEmojiByUnicode(it.emoji) + " - " + it.hint + "\n" }
+            icons.joinToString(separator = "") { it.emoji?.let { it1 -> getEmojiByUnicode(it1) } + " - " + it.hint + "\n" }
 
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Умовні позначки")
