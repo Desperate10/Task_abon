@@ -1,20 +1,17 @@
 package ua.POE.Task_abon.presentation.userinfo
 
 import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
-import ua.POE.Task_abon.data.entities.Directory
-import ua.POE.Task_abon.data.entities.Result
-import ua.POE.Task_abon.data.entities.TaskEntity
-import ua.POE.Task_abon.data.entities.Timing
+import ua.POE.Task_abon.data.entities.*
+import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
 import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
+import ua.POE.Task_abon.domain.model.Catalog
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -190,7 +187,11 @@ class UserInfoViewModel @ViewModelInject constructor(
 
     fun getResult(taskId: Int, index: Int) = resultDao.getResultUser(taskId, index)
 
-    fun getSourceList(type: String) = catalogDao.getSourceList(type)
+    fun getSourceList(type: String): List<Catalog> {
+        return catalogDao.getSourceList(type).map {
+            mapCatalogEntityToCatalog(it)
+        }
+    }
 
     fun getSourceName(code: String, type: String) = catalogDao.getSourceByCode(code, type)
 

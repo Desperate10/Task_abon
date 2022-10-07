@@ -6,10 +6,14 @@ import android.content.Context
 import android.content.res.Resources
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.text.Editable
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.TextView
 import androidx.annotation.RawRes
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
+import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,8 +25,8 @@ import java.io.InputStreamReader
 import java.nio.charset.Charset
 
 
-fun <T : Any> Fragment.autoCleared(initializer: (() -> T)? = null): AutoClearedValue<T> {
-    return AutoClearedValue(this, initializer)
+fun <T : Any> Fragment.autoCleaned(initializer: (() -> T)? = null): AutoCleanedValue<T> {
+    return AutoCleanedValue(this, initializer)
 }
 
 fun Fragment.hideKeyboard() {

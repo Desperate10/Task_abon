@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -42,9 +41,10 @@ import ua.POE.Task_abon.network.MyApi
 import ua.POE.Task_abon.network.UploadRequestBody
 import ua.POE.Task_abon.network.UploadResponse
 import ua.POE.Task_abon.presentation.MainActivity
-import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
 import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
-import ua.POE.Task_abon.utils.*
+import ua.POE.Task_abon.utils.autoCleaned
+import ua.POE.Task_abon.utils.getFileName
+import ua.POE.Task_abon.utils.snackbar
 import java.io.*
 
 
@@ -52,9 +52,9 @@ import java.io.*
 class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
     UploadRequestBody.UploadCallback {
 
-    private var binding: FragmentTasksBinding by autoCleared()
+    private var binding: FragmentTasksBinding by autoCleaned()
     private val viewModel: TaskViewModel by viewModels()
-    private var adapter: TaskListAdapter by autoCleared()
+    private var adapter: TaskListAdapter by autoCleaned { TaskListAdapter(requireContext()) }
     private var taskId: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -80,14 +80,13 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
         (activity as MainActivity).supportActionBar?.title = "Список завдань"
 
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
-        adapter = TaskListAdapter(requireContext())
         binding.recyclerview.adapter = adapter
         adapter.onTaskClickListener = this
         binding.recyclerview.layoutManager = linearLayoutManager
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.tasks.collectLatest { tasks  ->
+                viewModel.tasks.collectLatest { tasks ->
                     if (tasks.isNotEmpty()) {
                         adapter.submitList(tasks)
                         binding.noTasks.visibility = View.GONE
@@ -147,9 +146,8 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
     }
 
     private fun requestPermission() {
-
         val permissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        this.requestPermissions(permissions, 5)
+        this.requestPermissions(permissions, READ_STORAGE_CODE)
     }
 
 
@@ -170,31 +168,21 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
             CoroutineScope(Dispatchers.IO).launch {
                 val uri1 = data?.data
                 try {
-                    val os = requireActivity().contentResolver.openOutputStream(uri1!!)
-                    val w: Writer = BufferedWriter(OutputStreamWriter(os, "windows-1251"))
-                    val sb = viewModel.createXml(taskId)
+                    val os = uri1?.let { requireActivity().contentResolver.openOutputStream(it) }
                     withContext(Dispatchers.IO) {
+                        val w: Writer = BufferedWriter(OutputStreamWriter(os, "windows-1251"))
+                        val sb = viewModel.createXml(taskId)
                         w.write(sb)
                         w.flush()
                         w.close()
+                        val photosUris = viewModel.getPhotos(taskId)
+                        uploadImage(photosUris)
                     }
-
-                    val photosUris = viewModel.getPhotos(taskId)
-                    //for (photo in photosUris.indices) {
-                    uploadImage(photosUris)
-                    //}
-
                 } catch (e: IOException) {
                     Toast.makeText(requireContext(), "Файл не найден", Toast.LENGTH_SHORT).show()
-                    //  Log.d("test", e.toString())
                 }
             }
         }
-    }
-
-
-    companion object {
-        const val PICK_XML_FILE = 1
     }
 
     override fun onClick(task: TaskInfo) {
@@ -239,12 +227,11 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
     }
 
     private fun prepareFilePart(
-        partName: String,
         fileUri: Uri,
         body: UploadRequestBody
     ): MultipartBody.Part {
         val file = fileUri.path?.let { File(it) }
-        return MultipartBody.Part.createFormData(partName, file?.name, body)
+        return MultipartBody.Part.createFormData("files", file?.name, body)
     }
 
     private fun uploadImage(uriStrings: List<String>) {
@@ -253,13 +240,13 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
         //    return
         //}
 
-        var list: ArrayList<MultipartBody.Part> = ArrayList()
+        val list: ArrayList<MultipartBody.Part> = ArrayList()
         for (i in uriStrings.indices) {
 
             val parcelFileDescriptor =
                 requireActivity().contentResolver.openFileDescriptor(
                     uriStrings[i].toUri(),
-                    "r",
+                    WRITE_MODE,
                     null
                 ) ?: return
 
@@ -272,7 +259,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
             val outputStream = FileOutputStream(file)
             inputStream.copyTo(outputStream)
             val body = UploadRequestBody(file, "image", this)
-            list.add(prepareFilePart("files", uriStrings[i].toUri(), body))
+            list.add(prepareFilePart(uriStrings[i].toUri(), body))
 
         }
         binding.progressBar.progress = 0
@@ -366,7 +353,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
             val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
             version = pInfo.versionName
         } catch (e: PackageManager.NameNotFoundException) {
-            e.printStackTrace()
+            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
         }
 
         return version
@@ -393,5 +380,10 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
             .show()
     }
 
+    companion object {
+        const val PICK_XML_FILE = 1
+        const val READ_STORAGE_CODE = 5
+        const val WRITE_MODE = "r"
+    }
 
 }

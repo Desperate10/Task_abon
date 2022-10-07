@@ -1,17 +1,18 @@
 package ua.POE.Task_abon.data.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import ua.POE.Task_abon.data.entities.Catalog
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import ua.POE.Task_abon.data.entities.CatalogEntity
 
 @Dao
 interface CatalogDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(catalog : Catalog)
+    suspend fun insert(catalog : CatalogEntity)
 
     @Query("DELETE FROM catalog WHERE type = 1 and type = 0")
     suspend fun deleteTypeOne()
@@ -20,10 +21,10 @@ interface CatalogDao {
     fun getCatalogItem(type: String, code: String) : Boolean
 
     @Query("SELECT * FROM catalog WHERE type = \"0\"")
-    fun getStatusList() : List<Catalog>
+    fun getStatusList() : List<CatalogEntity>
 
     @Query("SELECT * FROM catalog WHERE type = :type")
-    fun getSourceList(type: String) : List<Catalog>
+    fun getSourceList(type: String) : List<CatalogEntity>
 
     @Query("SELECT text FROM catalog WHERE code = :code AND type = :type")
     fun getSourceByCode(code: String, type: String) : String

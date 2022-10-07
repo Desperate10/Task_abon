@@ -13,7 +13,7 @@ import ua.POE.Task_abon.data.entities.*
 import ua.POE.Task_abon.data.entities.UserData
 
 @Database(
-    entities = [TestEntity::class, TaskEntity::class, Directory::class, Catalog::class, UserData::class, Result::class, Timing::class],
+    entities = [TestEntity::class, TaskEntity::class, Directory::class, CatalogEntity::class, UserData::class, Result::class, Timing::class],
     version = 9,
     exportSchema = false
 )
@@ -40,13 +40,13 @@ abstract class AppDatabase : RoomDatabase() {
                 scope.launch {
                     val catalogDao = database.catalogDao()
                     catalogDao.deleteTypeOne()
-                    catalogDao.insert(Catalog(0, "0", "0", "Виконано"))
-                    catalogDao.insert(Catalog(0, "0", "1", "Не виконано"))
-                    catalogDao.insert(Catalog(0, "1", "1", "Містить"))
-                    catalogDao.insert(Catalog(0, "1", "2", "Рівно"))
-                    catalogDao.insert(Catalog(0, "1", "3", "Починається з"))
-                    catalogDao.insert(Catalog(0, "1", "4", "Не пусте"))
-                    catalogDao.insert(Catalog(0, "1", "5", "Пусте"))
+                    catalogDao.insert(CatalogEntity(0, "0", "0", "Виконано"))
+                    catalogDao.insert(CatalogEntity(0, "0", "1", "Не виконано"))
+                    catalogDao.insert(CatalogEntity(0, "1", "1", "Містить"))
+                    catalogDao.insert(CatalogEntity(0, "1", "2", "Рівно"))
+                    catalogDao.insert(CatalogEntity(0, "1", "3", "Починається з"))
+                    catalogDao.insert(CatalogEntity(0, "1", "4", "Не пусте"))
+                    catalogDao.insert(CatalogEntity(0, "1", "5", "Пусте"))
                     /*val passwordDao = database.passwordDao()
                     //чистим пароли
                     passwordDao.deleteAll()

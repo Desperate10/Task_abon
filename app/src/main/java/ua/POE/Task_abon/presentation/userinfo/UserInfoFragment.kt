@@ -18,6 +18,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
+import android.text.TextWatcher
 import android.text.util.Linkify
 import android.util.Log
 import android.view.*
@@ -36,8 +37,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.Catalog
+import ua.POE.Task_abon.data.entities.CatalogEntity
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
+import ua.POE.Task_abon.domain.model.Catalog
 import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.domain.model.Image
 import ua.POE.Task_abon.presentation.MainActivity
@@ -53,11 +55,11 @@ import kotlin.collections.ArrayList
 class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.OnClickListener,
     DatePickerDialog.OnDateSetListener {
 
-    private var binding: FragmentUserInfoBinding by autoCleared()
+    private var binding: FragmentUserInfoBinding by autoCleaned()
     private val viewModel: UserInfoViewModel by viewModels()
     private var taskId: Int = 0
-    private var filial: String? = "no"
-    private var num: String? = "num"
+    private var filial: String? = null
+    private var num: String? = null
     private var index: Int? = 1
     private var count: Int? = 1
     private var positionOf: Int = 0
@@ -66,8 +68,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
     private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
-    private var statusSpinnerPosition: Int? = null
+    private var statusSpinnerPosition: Int = 0
     private var numbpers = ""
+    private var isFirstLoad = false
     var family = ""
     var adress = ""
     var numbersField = ""
@@ -85,20 +88,22 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val operators by lazy { viewModel.getOperatorsList() }
     lateinit var sourceAdapter: ArrayAdapter<String>
 
-    //  lateinit var sourceAdapter2 : ArrayAdapter<String>
     lateinit var catalog: List<Catalog>
     lateinit var catalog2: List<Catalog>
     lateinit var locationManager: LocationManager
-    private val imageAdapter by lazy {
+    private val imageAdapter: ImageAdapter by autoCleaned {
         ImageAdapter(requireContext(), items, uri)
     }
     private val items = ArrayList<Image>()
     private val uri = ArrayList<String>()
-    lateinit var tempImage: File
+    private lateinit var tempImage: File
     private var imageUri: Uri? = null
     private var icons = ArrayList<Icons>()
     private var isEdit: Boolean = false
     private var firstEditDate: String = ""
+    private var zone1watcher: TextWatcher? = null
+    private var zone2watcher: TextWatcher? = null
+    private var zone3watcher: TextWatcher? = null
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -116,6 +121,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             num = arguments?.getString("num")
             index = arguments?.getInt("id")
             count = arguments?.getInt("count")
+            isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
@@ -123,13 +129,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         //читаем иконки
         icons = resources.getRawTextFile(R.raw.icons)
 
-        registerTextChangedListeners()
-
         viewModel.isTrueEdit.observe(viewLifecycleOwner) {
             isEdit = it
         }
 
         getBasicInfo(taskId)
+        isFirstLoad = false
 
         checkPermissions()
 
@@ -152,8 +157,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.next.setOnClickListener(this)
 
         binding.results.statusSpinner.onItemSelectedListener = this
-
-        //imageAdapter = ImageAdapter(requireContext(), items, uri)
         binding.results.photoLayout.adapter = imageAdapter
         addAddButton()
 
@@ -170,30 +173,31 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
         }
-
     }
 
-    private fun registerTextChangedListeners() {
-        try {
-            binding.results.newMeters1.doAfterTextChanged {
-                if (!binding.results.newMeters1.text.isNullOrEmpty())
-                    binding.results.difference1.text =
-                        (it.toString().toInt() - binding.results.previousMeters1.text.toString()
-                            .toInt()).toString()
+    private fun registerWatcher(
+        newMeters: EditText,
+        difference: TextView,
+        oldMeters: TextView
+    ): TextWatcher? {
+        return try {
+            newMeters.doAfterTextChanged {
+                if (!it.isNullOrEmpty()) {
+                    difference.text = (
+                            it.toString().toInt() - oldMeters.text.toString()
+                                .toInt()).toString()
+                }
             }
-            binding.results.newMeters2.doAfterTextChanged {
-                if (!binding.results.newMeters2.text.isNullOrEmpty())
-                    binding.results.difference2.text =
-                        (it.toString().toInt() - binding.results.previousMeters2.text.toString()
-                            .toInt()).toString()
-            }
-            binding.results.newMeters3.doAfterTextChanged {
-                if (!binding.results.newMeters3.text.isNullOrEmpty())
-                    binding.results.difference3.text =
-                        (it.toString().toInt() - binding.results.previousMeters3.text.toString()
-                            .toInt()).toString()
-            }
-        } catch (_: NumberFormatException) {}
+        } catch (e: NumberFormatException) {
+            return null
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        binding.results.newMeters1.removeTextChangedListener(zone1watcher)
+        binding.results.newMeters2.removeTextChangedListener(zone2watcher)
+        binding.results.newMeters3.removeTextChangedListener(zone3watcher)
     }
 
     private fun addAddButton() {
@@ -310,7 +314,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         override fun onProviderEnabled(provider: String) {}
         override fun onProviderDisabled(provider: String) {}
-        override fun onStatusChanged(provider: String, status: Int, extras: Bundle) {}
     }
 
     private fun onGPS() {
@@ -356,7 +359,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
             //val imageUri = FileProvider.getUriForFile(requireContext(), "ua.POE.Task_abon.fileprovider", tempImage)
             val i = Image(imageUri)
-           // i.setURI(imageUri)
+            // i.setURI(imageUri)
             items.add(i)
             uri.add(imageUri.toString())
             imageAdapter.notifyDataSetChanged()
@@ -423,7 +426,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         massiv2.clear()
 
         //positionOf всегда 0?
-        catalog = if (positionOf == 0) {
+        catalog = if(statusSpinnerPosition == 0) {
             viewModel.getSourceList("2")
         } else {
             viewModel.getSourceList("3")
@@ -486,21 +489,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
         multipleSpinner.hintText = "Можливий вибір декількох пунктів:"
-
-        /*sourceAdapter2 = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            massiv2
-        )*/
-        // binding.results.sourceSpinner2.adapter = sourceAdapter2
-        //binding.results.sourceSpinner2.onItemSelectedListener = this
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        // Inflate the layout for this fragment
         binding = FragmentUserInfoBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -575,10 +569,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 goPrevious()
             }
         } else if (v.id == R.id.next) {
-            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                showSaveOrNotDialog(true)
-            } else {
+            if (isResultSaved || !(binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
                 goNext()
+            } else {
+                showSaveOrNotDialog(true)
             }
         } else if (v.id == R.id.date || v.id == R.id.new_date) {
             val dialog = DatePickerDialog(
@@ -633,8 +627,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun goPrevious() {
         resetTimer()
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-        //unRegisterReceivers()
-        //registerReceivers()
         index = if (index != 1) {
             index!!.minus(1)
         } else {
@@ -678,6 +670,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     loadResultTab()
                 }
             }
+            R.id.status_spinner -> {
+                statusSpinnerPosition = position
+                updateSourceSpinner(position)
+            }
             R.id.source_spinner -> {
                 try {
                     source = if (position != 0) {
@@ -688,27 +684,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
 
             }
-            /*R.id.source_spinner2 -> {
-                try {
-                    source2 = if (position != 0) {
-                        // val position = position.plus(1)
-                        catalog2[position].code!!
-                    } else ""
-                } catch (e: Exception) {
-
-                }
-
-            }*/
-            R.id.status_spinner -> {
-                statusSpinnerPosition = position
-                updateSourceSpinner(position)
-            }
         }
     }
 
     private fun updateSourceSpinner(position: Int) {
+
         massiv.clear()
-        catalog = if (position == 0) {
+        catalog = if(position == 0) {
             viewModel.getSourceList("2")
         } else {
             viewModel.getSourceList("3")
@@ -718,7 +700,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             massiv.add(i.text!!)
         }
         sourceAdapter.notifyDataSetChanged()
-
     }
 
     private fun loadResultTab() {
@@ -727,8 +708,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.newDate.setOnClickListener(this)
 
         val techHash = viewModel.getTechInfoTextByFields(taskId, index!!)
-
-        val contr = StringBuilder()
+        val controlInfo = StringBuilder()
 
         techHash.forEach { (key, value) ->
             when (key) {
@@ -785,32 +765,47 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
                 "contr_date" -> {
                     binding.results.contrDate.text = value
-                    contr.append(" $value")
+                    controlInfo.append(" $value")
                 }
                 "contr_pok" -> {
-                    contr.append(" $value")
+                    controlInfo.append(" $value")
                 }
                 "contr_name" -> {
-                    contr.append(" $value")
+                    controlInfo.append(" $value")
                 }
             }
         }
 
         binding.results.contrText.text =
-            resources.getString(R.string.contr_pokaz) + contr.toString()
+            resources.getString(R.string.contr_pokaz) + controlInfo.toString()
         binding.results.contrText.setTextColor(Color.YELLOW)
         binding.results.contrText.setTypeface(binding.results.contrText.typeface, Typeface.BOLD)
 
         try {
             val result = viewModel.getResult(taskId, index!!)
-            positionOf = result.notDone?.toInt() ?: 0
-            binding.results.statusSpinner.setSelection(positionOf)
+            statusSpinnerPosition = result.notDone?.toInt() ?: 0
+            binding.results.statusSpinner.setSelection(statusSpinnerPosition)
             loadSpinners(result.point_condition)
             binding.results.date.text = result.doneDate
             binding.results.newDate.text = result.doneDate
             binding.results.newMeters1.setText(result.zone1)
             binding.results.newMeters2.setText(result.zone2)
             binding.results.newMeters3.setText(result.zone3)
+            zone1watcher = registerWatcher(
+                binding.results.newMeters1,
+                binding.results.difference1,
+                binding.results.previousMeters1
+            )
+            zone2watcher = registerWatcher(
+                binding.results.newMeters2,
+                binding.results.difference2,
+                binding.results.previousMeters2
+            )
+            zone3watcher = registerWatcher(
+                binding.results.newMeters3,
+                binding.results.difference3,
+                binding.results.previousMeters3
+            )
             binding.results.note.setText(result.note)
             binding.results.phone.setText(result.phoneNumber)
             binding.results.checkBox.isChecked = result.is_main == 1
@@ -818,7 +813,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             if (!result.photo.isNullOrEmpty()) {
                 addAddButton(Uri.parse(result.photo))
             }
-            val type = if (positionOf == 0) {
+            val type = if (statusSpinnerPosition == 0) {
                 "2"
             } else {
                 "3"
@@ -827,25 +822,21 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             if (!result.dataSource.isNullOrEmpty()) {
                 val spinnerPosition: Int =
                     sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
-                //Log.d("errortestim", viewModel.getSourceName(result.dataSource!!, type))
-                //val spinnerPosition2 : Int = sourceAdapter2.getPosition(viewModel.getNoteName(result.point_condition!!))
                 binding.results.sourceSpinner.setSelection(spinnerPosition)
-                //binding.results.sourceSpinner2.setSelection(spinnerPosition2 - 1)
             } else {
                 binding.results.sourceSpinner.setSelection(0)
             }
             isResultSaved = true
 
         } catch (e: Exception) {
-            //Log.d("errortestim", e.message.toString())
             try {
-                positionOf = 0
+                //positionOf = 0
+                statusSpinnerPosition = 0
                 loadSpinners("")
                 binding.results.date.text = sdformat.format(calendar.time)
                 binding.results.newDate.text = sdformat.format(calendar.time)
                 binding.results.statusSpinner.setSelection(0)
                 binding.results.sourceSpinner.setSelection(0)
-                // binding.results.sourceSpinner2.setSelection(0)
                 binding.results.newMeters1.setText("", TextView.BufferType.EDITABLE)
                 binding.results.newMeters2.setText("", TextView.BufferType.EDITABLE)
                 binding.results.newMeters3.setText("", TextView.BufferType.EDITABLE)
@@ -888,11 +879,11 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     "О/р" -> {
                         //createRow(key, value, true)
                         numbersField = key
-                        numbpers = value;
+                        numbpers = value
                     }
                     "icons_account" -> {
                         if (value.isNotEmpty()) {
-                            var text = getNeededEmojis(icons, value)
+                            val text = getNeededEmojis(icons, value)
                             createRow(numbersField, "$numbpers $text", true)
                         } else {
                             createRow(numbersField, numbpers, true)
@@ -928,7 +919,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
         }
         createRow("Інше/Фiдер", stringBuilder.append(opora).toString(), true)
+        if (!isFirstLoad) {
             loadResultTab()
+        }
 
 
         basicFieldsTxt.clear()
@@ -1012,6 +1005,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             val zone1 = binding.results.newMeters1.text.toString()
             val zone2 = binding.results.newMeters2.text.toString()
             val zone3 = binding.results.newMeters3.text.toString()
+
             val note = binding.results.note.text.toString()
             val phoneNumber = binding.results.phone.text.toString()
             val lat = binding.lat.text.toString()
@@ -1026,7 +1020,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             } else {
                 null
             }
-            val currentDateAndTime = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+            val currentDateAndTime =
+                SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
             viewModel.saveEditTiming(taskId, index.toString(), firstEditDate, currentDateAndTime)
             resetTimer()
 
@@ -1072,15 +1067,15 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         builder.setTitle("Повідомлення")
         var i = 0
         var message = ""
-        icons?.let {
-            do {
-                val icon = getEmojiByUnicode(it[i].emoji!!)
-                if (iconsText.contains(icon)) {
-                    message += "$icon  ${it[i].hint}\n"
-                }
-                i++
-            } while (i < it.size)
-        }
+
+        do {
+            val icon = getEmojiByUnicode(icons[i].emoji!!)
+            if (iconsText.contains(icon)) {
+                message += "$icon  ${icons[i].hint}\n"
+            }
+            i++
+        } while (i < icons.size)
+
         builder.setMessage(message)
 
         builder.setPositiveButton("Ок") { dialog, _ ->

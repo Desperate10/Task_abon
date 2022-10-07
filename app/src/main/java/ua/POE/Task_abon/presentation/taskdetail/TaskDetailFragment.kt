@@ -3,11 +3,9 @@ package ua.POE.Task_abon.presentation.taskdetail
 import android.app.AlertDialog
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import android.view.*
 import android.widget.Scroller
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -27,9 +25,9 @@ import ua.POE.Task_abon.utils.*
 @AndroidEntryPoint
 class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListener {
 
-    private var binding: FragmentTaskDetailBinding by autoCleared()
+    private var binding: FragmentTaskDetailBinding by autoCleaned()
     private val viewModel by viewModels<TaskDetailViewModel>()
-    private var adapter: CustomerListAdapter by autoCleared()
+    private var adapter: CustomerListAdapter by autoCleaned()
 
     private var taskId = 0
     private var searchList: Map<String, String>? = null
@@ -39,11 +37,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
 
     private var userData = listOf<UserData>()
     private var icons = ArrayList<Icons>()
-
-    companion object {
-        private const val NOT_FINISHED = "Не виконано"
-        private const val ALL = "Всі"
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,14 +49,9 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         hideKeyboard()
         readBundle()
         bindViews()
-        //read all icons from raw
-        icons = resources.getRawTextFile(R.raw.icons)
         createCustomerListAdapter()
-
         observeViewModel()
         addClickListeners()
-
-
     }
 
     private fun addClickListeners() {
@@ -75,9 +63,11 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun createCustomerListAdapter() {
+        //read all icons from raw
+        icons = resources.getRawTextFile(R.raw.icons)
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
         binding.recyclerview.layoutManager = linearLayoutManager
-        adapter = CustomerListAdapter(requireContext(),icons)
+        adapter = CustomerListAdapter(requireContext(), icons)
         binding.recyclerview.adapter = adapter
     }
 
@@ -106,7 +96,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
             }
             adapter.submitList(userData)
             with(binding.recyclerview) {
-                post { scrollToPosition(0)}
+                post { scrollToPosition(0) }
             }
         }
         viewModel.getFinishedCount(taskId).observe(viewLifecycleOwner) { count ->
@@ -145,7 +135,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun showEmojiInfoDialog() {
 
         val message =
-            icons.joinToString(separator = "") { it.emoji?.let { it1 -> getEmojiByUnicode(it1) } + " - " + it.hint + "\n" }
+            icons.joinToString(separator = "") { "${it.emoji?.let { it1 -> getEmojiByUnicode(it1) }} - ${it.hint}\n" }
 
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Умовні позначки")
@@ -191,6 +181,13 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun extractFilialFromFileName(fileName: String): String {
-        return fileName.substring(1, 5)
+        return fileName.substring(FIRST_FILIAL_NUMBER, LAST_FILIAL_NUMBER)
+    }
+
+    companion object {
+        private const val NOT_FINISHED = "Не виконано"
+        private const val ALL = "Всі"
+        private const val FIRST_FILIAL_NUMBER = 1
+        private const val LAST_FILIAL_NUMBER = 5
     }
 }

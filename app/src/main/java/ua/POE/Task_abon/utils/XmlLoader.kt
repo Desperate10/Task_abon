@@ -5,27 +5,15 @@ import android.content.Context
 import android.database.Cursor
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.util.Log
 import android.widget.Toast
 import androidx.sqlite.db.SupportSQLiteDatabase
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
-import ua.POE.Task_abon.network.MyApi
-import ua.POE.Task_abon.network.UploadRequestBody
-import ua.POE.Task_abon.network.UploadResponse
 import java.io.*
 import javax.inject.Inject
 
@@ -193,7 +181,7 @@ class  XmlLoader @Inject constructor(val context: Context, val database: AppData
     private suspend fun insertCatalog(type: String, code: String, value: String) {
         val exists = catalogDao.getCatalogItem(type, code)
         if (!exists) {
-            catalogDao.insert(Catalog(0, type, code, value))
+            catalogDao.insert(CatalogEntity(0, type, code, value))
         }
     }
 

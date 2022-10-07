@@ -2,7 +2,10 @@ package ua.POE.Task_abon.presentation.finduser
 
 import android.content.DialogInterface
 import android.os.Bundle
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SimpleAdapter
@@ -14,14 +17,15 @@ import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentFindUserBinding
+import ua.POE.Task_abon.databinding.FragmentTasksBinding
 import ua.POE.Task_abon.presentation.MainActivity
-import ua.POE.Task_abon.utils.autoCleared
+import ua.POE.Task_abon.utils.autoCleaned
 
 
 @AndroidEntryPoint
 class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.OnClickListener {
 
-    private var binding: FragmentFindUserBinding by autoCleared()
+    private var binding : FragmentFindUserBinding by autoCleaned()
     private val viewModel: FindUserViewModel by viewModels()
 
     private var adapter: ArrayAdapter<String>? = null
@@ -43,18 +47,23 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         setHasOptionsMenu(true)
     }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View {
+        binding = FragmentFindUserBinding.inflate(inflater, container, false)
+        return binding.root
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+        super.onViewCreated(view, savedInstanceState)
         (activity as MainActivity).supportActionBar?.title = "Критерії пошуку"
 
         readArguments()
         initSearchSpinner()
         initClickListeners()
         initAdapterForSearchCriteria()
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
     }
 
     private fun readArguments() {
@@ -108,7 +117,6 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     override fun onClick(v: View) {
         when (v.id) {
             R.id.add_filter -> {
-
                 var hash = mutableMapOf<String, String>()
                 val name = binding.filterSpinner.selectedItem.toString()
                 hash["name"] = name
@@ -119,8 +127,6 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 simpleAdapter?.notifyDataSetChanged()
                 adapter?.notifyDataSetChanged()
                 binding.filterSpinner.setSelection(1)
-
-
             }
             R.id.do_filter -> {
                 navigateToTaskDetailFragment()
@@ -134,6 +140,7 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun navigateToTaskDetailFragment() {
         val bundle = bundleOf(
             "taskId" to taskId,
+            "taskName" to taskName,
             "searchList" to listHash,
             "fileName" to fileName,
             "name" to taskName,
@@ -167,7 +174,6 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                         android.R.layout.simple_spinner_dropdown_item,
                         existFields
                     )
-
                 binding.existItemsSpinner.adapter = existAdapter
                 binding.existItemsSpinner.onItemSelectedListener = this
             }
@@ -188,14 +194,6 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         spinner.adapter = adapter
         spinner.onItemSelectedListener = this
 
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        binding = FragmentFindUserBinding.inflate(inflater, container, false)
-        return binding.root
     }
 
     override fun onNothingSelected(parent: AdapterView<*>?) {}
