@@ -2,6 +2,8 @@ package ua.POE.Task_abon.presentation.userinfo
 
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
@@ -27,6 +29,10 @@ class UserInfoViewModel @ViewModelInject constructor(
 
     private var _isTrueEdit = MutableLiveData<Boolean>()
     val isTrueEdit: MutableLiveData<Boolean> = _isTrueEdit
+
+    var statusSpinnerPosition = MutableStateFlow(0)
+    var sourceSpinnerPosition = MutableStateFlow(0)
+    //var statusSpinnerPosition : StateFlow<Int> = _statusSpinnerPosition
 
     var time = 0
     private val timer = Timer()

@@ -16,6 +16,8 @@ import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.domain.model.Icons
 import java.io.BufferedReader
@@ -116,3 +118,6 @@ suspend fun <T> saveReadFile(
         }
     }
 }
+
+inline fun <T, R> Flow<Iterable<T>>.mapLatestIterable(crossinline transform: (T) -> R): Flow<List<R>> =
+    mapLatest { it.map(transform) }

@@ -31,10 +31,14 @@ import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.CatalogEntity
@@ -62,13 +66,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private var num: String? = null
     private var index: Int? = 1
     private var count: Int? = 1
-    private var positionOf: Int = 0
     private val fieldsArray: ArrayList<String> = ArrayList()
     private val basicFieldsTxt = ArrayList<String>()
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
     private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
-    private var statusSpinnerPosition: Int = 0
+
+    // private var statusSpinnerPosition: Int = 0
     private var numbpers = ""
     private var isFirstLoad = false
     var family = ""
@@ -99,12 +103,30 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private lateinit var tempImage: File
     private var imageUri: Uri? = null
     private var icons = ArrayList<Icons>()
-    private var isEdit: Boolean = false
     private var firstEditDate: String = ""
     private var zone1watcher: TextWatcher? = null
     private var zone2watcher: TextWatcher? = null
     private var zone3watcher: TextWatcher? = null
 
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.statusSpinnerPosition.collect {
+                    updateSourceSpinner(it)
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.sourceSpinnerPosition.collect {
+                    source = if (it != 0) {
+                        catalog[it - 1].code!!
+                    } else ""
+                }
+            }
+        }
+
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -129,34 +151,49 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         //читаем иконки
         icons = resources.getRawTextFile(R.raw.icons)
 
-        viewModel.isTrueEdit.observe(viewLifecycleOwner) {
-            isEdit = it
-        }
-
         getBasicInfo(taskId)
         isFirstLoad = false
 
         checkPermissions()
 
-        val spinner = binding.blockName
-
-        val blockName: MutableList<String> = viewModel.getBlockNames()
-        blockName.add(0, "Результати")
-
-        val adapter = context?.let {
-            ArrayAdapter(
-                it,
-                android.R.layout.simple_spinner_dropdown_item,
-                blockName
-            )
-        }
-        spinner.adapter = adapter
-        spinner.onItemSelectedListener = this
+        setupMainBlockSpinner()
 
         binding.previous.setOnClickListener(this)
         binding.next.setOnClickListener(this)
 
+        setupStatusSpinner()
+        setupImageAdapter()
+
+        observeViewModel()
+    }
+
+    private fun setupMainBlockSpinner() {
+        val blockNameList: MutableList<String> = viewModel.getBlockNames()
+        blockNameList.add(0, "Результати")
+        val adapter =
+            ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                blockNameList
+            )
+
+        binding.blockName.adapter = adapter
+        binding.blockName.onItemSelectedListener = this
+    }
+
+    private fun setupStatusSpinner() {
         binding.results.statusSpinner.onItemSelectedListener = this
+        //sourcespinner
+        sourceAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            massiv
+        )
+        binding.results.sourceSpinner.adapter = sourceAdapter
+        binding.results.sourceSpinner.onItemSelectedListener = this
+    }
+
+    private fun setupImageAdapter() {
         binding.results.photoLayout.adapter = imageAdapter
         addAddButton()
 
@@ -425,8 +462,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         massiv.clear()
         massiv2.clear()
 
-        //positionOf всегда 0?
-        catalog = if(statusSpinnerPosition == 0) {
+        catalog = if (viewModel.statusSpinnerPosition.value == 0) {
             viewModel.getSourceList("2")
         } else {
             viewModel.getSourceList("3")
@@ -437,14 +473,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             massiv.add(i.text!!)
         }
 
-        sourceAdapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            massiv
-        )
+        sourceAdapter.notifyDataSetChanged()
 
-        binding.results.sourceSpinner.adapter = sourceAdapter
-        binding.results.sourceSpinner.onItemSelectedListener = this
+        /*binding.results.sourceSpinner.adapter = sourceAdapter
+        binding.results.sourceSpinner.onItemSelectedListener = this*/
 
         catalog2 = viewModel.getSourceList("4")
 
@@ -671,17 +703,20 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
             R.id.status_spinner -> {
-                statusSpinnerPosition = position
-                updateSourceSpinner(position)
+                //statusSpinnerPosition = position
+                viewModel.statusSpinnerPosition.value = position
+                //updateSourceSpinner(position)
             }
             R.id.source_spinner -> {
-                try {
+
+                viewModel.sourceSpinnerPosition.value = position
+                /*try {
                     source = if (position != 0) {
                         // val position = position.plus(1)
                         catalog[position - 1].code!!
                     } else ""
                 } catch (e: Exception) {
-                }
+                }*/
 
             }
         }
@@ -690,7 +725,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun updateSourceSpinner(position: Int) {
 
         massiv.clear()
-        catalog = if(position == 0) {
+        catalog = if (position == 0) {
             viewModel.getSourceList("2")
         } else {
             viewModel.getSourceList("3")
@@ -783,8 +818,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         try {
             val result = viewModel.getResult(taskId, index!!)
-            statusSpinnerPosition = result.notDone?.toInt() ?: 0
-            binding.results.statusSpinner.setSelection(statusSpinnerPosition)
+            //statusSpinnerPosition = result.notDone?.toInt() ?: 0
+            viewModel.statusSpinnerPosition.value = result.notDone?.toInt() ?: 0
+            binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
             loadSpinners(result.point_condition)
             binding.results.date.text = result.doneDate
             binding.results.newDate.text = result.doneDate
@@ -813,16 +849,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             if (!result.photo.isNullOrEmpty()) {
                 addAddButton(Uri.parse(result.photo))
             }
-            val type = if (statusSpinnerPosition == 0) {
+            val type = if (viewModel.statusSpinnerPosition.value == 0) {
                 "2"
             } else {
                 "3"
             }
 
             if (!result.dataSource.isNullOrEmpty()) {
+
                 val spinnerPosition: Int =
                     sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
                 binding.results.sourceSpinner.setSelection(spinnerPosition)
+                Log.d("testim", "${result.dataSource} $type")
             } else {
                 binding.results.sourceSpinner.setSelection(0)
             }
@@ -831,7 +869,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         } catch (e: Exception) {
             try {
                 //positionOf = 0
-                statusSpinnerPosition = 0
+                // statusSpinnerPosition = 0
+                viewModel.statusSpinnerPosition.value = 0
                 loadSpinners("")
                 binding.results.date.text = sdformat.format(calendar.time)
                 binding.results.newDate.text = sdformat.format(calendar.time)
@@ -997,11 +1036,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun saveResult() {
+        //Log.d("testim", "${viewModel.statusSpinnerPosition.value} ${viewModel.sourceSpinnerPosition.value}")
 
-
-        if (binding.results.newMeters1.text.isNotEmpty() || (binding.results.statusSpinner.selectedItemPosition == 1 && binding.results.sourceSpinner.selectedItemPosition != 0)) {
+        if (binding.results.newMeters1.text.isNotEmpty() || (viewModel.statusSpinnerPosition.value == 1 && viewModel.sourceSpinnerPosition.value != 0)) {
             val date1: String = binding.results.newDate.text.toString()
-            val isDone: String = statusSpinnerPosition.toString()
+            //val isDone: String = statusSpinnerPosition.toString()
+            //возможно убрать все отсюда
+            val isDone = viewModel.statusSpinnerPosition.value.toString()
             val zone1 = binding.results.newMeters1.text.toString()
             val zone2 = binding.results.newMeters2.text.toString()
             val zone3 = binding.results.newMeters3.text.toString()
