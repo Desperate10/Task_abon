@@ -41,7 +41,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.CatalogEntity
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.domain.model.Catalog
 import ua.POE.Task_abon.domain.model.Icons
@@ -157,14 +156,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         checkPermissions()
 
         setupMainBlockSpinner()
+        setupSecondarySpinners()
 
+        registerClickListeners()
+        setupImageAdapter()
+        observeViewModel()
+    }
+
+    private fun registerClickListeners() {
         binding.previous.setOnClickListener(this)
         binding.next.setOnClickListener(this)
-
-        setupStatusSpinner()
-        setupImageAdapter()
-
-        observeViewModel()
+        binding.results.date.setOnClickListener(this)
+        binding.results.newDate.setOnClickListener(this)
     }
 
     private fun setupMainBlockSpinner() {
@@ -181,7 +184,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.blockName.onItemSelectedListener = this
     }
 
-    private fun setupStatusSpinner() {
+    private fun setupSecondarySpinners() {
         binding.results.statusSpinner.onItemSelectedListener = this
         //sourcespinner
         sourceAdapter = ArrayAdapter(
@@ -739,9 +742,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun loadResultTab() {
 
-        binding.results.date.setOnClickListener(this)
-        binding.results.newDate.setOnClickListener(this)
-
         val techHash = viewModel.getTechInfoTextByFields(taskId, index!!)
         val controlInfo = StringBuilder()
 
@@ -1066,7 +1066,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             viewModel.saveEditTiming(taskId, index.toString(), firstEditDate, currentDateAndTime)
             resetTimer()
 
-            CoroutineScope(Dispatchers.IO).launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 viewModel.saveResults(
                     taskId,
                     index!!,
