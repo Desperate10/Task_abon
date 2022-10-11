@@ -2,8 +2,8 @@ package ua.POE.Task_abon.presentation.userinfo
 
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
@@ -14,6 +14,7 @@ import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
 import ua.POE.Task_abon.domain.model.Catalog
+import ua.POE.Task_abon.utils.mapLatestIterable
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -32,7 +33,9 @@ class UserInfoViewModel @ViewModelInject constructor(
 
     var statusSpinnerPosition = MutableStateFlow(0)
     var sourceSpinnerPosition = MutableStateFlow(0)
-    //var statusSpinnerPosition : StateFlow<Int> = _statusSpinnerPosition
+    var customerIndex = MutableStateFlow(1)
+
+
 
     var time = 0
     private val timer = Timer()
@@ -47,9 +50,9 @@ class UserInfoViewModel @ViewModelInject constructor(
             timer.scheduleAtFixedRate(object : TimerTask() {
                 override fun run() {
                     time++
-                 //   Log.d("testim", time.toString())
+                    //   Log.d("testim", time.toString())
                 }
-            },0, 1000)
+            }, 0, 1000)
         }
     }
 
@@ -193,11 +196,22 @@ class UserInfoViewModel @ViewModelInject constructor(
 
     fun getResult(taskId: Int, index: Int) = resultDao.getResultUser(taskId, index)
 
-    fun getSourceList(type: String): List<Catalog> {
+    //adding
+    fun getSourceList(): StateFlow<List<Catalog>> {
+        return if (statusSpinnerPosition.value == 0) {
+            catalogDao.getSourceList("2")
+        } else {
+            catalogDao.getSourceList("3")
+        }.mapLatestIterable { mapCatalogEntityToCatalog(it) }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
+
+    /*fun getSourceList(type: String): List<Catalog> {
         return catalogDao.getSourceList(type).map {
             mapCatalogEntityToCatalog(it)
         }
-    }
+    }*/
 
     fun getSourceName(code: String, type: String) = catalogDao.getSourceByCode(code, type)
 
@@ -207,5 +221,12 @@ class UserInfoViewModel @ViewModelInject constructor(
 
     fun getCheckedConditions(taskId: Int, index: Int) =
         testEntityRepository.getCheckedConditions(taskId, index)
+
+    fun getFeatureList(): StateFlow<List<Catalog>> {
+        return catalogDao.getSourceList("4")
+            .mapLatestIterable { mapCatalogEntityToCatalog(it) }
+            .flowOn(Dispatchers.Default)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }
 
 }

@@ -38,7 +38,7 @@ import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
@@ -63,9 +63,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private var taskId: Int = 0
     private var filial: String? = null
     private var num: String? = null
-    private var index: Int? = 1
-    private var count: Int? = 1
-    private val fieldsArray: ArrayList<String> = ArrayList()
+    private var index = 1
+    private var count = 1
+    private var fieldsArray = listOf<String>()
     private val basicFieldsTxt = ArrayList<String>()
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
@@ -92,7 +92,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     lateinit var sourceAdapter: ArrayAdapter<String>
 
     lateinit var catalog: List<Catalog>
-    lateinit var catalog2: List<Catalog>
+    lateinit var featureList: List<Catalog>
     lateinit var locationManager: LocationManager
     private val imageAdapter: ImageAdapter by autoCleaned {
         ImageAdapter(requireContext(), items, uri)
@@ -110,9 +110,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.statusSpinnerPosition.collect {
-                    updateSourceSpinner(it)
-                }
+                viewModel.statusSpinnerPosition
+                    .flatMapLatest { viewModel.getSourceList() }
+                    .flowOn(Dispatchers.IO)
+                    .collect {
+                        //Log.d("testim", it.toString())
+                        updateSourceSpinner(it)
+                    }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -124,7 +128,22 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
         }
-
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.getFeatureList().collect {
+                    featureList = it
+                }
+            }
+        }
+        /*viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.customerIndex.flatMapMerge { index ->
+                    viewModel.getFieldsByBlockName("", taskId).asFlow()
+                }.flatMapMerge {
+                    viewModel.getTextFieldsByBlockName(it, "TD$taskId", index)
+                }
+            }
+        }*/
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -140,8 +159,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             taskId = arguments?.getInt("taskId") ?: 0
             filial = arguments?.getString("filial")
             num = arguments?.getString("num")
-            index = arguments?.getInt("id")
-            count = arguments?.getInt("count")
+            index = arguments?.getInt("id") ?: throw NullPointerException("index is null")
+            count = arguments?.getInt("count") ?: throw NullPointerException("count is null")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
 
@@ -462,68 +481,53 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun loadSpinners(savedConditions: String?) {
-        massiv.clear()
-        massiv2.clear()
 
-        catalog = if (viewModel.statusSpinnerPosition.value == 0) {
-            viewModel.getSourceList("2")
-        } else {
-            viewModel.getSourceList("3")
-        }
-
-        massiv.add("-Не вибрано-")
-        for (i in catalog) {
-            massiv.add(i.text!!)
-        }
-
-        sourceAdapter.notifyDataSetChanged()
-
+        //updateSourceSpinner(catalog)
         /*binding.results.sourceSpinner.adapter = sourceAdapter
         binding.results.sourceSpinner.onItemSelectedListener = this*/
 
-        catalog2 = viewModel.getSourceList("4")
 
         // massiv2.add("-Не выбрано-")
         val result = if (!savedConditions.isNullOrEmpty()) {
-            savedConditions.split(",").map { it.trim() }
+            savedConditions
         } else {
-            val array = viewModel.getCheckedConditions(taskId, index!!)
-            array.split(",").map { it.trim() }
-        }
-
-        for (i in catalog2) {
-            if (i.code.toString() in result) {
-                massiv2.add(KeyPairBoolData(i.text!!, true))
+            viewModel.getCheckedConditions(taskId, index!!)
+        }.split(",").map { it.trim() }
+        massiv2.clear()
+        for (feature in featureList) {
+            if (feature.code.toString() in result) {
+                massiv2.add(KeyPairBoolData(feature.text!!, true))
             } else {
-                massiv2.add(KeyPairBoolData(i.text!!, false))
+                massiv2.add(KeyPairBoolData(feature.text!!, false))
             }
         }
 
-        val multipleSpinner = binding.results.sourceSpinner2
-        multipleSpinner.isSearchEnabled = false
-        multipleSpinner.isShowSelectAllButton = true
-        multipleSpinner.isColorSeparation = false
-        when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-            Configuration.UI_MODE_NIGHT_YES ->
-                multipleSpinner.setBackgroundColor(Color.GRAY)
-            Configuration.UI_MODE_NIGHT_NO ->
-                multipleSpinner.setBackgroundColor(Color.WHITE)
-        }
+        with(binding.results.featureSpinner) {
+            isSearchEnabled = false
+            isShowSelectAllButton = true
+            isColorSeparation = false
 
-        multipleSpinner.setClearText("Очистити все")
-        multipleSpinner.setItems(
-            massiv2
-        ) { items ->
-            source2.clear()
-            for (i in items.indices) {
-                for (catalog in catalog2) {
-                    if (items[i].name == catalog.text) {
-                        source2.add(catalog.code!!)
+            when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+                Configuration.UI_MODE_NIGHT_YES ->
+                    setBackgroundColor(Color.GRAY)
+                Configuration.UI_MODE_NIGHT_NO ->
+                    setBackgroundColor(Color.WHITE)
+            }
+            hintText = "Можливий вибір декількох пунктів:"
+            setClearText("Очистити все")
+            setItems(
+                massiv2
+            ) { items ->
+                source2.clear()
+                for (i in items.indices) {
+                    for (feature in featureList) {
+                        if (items[i].name == feature.text) {
+                            feature.code?.let { source2.add(it) }
+                        }
                     }
                 }
             }
         }
-        multipleSpinner.hintText = "Можливий вибір декількох пунктів:"
     }
 
     override fun onCreateView(
@@ -623,9 +627,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
-                    if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(
-                            3
-                        ).toString() !in operators || binding.results.phone.text.length < 10)
+                    if (binding.results.phone.text.isNotEmpty()
+                        && (binding.results.phone.text.take(3).toString() !in operators
+                                || binding.results.phone.text.length < 10)
                     ) {
                         Toast.makeText(
                             requireContext(),
@@ -660,26 +664,30 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun goPrevious() {
-        resetTimer()
-        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-        index = if (index != 1) {
-            index!!.minus(1)
-        } else {
-            count
-        }
-        if (fieldsArray.isNotEmpty())
-            updateView(fieldsArray)
-        getBasicInfo(taskId)
+        selectCustomer(R.id.previous)
     }
 
     private fun goNext() {
+        selectCustomer(R.id.next)
+    }
+
+    private fun selectCustomer(viewId: Int) {
         resetTimer()
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-        index = if (index != count) {
-            index!!.plus(1)
+        index = if ( viewId == R.id.next) {
+            if (index != count) {
+                index.plus(1)
+            } else {
+                1
+            }
         } else {
-            1
+            if (index != 1) {
+                index.minus(1)
+            } else {
+                count
+            }
         }
+        viewModel.customerIndex.value = index
         if (fieldsArray.isNotEmpty())
             updateView(fieldsArray)
         getBasicInfo(taskId)
@@ -690,12 +698,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         when (parent.id) {
             R.id.block_name -> {
                 if (selectedItem != "Результати") {
-                    fieldsArray.clear()
                     val fields = viewModel.getFieldsByBlockName(selectedItem, taskId)
-
-                    for (element in fields) {
-                        element.fieldName?.let { fieldsArray.add(it) }
-                    }
+                    fieldsArray = fields.map { it.fieldName.toString() }
                     updateView(fieldsArray)
                     binding.infoTables.visibility = VISIBLE
                     binding.results.root.visibility = GONE
@@ -706,35 +710,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
             R.id.status_spinner -> {
-                //statusSpinnerPosition = position
                 viewModel.statusSpinnerPosition.value = position
-                //updateSourceSpinner(position)
             }
             R.id.source_spinner -> {
-
                 viewModel.sourceSpinnerPosition.value = position
-                /*try {
-                    source = if (position != 0) {
-                        // val position = position.plus(1)
-                        catalog[position - 1].code!!
-                    } else ""
-                } catch (e: Exception) {
-                }*/
-
             }
         }
     }
 
-    private fun updateSourceSpinner(position: Int) {
-
+    private fun updateSourceSpinner(catalogList: List<Catalog>) {
         massiv.clear()
-        catalog = if (position == 0) {
-            viewModel.getSourceList("2")
-        } else {
-            viewModel.getSourceList("3")
-        }
         massiv.add("-Не вибрано-")
-        for (i in catalog) {
+        for (i in catalogList) {
             massiv.add(i.text!!)
         }
         sourceAdapter.notifyDataSetChanged()
@@ -856,11 +843,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
 
             if (!result.dataSource.isNullOrEmpty()) {
-
                 val spinnerPosition: Int =
                     sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
                 binding.results.sourceSpinner.setSelection(spinnerPosition)
-                Log.d("testim", "${result.dataSource} $type")
             } else {
                 binding.results.sourceSpinner.setSelection(0)
             }
@@ -868,8 +853,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         } catch (e: Exception) {
             try {
-                //positionOf = 0
-                // statusSpinnerPosition = 0
                 viewModel.statusSpinnerPosition.value = 0
                 loadSpinners("")
                 binding.results.date.text = sdformat.format(calendar.time)
@@ -895,20 +878,19 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
-        index?.let { savedInstanceState.putInt("index", it) }
+        savedInstanceState.putInt("index", index)
         //declare values before saving the state
         super.onSaveInstanceState(savedInstanceState)
     }
 
     private fun getBasicInfo(taskId: Int) {
+
         binding.basicTable.removeAllViews()
         val fields = viewModel.getFieldsByBlockName("", taskId)
         for (element in fields) {
             element.fieldName?.let { basicFieldsTxt.add(it) }
         }
-        val tdHash = viewModel.getTextFieldsByBlockName(basicFieldsTxt, "TD$taskId", index!!)
-
-        var fieldCounter = 1
+        val tdHash = viewModel.getTextFieldsByBlockName(basicFieldsTxt, "TD$taskId", index)
         val stringBuilder = StringBuilder()
         var opora = ""
 
@@ -916,7 +898,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             if (key.isNotEmpty()) {
                 when (key) {
                     "О/р" -> {
-                        //createRow(key, value, true)
                         numbersField = key
                         numbpers = value
                     }
@@ -949,25 +930,17 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                             stringBuilder.append("$value ")
                     }
                 }
-                /*if (fieldCounter>3) {
-                    stringBuilder.append("$value ")
-                } else {
-                    createRow(key, value, true)
-                }*/
-                fieldCounter++
             }
         }
         createRow("Інше/Фiдер", stringBuilder.append(opora).toString(), true)
         if (!isFirstLoad) {
             loadResultTab()
         }
-
-
         basicFieldsTxt.clear()
         tdHash.clear()
     }
 
-    private fun updateView(fieldsArray: ArrayList<String>) {
+    private fun updateView(fieldsArray: List<String>) {
         val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray, "TD$taskId", index!!)
         binding.infoTable.removeAllViews()
 

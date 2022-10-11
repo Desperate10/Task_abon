@@ -43,8 +43,13 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
                 data2[csr.getString(csr.getColumnIndex("fieldName"))] = csr.getString(csr.getColumnIndex("fieldNameTxt"))
             }
             var common: HashMap<String, String> = HashMap()
-            for (key in data.keys) {
-                for (key1 in data2.keys) {
+                //поиграться ещё
+            val newData = data.entries.map { data2.entries }.groupBy { it.forEach { it.key } }.values
+            //val newdata = data.map { data2 }.filter { it -> it.keys }
+            Log.d("testim1", newData.toString())
+            data.keys.forEach { key ->
+                data2.keys.forEach { key1 ->
+                    //Log.d("testim", "$key $key1")
                     if (key == key1) {
                         common[data2[key1]!!] = data[key]!!
                     }

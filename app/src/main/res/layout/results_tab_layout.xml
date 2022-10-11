@@ -175,7 +175,7 @@
                 android:textSize="17sp" />
 
             <com.androidbuts.multispinnerfilter.MultiSpinnerSearch
-                android:id="@+id/source_spinner2"
+                android:id="@+id/feature_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="45dp"
