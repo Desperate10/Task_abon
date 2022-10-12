@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.presentation.adapters
 
 import android.content.Context
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +17,8 @@ class ImageAdapter(
     private val data: ArrayList<Image>,
     private val uri: ArrayList<String>
 ) : BaseAdapter() {
+
+
 
     override fun getCount(): Int = data.size
 
@@ -41,6 +44,8 @@ class ImageAdapter(
                 deleteImage.visibility = View.VISIBLE
             }
 
+            addAddButton(context)
+
             deleteImage.setOnClickListener {
                 try {
                     context.contentResolver.delete(data[position].imgURI!!, null, null)
@@ -60,5 +65,29 @@ class ImageAdapter(
             return view
         }
         return convertView
+    }
+
+    private fun addAddButton(context: Context) {
+        val selectedImage =
+            Uri.parse("android.resource://" + context.packageName + "/" + R.drawable.ic_add_photo)
+        val i = Image(selectedImage)
+        data.add(i)
+    }
+
+    fun deletePhoto(context: Context) {
+        data.clear()
+        addAddButton(context)
+    }
+
+    fun addSavedPhoto(uri: Uri) {
+        data.add(Image(uri))
+        notifyDataSetChanged()
+    }
+
+    fun addNewPhoto(imageUri: Uri ) {
+        val i = Image(imageUri)
+        data.add(i)
+        uri.add(imageUri.toString())
+        notifyDataSetChanged()
     }
 }

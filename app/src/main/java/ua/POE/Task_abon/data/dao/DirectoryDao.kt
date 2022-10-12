@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import ua.POE.Task_abon.data.entities.Directory
 
 @Dao
@@ -33,7 +34,7 @@ interface DirectoryDao {
     fun getFieldsByBlockName(name : String, taskId: Int) : List<Directory>
 
     @Query("SELECT DISTINCT fieldBlockName FROM directory WHERE fieldBlockName != \"\"")
-    fun getFieldNames() : MutableList<String>
+    suspend fun getFieldNames() : List<String>
 
     @Query("DELETE FROM directory WHERE taskId = :taskId")
     suspend fun deleteByTaskId(taskId: Int)

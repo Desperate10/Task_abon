@@ -114,7 +114,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     .flatMapLatest { viewModel.getSourceList() }
                     .flowOn(Dispatchers.IO)
                     .collect {
-                        //Log.d("testim", it.toString())
+                        catalog = it
                         updateSourceSpinner(it)
                     }
             }
@@ -132,6 +132,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.getFeatureList().collect {
                     featureList = it
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.blockNames.collect {
+                    setupMainBlockSpinner(it)
                 }
             }
         }
@@ -170,11 +177,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         icons = resources.getRawTextFile(R.raw.icons)
 
         getBasicInfo(taskId)
-        isFirstLoad = false
+
+
 
         checkPermissions()
-
-        setupMainBlockSpinner()
         setupSecondarySpinners()
 
         registerClickListeners()
@@ -189,16 +195,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.newDate.setOnClickListener(this)
     }
 
-    private fun setupMainBlockSpinner() {
-        val blockNameList: MutableList<String> = viewModel.getBlockNames()
-        blockNameList.add(0, "Результати")
+    private fun setupMainBlockSpinner(list: List<String>) {
         val adapter =
             ArrayAdapter(
                 requireContext(),
                 android.R.layout.simple_spinner_dropdown_item,
-                blockNameList
+                list
             )
-
         binding.blockName.adapter = adapter
         binding.blockName.onItemSelectedListener = this
     }
@@ -217,7 +220,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun setupImageAdapter() {
         binding.results.photoLayout.adapter = imageAdapter
-        addAddButton()
+        //imageAdapter.addAddButton(requireContext())
 
         binding.results.photoLayout.setOnItemClickListener { _, _, position, _ ->
             if (position == 0) {
@@ -257,25 +260,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.newMeters1.removeTextChangedListener(zone1watcher)
         binding.results.newMeters2.removeTextChangedListener(zone2watcher)
         binding.results.newMeters3.removeTextChangedListener(zone3watcher)
-    }
-
-    private fun addAddButton() {
-        val selectedImage =
-            Uri.parse("android.resource://" + requireActivity().packageName + "/" + R.drawable.ic_add_photo)
-        val i = Image(selectedImage)
-        items.add(i)
-        imageAdapter.notifyDataSetChanged()
-    }
-
-    private fun addAddButton(uri: Uri) {
-        val i = Image(uri)
-        items.add(i)
-        imageAdapter.notifyDataSetChanged()
-    }
-
-    private fun deletePhoto() {
-        items.clear()
-        addAddButton()
     }
 
     private fun takePhoto() {
@@ -414,19 +398,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (resultCode == Activity.RESULT_OK) {
-
-
-            //val imageUri = FileProvider.getUriForFile(requireContext(), "ua.POE.Task_abon.fileprovider", tempImage)
-            val i = Image(imageUri)
-            // i.setURI(imageUri)
-            items.add(i)
-            uri.add(imageUri.toString())
-            imageAdapter.notifyDataSetChanged()
-
+            imageUri?.let { imageAdapter.addNewPhoto(it) }
             val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
             mediaScanIntent.data = imageUri
             requireActivity().sendBroadcast(mediaScanIntent)
-
         } else
             super.onActivityResult(requestCode, resultCode, data)
     }
@@ -491,7 +466,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         val result = if (!savedConditions.isNullOrEmpty()) {
             savedConditions
         } else {
-            viewModel.getCheckedConditions(taskId, index!!)
+            viewModel.getCheckedConditions(taskId, index)
         }.split(",").map { it.trim() }
         massiv2.clear()
         for (feature in featureList) {
@@ -560,7 +535,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 } else if (binding.lat.text != "0.0") {
                     saveResult()
                 } else {
-                    askAboutCoords()
+                    askAboutSavingWithoutCoords()
                 }
                 return true
             }
@@ -568,13 +543,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         return super.onOptionsItemSelected(item)
     }
 
-    private fun askAboutCoords() {
+    private fun askAboutSavingWithoutCoords() {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
-                    if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(
-                            3
-                        ).toString() !in operators || binding.results.phone.text.length < 10)
+                    if (binding.results.phone.text.isNotEmpty()
+                        && (binding.results.phone.text.take(3).toString() !in operators
+                                || binding.results.phone.text.length < 10)
                     ) {
                         Toast.makeText(
                             requireContext(),
@@ -608,10 +583,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 goPrevious()
             }
         } else if (v.id == R.id.next) {
-            if (isResultSaved || !(binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                goNext()
-            } else {
+            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
                 showSaveOrNotDialog(true)
+            } else {
+                goNext()
             }
         } else if (v.id == R.id.date || v.id == R.id.new_date) {
             val dialog = DatePickerDialog(
@@ -693,6 +668,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         getBasicInfo(taskId)
     }
 
+    /**
+     * @param
+     *
+     */
     override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
         val selectedItem = parent.getItemAtPosition(position).toString()
         when (parent.id) {
@@ -704,9 +683,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     binding.infoTables.visibility = VISIBLE
                     binding.results.root.visibility = GONE
                 } else {
+                    loadResultTab()
                     binding.infoTables.visibility = GONE
                     binding.results.root.visibility = VISIBLE
-                    loadResultTab()
                 }
             }
             R.id.status_spinner -> {
@@ -729,7 +708,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun loadResultTab() {
 
-        val techHash = viewModel.getTechInfoTextByFields(taskId, index!!)
+        val techHash = viewModel.getTechInfoTextByFields(taskId, index)
         val controlInfo = StringBuilder()
 
         techHash.forEach { (key, value) ->
@@ -774,7 +753,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
                 "Counter_numb" -> {
                     counter = value
-                    if (!iconsLs.isNullOrEmpty()) {
+                    if (iconsLs.isNotEmpty()) {
                         val text = getNeededEmojis(icons, iconsLs)
                         createRow("Лічильник", "$counter $text", true)
                         iconsLs = ""
@@ -802,9 +781,24 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             resources.getString(R.string.contr_pokaz) + controlInfo.toString()
         binding.results.contrText.setTextColor(Color.YELLOW)
         binding.results.contrText.setTypeface(binding.results.contrText.typeface, Typeface.BOLD)
-
+        imageAdapter.deletePhoto(requireContext())
+        zone1watcher = registerWatcher(
+            binding.results.newMeters1,
+            binding.results.difference1,
+            binding.results.previousMeters1
+        )
+        zone2watcher = registerWatcher(
+            binding.results.newMeters2,
+            binding.results.difference2,
+            binding.results.previousMeters2
+        )
+        zone3watcher = registerWatcher(
+            binding.results.newMeters3,
+            binding.results.difference3,
+            binding.results.previousMeters3
+        )
         try {
-            val result = viewModel.getResult(taskId, index!!)
+            val result = viewModel.getResult(taskId, index)
             //statusSpinnerPosition = result.notDone?.toInt() ?: 0
             viewModel.statusSpinnerPosition.value = result.notDone?.toInt() ?: 0
             binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
@@ -814,27 +808,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             binding.results.newMeters1.setText(result.zone1)
             binding.results.newMeters2.setText(result.zone2)
             binding.results.newMeters3.setText(result.zone3)
-            zone1watcher = registerWatcher(
-                binding.results.newMeters1,
-                binding.results.difference1,
-                binding.results.previousMeters1
-            )
-            zone2watcher = registerWatcher(
-                binding.results.newMeters2,
-                binding.results.difference2,
-                binding.results.previousMeters2
-            )
-            zone3watcher = registerWatcher(
-                binding.results.newMeters3,
-                binding.results.difference3,
-                binding.results.previousMeters3
-            )
             binding.results.note.setText(result.note)
             binding.results.phone.setText(result.phoneNumber)
             binding.results.checkBox.isChecked = result.is_main == 1
-            deletePhoto()
+
             if (!result.photo.isNullOrEmpty()) {
-                addAddButton(Uri.parse(result.photo))
+                imageAdapter.addSavedPhoto(Uri.parse(result.photo))
             }
             val type = if (viewModel.statusSpinnerPosition.value == 0) {
                 "2"
@@ -868,7 +847,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 binding.results.phone.setText("")
                 binding.results.checkBox.isChecked = false
                 isResultSaved = false
-                deletePhoto()
                 imageAdapter.notifyDataSetChanged()
             } catch (e: Exception) {
                 //Log.d("errortestim", e.message.toString())
@@ -936,12 +914,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         if (!isFirstLoad) {
             loadResultTab()
         }
+        isFirstLoad = false
         basicFieldsTxt.clear()
         tdHash.clear()
     }
 
     private fun updateView(fieldsArray: List<String>) {
-        val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray, "TD$taskId", index!!)
+        val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray, "TD$taskId", index)
         binding.infoTable.removeAllViews()
 
         tdHash.forEach { (key, value) ->
@@ -1042,7 +1021,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             viewLifecycleOwner.lifecycleScope.launch {
                 viewModel.saveResults(
                     taskId,
-                    index!!,
+                    index,
                     date1,
                     isDone,
                     source,
@@ -1095,7 +1074,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         builder.setPositiveButton("Ок") { dialog, _ ->
             dialog.dismiss()
         }
-
         builder.show()
     }
 

@@ -5,7 +5,7 @@ import javax.inject.Inject
 
 class DirectoryRepository @Inject constructor(private val directoryDao: DirectoryDao) {
 
-    fun getBlockNames() = directoryDao.getFieldNames()
+    suspend fun getBlockNames() = directoryDao.getFieldNames()
 
     fun getFieldsByBlockName(name:String, taskId : Int) = directoryDao.getFieldsByBlockName(name, taskId)
 

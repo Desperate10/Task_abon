@@ -5,6 +5,11 @@ import android.database.Cursor
 import android.util.Log
 import androidx.room.*
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.util.function.Function
+import java.util.stream.Collectors
 
 
 @Entity(tableName = "base")
@@ -19,6 +24,9 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
 
         @Ignore
         fun getFieldsByBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
+            CoroutineScope(Dispatchers.IO).launch {
+
+            }
             var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
             var data : HashMap<String, String> = HashMap()
             var data2 : HashMap<String, String> = HashMap()
@@ -42,19 +50,11 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             while (csr.moveToNext()) {
                 data2[csr.getString(csr.getColumnIndex("fieldName"))] = csr.getString(csr.getColumnIndex("fieldNameTxt"))
             }
-            var common: HashMap<String, String> = HashMap()
-                //поиграться ещё
-            val newData = data.entries.map { data2.entries }.groupBy { it.forEach { it.key } }.values
-            //val newdata = data.map { data2 }.filter { it -> it.keys }
-            Log.d("testim1", newData.toString())
-            data.keys.forEach { key ->
-                data2.keys.forEach { key1 ->
-                    //Log.d("testim", "$key $key1")
-                    if (key == key1) {
-                        common[data2[key1]!!] = data[key]!!
-                    }
-                }
-            }
+            val common: HashMap<String, String> = HashMap()
+
+            data.flatMap { dataEntry -> data2
+                .filterKeys { dataEntry.key == it }
+                .map { common[it.value] = dataEntry.value }}
 
             csr.close()
 
@@ -80,7 +80,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
         @Ignore
         fun getCheckedConditions(sdb: SupportSQLiteDatabase, taskId: Int, index: Int) :String{
             var isExist = false
-            val cursor1 = sdb.query("PRAGMA table_info('TD$taskId')", null)
+            val cursor1 = sdb.query("PRAGMA table_info('TD$taskId')", emptyArray())
             cursor1.moveToFirst()
             do {
                 val currentColumn = cursor1.getString(1)
@@ -129,7 +129,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
         @Ignore
         fun insertRows(sdb: SupportSQLiteDatabase, tableName: String?, cv: ContentValues): Long? {
 
-            return sdb.insert(tableName, OnConflictStrategy.IGNORE, cv)
+            return tableName?.let { sdb.insert(it, OnConflictStrategy.IGNORE, cv) }
         }
 
         @Ignore

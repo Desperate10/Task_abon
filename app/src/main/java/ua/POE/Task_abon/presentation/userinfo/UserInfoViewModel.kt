@@ -3,6 +3,7 @@ package ua.POE.Task_abon.presentation.userinfo
 import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.*
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.CatalogDao
@@ -35,14 +36,16 @@ class UserInfoViewModel @ViewModelInject constructor(
     var sourceSpinnerPosition = MutableStateFlow(0)
     var customerIndex = MutableStateFlow(1)
 
+    private var _blockNames = MutableStateFlow(listOf("Результати"))
+    val blockNames : StateFlow<List<String>> = _blockNames
 
 
     var time = 0
     private val timer = Timer()
 
     init {
-        _isTrueEdit.value = false
         startTimer()
+        getBlockNames()
     }
 
     private fun startTimer() {
@@ -50,13 +53,20 @@ class UserInfoViewModel @ViewModelInject constructor(
             timer.scheduleAtFixedRate(object : TimerTask() {
                 override fun run() {
                     time++
-                    //   Log.d("testim", time.toString())
                 }
             }, 0, 1000)
         }
     }
 
-    fun getBlockNames(): MutableList<String> = directoryRepository.getBlockNames()
+    private fun getBlockNames() {
+        val job = viewModelScope.launch {
+            val blockNameList = mutableListOf<String>()
+            blockNameList.addAll(directoryRepository.getBlockNames())
+            blockNameList.add(0, "Результати")
+            _blockNames.value = blockNameList
+        }
+        job.cancel()
+    }
 
     fun getFieldsByBlockName(name: String, taskId: Int): List<Directory> =
         directoryRepository.getFieldsByBlockName(name, taskId)
