@@ -28,8 +28,6 @@ android {
     defaultConfig {
         minSdkVersion 19
         targetSdkVersion 30
-        versionCode 2
-        versionName '1.1'
     }
     buildTypes {
         release {
@@ -44,6 +42,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     buildToolsVersion '30.0.2'
+    namespace 'com.androidbuts.multispinnerfilter'
 }
 
 dependencies {
