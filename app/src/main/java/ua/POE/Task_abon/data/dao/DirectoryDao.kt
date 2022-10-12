@@ -1,13 +1,10 @@
 package ua.POE.Task_abon.data.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy.REPLACE
+import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
-import androidx.room.Update
 import ua.POE.Task_abon.data.entities.Directory
-import java.util.concurrent.Flow
 
 @Dao
 interface DirectoryDao {

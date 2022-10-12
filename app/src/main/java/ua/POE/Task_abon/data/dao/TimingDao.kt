@@ -1,10 +1,8 @@
 package ua.POE.Task_abon.data.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.OnConflictStrategy.IGNORE
+import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
 import ua.POE.Task_abon.data.entities.Timing
 
