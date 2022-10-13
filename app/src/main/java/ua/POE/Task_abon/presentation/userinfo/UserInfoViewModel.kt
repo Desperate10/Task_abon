@@ -29,16 +29,12 @@ class UserInfoViewModel @ViewModelInject constructor(
     private val catalogDao: CatalogDao
 ) : ViewModel() {
 
-    private var _isTrueEdit = MutableLiveData<Boolean>()
-    val isTrueEdit: MutableLiveData<Boolean> = _isTrueEdit
+    val statusSpinnerPosition = MutableStateFlow(0)
+    val sourceSpinnerPosition = MutableStateFlow(0)
+    val customerIndex = MutableStateFlow(1)
 
-    var statusSpinnerPosition = MutableStateFlow(0)
-    var sourceSpinnerPosition = MutableStateFlow(0)
-    var customerIndex = MutableStateFlow(1)
-
-    private var _blockNames = MutableStateFlow(listOf("Результати"))
+    private val _blockNames = MutableStateFlow(listOf("Результати"))
     val blockNames : StateFlow<List<String>> = _blockNames
-
 
     var time = 0
     private val timer = Timer()
@@ -88,7 +84,7 @@ class UserInfoViewModel @ViewModelInject constructor(
     //save date when pressing saveResult
     fun saveEditTiming(taskId: Int, num: String, firstEditDate: String, date: String) {
         viewModelScope.launch {
-            _isTrueEdit.value = true
+            //_isTrueEdit.value = true
             if (timingRepository.isStartTaskDateEmpty(taskId, num)) {
                 timingRepository.insertTiming(
                     Timing(

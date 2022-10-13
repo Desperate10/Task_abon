@@ -26,9 +26,6 @@ interface CatalogDao {
     @Query("SELECT * FROM catalog WHERE type = :type")
     fun getSourceList(type: String) : Flow<List<CatalogEntity>>
 
-    /*@Query("SELECT * FROM catalog WHERE type = :type")
-    fun getSourceListTest(type: String) : Flow<List<CatalogEntity>>*/
-
     @Query("SELECT text FROM catalog WHERE code = :code AND type = :type")
     fun getSourceByCode(code: String, type: String) : String
 

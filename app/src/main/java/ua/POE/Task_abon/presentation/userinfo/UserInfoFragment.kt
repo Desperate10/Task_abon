@@ -673,9 +673,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
      *
      */
     override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-        val selectedItem = parent.getItemAtPosition(position).toString()
         when (parent.id) {
             R.id.block_name -> {
+                val selectedItem = parent.getItemAtPosition(position).toString()
                 if (selectedItem != "Результати") {
                     val fields = viewModel.getFieldsByBlockName(selectedItem, taskId)
                     fieldsArray = fields.map { it.fieldName.toString() }
@@ -880,12 +880,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                         numbpers = value
                     }
                     "icons_account" -> {
-                        if (value.isNotEmpty()) {
+                    //    if (value.isNotEmpty()) {
                             val text = getNeededEmojis(icons, value)
                             createRow(numbersField, "$numbpers $text", true)
-                        } else {
-                            createRow(numbersField, numbpers, true)
-                        }
+                    //    } else {
+                     //       createRow(numbersField, numbpers, true)
+                    //    }
                     }
                     "Адреса" -> {
                         createRow(key, value, true)
@@ -904,7 +904,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                         }
                     }
                     else -> {
-                        if (!key.contains("Значки".toLowerCase()))
+                        if (!key.contains("Значки".lowercase(Locale.getDefault())))
                             stringBuilder.append("$value ")
                     }
                 }
