@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
+import ua.POE.Task_abon.domain.model.BasicInfo
 import ua.POE.Task_abon.domain.model.Catalog
 import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.domain.model.Image
@@ -142,6 +143,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.customerIndex
+                    .flatMapLatest {
+                        //добавить запрос во viewModel для получения названия полей
+                        и попробовать так
+                    viewModel.getCustomerBasicInfo(taskId, index, icons)
+                }.collect {
+                   // getBasicInfo(it)
+                }
+            }
+        }
         /*viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.customerIndex.flatMapMerge { index ->
@@ -170,6 +183,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             count = arguments?.getInt("count") ?: throw NullPointerException("count is null")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
+        viewModel.customerIndex.value = index
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
@@ -860,6 +874,19 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         //declare values before saving the state
         super.onSaveInstanceState(savedInstanceState)
     }
+
+    /*private fun getBasicInfo(basicInfo: BasicInfo) {
+        binding.personalAccount?.text = basicInfo.personalAccount
+        binding.address?.text = basicInfo.address
+        binding.name?.text = basicInfo.name
+        binding.counter?.text = basicInfo.counter
+        binding.otherInfo?.text = basicInfo.other
+
+        if (!isFirstLoad) {
+            loadResultTab()
+        }
+        isFirstLoad = false
+    }*/
 
     private fun getBasicInfo(taskId: Int) {
 

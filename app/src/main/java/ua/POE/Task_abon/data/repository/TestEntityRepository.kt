@@ -13,6 +13,9 @@ class TestEntityRepository @Inject constructor(appDatabase: AppDatabase) {
 
     private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
 
+    fun getBasicInfoBlock(fields: List<String>, tableName: String, num: Int) =
+        TestEntity.getBasicInfoBlock(sdb, tableName, fields, num)
+
     fun getFieldsByBlock(tableName: String, fields: List<String>, num: Int) =
         TestEntity.getFieldsByBlock(sdb, tableName, fields, num)
 
@@ -46,4 +49,6 @@ class TestEntityRepository @Inject constructor(appDatabase: AppDatabase) {
     fun deleteTable(taskId: Int) {
         TestEntity.dropTable(sdbw, taskId)
     }
+
+
 }

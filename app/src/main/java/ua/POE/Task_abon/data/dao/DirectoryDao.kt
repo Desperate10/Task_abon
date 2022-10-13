@@ -33,6 +33,9 @@ interface DirectoryDao {
     @Query("SELECT * FROM directory WHERE fieldBlockName= :name and taskId = :taskId")
     fun getFieldsByBlockName(name : String, taskId: Int) : List<Directory>
 
+    @Query("SELECT fieldName FROM directory WHERE fieldBlockName= '' and taskId = :taskId")
+    suspend fun getBasicFields(taskId: Int) : List<String>
+
     @Query("SELECT DISTINCT fieldBlockName FROM directory WHERE fieldBlockName != \"\"")
     suspend fun getFieldNames() : List<String>
 

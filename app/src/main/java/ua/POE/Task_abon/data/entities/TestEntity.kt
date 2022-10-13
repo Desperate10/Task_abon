@@ -8,6 +8,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import ua.POE.Task_abon.domain.model.BasicInfo
 import java.util.function.Function
 import java.util.stream.Collectors
 
@@ -23,10 +24,24 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
     const val BASETABLE_NAME_PLACEHOLDER = ":tablename:"
 
         @Ignore
-        fun getFieldsByBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
-            CoroutineScope(Dispatchers.IO).launch {
+        fun getBasicInfoBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
+            var csr: Cursor =
+                sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
+            var data: HashMap<String, String> = HashMap()
+            csr.moveToFirst()
+            do {
+                for (i in fields.indices) {
+                    var field = csr.getString(csr.getColumnIndex(fields[i]))
+                    data[fields[i]] = field
+                }
+            } while (csr.moveToNext())
+            csr.close()
+            return data
+        }
 
-            }
+        @Ignore
+        fun getFieldsByBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
+            Log.d("testim1", fields.joinToString())
             var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
             var data : HashMap<String, String> = HashMap()
             var data2 : HashMap<String, String> = HashMap()
@@ -38,7 +53,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
                 }
             } while (csr.moveToNext())
             csr.close()
-
+            Log.d("testim", data.toString())
             val sl = ArrayList<String>()
             for (i in fields.indices) {
                 sl.add("\"${fields[i]}\"")

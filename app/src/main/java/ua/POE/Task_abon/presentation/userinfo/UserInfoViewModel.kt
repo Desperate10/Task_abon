@@ -1,24 +1,31 @@
 package ua.POE.Task_abon.presentation.userinfo
 
 import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.*
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
-import ua.POE.Task_abon.data.entities.*
+import ua.POE.Task_abon.data.entities.Directory
+import ua.POE.Task_abon.data.entities.Result
+import ua.POE.Task_abon.data.entities.TaskEntity
+import ua.POE.Task_abon.data.entities.TestEntity.Companion.getBasicInfoBlock
+import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
 import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
+import ua.POE.Task_abon.domain.model.BasicInfo
 import ua.POE.Task_abon.domain.model.Catalog
+import ua.POE.Task_abon.domain.model.Icons
+import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class UserInfoViewModel @ViewModelInject constructor(
     private val directoryRepository: DirectoryRepository,
@@ -34,7 +41,16 @@ class UserInfoViewModel @ViewModelInject constructor(
     val customerIndex = MutableStateFlow(1)
 
     private val _blockNames = MutableStateFlow(listOf("Результати"))
-    val blockNames : StateFlow<List<String>> = _blockNames
+    val blockNames: StateFlow<List<String>> = _blockNames
+
+    private var basicInfoFields = listOf<String>()
+
+    private var personalAccount = ""
+    private var personalAccountEmoji = ""
+    private var address = ""
+    private var name = ""
+    private var counter = ""
+    private var counterEmoji = ""
 
     var time = 0
     private val timer = Timer()
@@ -44,13 +60,20 @@ class UserInfoViewModel @ViewModelInject constructor(
         getBlockNames()
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        timer.cancel()
+    }
+
     private fun startTimer() {
         viewModelScope.launch {
-            timer.scheduleAtFixedRate(object : TimerTask() {
-                override fun run() {
-                    time++
-                }
-            }, 0, 1000)
+            withContext(Dispatchers.IO) {
+                timer.scheduleAtFixedRate(object : TimerTask() {
+                    override fun run() {
+                        time++
+                    }
+                }, 0, 1000)
+            }
         }
     }
 
@@ -64,13 +87,85 @@ class UserInfoViewModel @ViewModelInject constructor(
         job.cancel()
     }
 
+    private fun getBasicFields() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                basicInfoFields = directoryRepository.getBasicFields(358281)
+            }
+        }
+    }
+
+    fun getCustomerBasicInfo(taskId: Int, index: Int, icons: ArrayList<Icons>) =
+        flow {
+            val basicInfoFieldsList = ArrayList<String>()
+            val basicFields = directoryRepository.getBasicFields(taskId)
+            basicInfoFieldsList.addAll(basicFields)
+            basicInfoFieldsList.add("Counter_numb")
+            val tdHash = getBasicInfo(basicInfoFieldsList, "TD$taskId", index)
+            var pillar = ""
+            val otherInfo = StringBuilder()
+            tdHash.forEach { (key, value) ->
+                if (key.isNotEmpty()) {
+                    when (key) {
+                        "Numbpers" -> {
+                            personalAccount = value
+                            emit(key to "$personalAccount $personalAccountEmoji")
+                        }
+                        "icons_account" -> {
+                            val text = getNeededEmojis(icons, value)
+                            personalAccountEmoji = text
+                            //emit(key to "$personalAccount $text")//personalAccountEmoji = "$personalAccount $text"
+                        }
+                        "Adress" -> {
+                            address = value
+                            emit(key to "$address")
+                        }
+                        "family" -> {
+                            name = value
+                            emit(key to name)
+                        }
+                        "opora" -> {
+                            pillar = "Оп.$value"
+                        }
+                        "Counter_numb" -> {
+                            counter = value
+                        }
+                        "icons_counter" -> {
+                            val icons = getNeededEmojis(icons, value)
+                            counterEmoji = "$counter $icons"
+                            emit(key to "$counterEmoji")
+                        }
+                        "tp", "Lep", "fider" -> {
+                            otherInfo.append("$value ")
+                        }
+                    }
+                }
+            }
+            //otherInfo.append(pillar).toString()
+            emit("info" to otherInfo.append(pillar).toString())
+            /*emit(
+                BasicInfo(
+                    personalAccount = personalAccountEmoji,
+                    address = address,
+                    name = name,
+                    counter = counterEmoji,
+                    other = otherInfo.toString()
+                )
+            )*/
+        }.flowOn(Dispatchers.Default)/*.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            BasicInfo("", "", "", "", "")*/
+        //)
+
+    fun getBasicInfo(fields: List<String>, tableName: String, num: Int) =
+        testEntityRepository.getBasicInfoBlock(fields, tableName, num)
+
     fun getFieldsByBlockName(name: String, taskId: Int): List<Directory> =
         directoryRepository.getFieldsByBlockName(name, taskId)
 
     fun getTextFieldsByBlockName(fields: List<String>, tableName: String, num: Int) =
         testEntityRepository.getFieldsByBlock(tableName, fields, num)
-
-//    fun getTextByFields(fields: List<String>, tableName: String, num : Int) = testEntityRepository.getTextByFields(tableName, fields, num)
 
     fun getTechInfoTextByFields(taskId: Int, index: Int): HashMap<String, String> {
         val tech = ArrayList<String>()
