@@ -46,28 +46,25 @@ class UserInfoViewModel @ViewModelInject constructor(
     private var basicInfoFields = listOf<String>()
 
     private var personalAccount = ""
+    private var personalAccountKey = ""
     private var personalAccountEmoji = ""
     private var address = ""
     private var name = ""
-    private var counter = ""
+    private var counterKey = ""
+    private var counterValue = ""
     private var counterEmoji = ""
 
     var time = 0
-    private val timer = Timer()
 
     init {
         startTimer()
         getBlockNames()
     }
 
-    override fun onCleared() {
-        super.onCleared()
-        timer.cancel()
-    }
-
     private fun startTimer() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                val timer = Timer()
                 timer.scheduleAtFixedRate(object : TimerTask() {
                     override fun run() {
                         time++
@@ -87,76 +84,77 @@ class UserInfoViewModel @ViewModelInject constructor(
         job.cancel()
     }
 
-    private fun getBasicFields() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                basicInfoFields = directoryRepository.getBasicFields(358281)
-            }
-        }
-    }
-
     fun getCustomerBasicInfo(taskId: Int, index: Int, icons: ArrayList<Icons>) =
         flow {
             val basicInfoFieldsList = ArrayList<String>()
             val basicFields = directoryRepository.getBasicFields(taskId)
             basicInfoFieldsList.addAll(basicFields)
             basicInfoFieldsList.add("Counter_numb")
-            val tdHash = getBasicInfo(basicInfoFieldsList, "TD$taskId", index)
+            val tdHash = getTextFieldsByBlockName(basicInfoFieldsList, "TD$taskId", index)
+            val basicInfoNameValue = mutableListOf<Pair<String,String>>()
             var pillar = ""
             val otherInfo = StringBuilder()
             tdHash.forEach { (key, value) ->
                 if (key.isNotEmpty()) {
                     when (key) {
-                        "Numbpers" -> {
+                        "О/р" -> {
+                            personalAccountKey = key
                             personalAccount = value
-                            emit(key to "$personalAccount $personalAccountEmoji")
+                          //  emit(key to "$personalAccount $personalAccountEmoji")
                         }
                         "icons_account" -> {
                             val text = getNeededEmojis(icons, value)
-                            personalAccountEmoji = text
+                            personalAccountEmoji = "$personalAccount $text"
+                            basicInfoNameValue.add(personalAccountKey to personalAccountEmoji)
                             //emit(key to "$personalAccount $text")//personalAccountEmoji = "$personalAccount $text"
                         }
-                        "Adress" -> {
+                        "Адреса" -> {
                             address = value
-                            emit(key to "$address")
+                            basicInfoNameValue.add(key to address)
+                         //   emit(key to "$address")
                         }
-                        "family" -> {
+                        "ПІБ" -> {
                             name = value
-                            emit(key to name)
+                            basicInfoNameValue.add(key to name)
+                        //    emit(key to name)
                         }
-                        "opora" -> {
+                        "Опора" -> {
                             pillar = "Оп.$value"
                         }
-                        "Counter_numb" -> {
-                            counter = value
+                        "№ ліч." -> {
+                            counterKey = key
+                            counterValue = value
                         }
                         "icons_counter" -> {
                             val icons = getNeededEmojis(icons, value)
-                            counterEmoji = "$counter $icons"
-                            emit(key to "$counterEmoji")
+                            counterEmoji = "$counterValue $icons"
+                            basicInfoNameValue.add(counterKey to counterEmoji)
+                           // emit(key to "$counterEmoji")
                         }
-                        "tp", "Lep", "fider" -> {
+                        //"tp", "Lep", "fider" -> {
+                        else -> {
                             otherInfo.append("$value ")
                         }
                     }
                 }
             }
             //otherInfo.append(pillar).toString()
-            emit("info" to otherInfo.append(pillar).toString())
-            /*emit(
-                BasicInfo(
+            basicInfoNameValue.add("Інше/Фiдер" to otherInfo.append(pillar).toString())
+            emit(
+                /*BasicInfo(
                     personalAccount = personalAccountEmoji,
                     address = address,
                     name = name,
                     counter = counterEmoji,
                     other = otherInfo.toString()
-                )
-            )*/
-        }.flowOn(Dispatchers.Default)/*.stateIn(
+                )*/
+            basicInfoNameValue
+            )
+        }.flowOn(Dispatchers.Default).stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            BasicInfo("", "", "", "", "")*/
-        //)
+            null
+        )
 
     fun getBasicInfo(fields: List<String>, tableName: String, num: Int) =
         testEntityRepository.getBasicInfoBlock(fields, tableName, num)

@@ -148,11 +148,11 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 viewModel.customerIndex
                     .flatMapLatest {
                         //добавить запрос во viewModel для получения названия полей
-                        и попробовать так
-                    viewModel.getCustomerBasicInfo(taskId, index, icons)
-                }.collect {
-                   // getBasicInfo(it)
-                }
+                        //и попробовать так
+                        viewModel.getCustomerBasicInfo(taskId, index, icons)
+                    }.collectLatest {
+                        it?.let { it1 -> getBasicInfo(it1) }
+                    }
             }
         }
         /*viewLifecycleOwner.lifecycleScope.launch {
@@ -190,8 +190,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         //читаем иконки
         icons = resources.getRawTextFile(R.raw.icons)
 
-        getBasicInfo(taskId)
-
+        //getBasicInfo(taskId)
 
 
         checkPermissions()
@@ -663,7 +662,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun selectCustomer(viewId: Int) {
         resetTimer()
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-        index = if ( viewId == R.id.next) {
+        index = if (viewId == R.id.next) {
             if (index != count) {
                 index.plus(1)
             } else {
@@ -679,7 +678,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         viewModel.customerIndex.value = index
         if (fieldsArray.isNotEmpty())
             updateView(fieldsArray)
-        getBasicInfo(taskId)
+        //getBasicInfo(taskId)
     }
 
     /**
@@ -767,13 +766,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
                 "Counter_numb" -> {
                     counter = value
-                    if (iconsLs.isNotEmpty()) {
+                    /*if (iconsLs.isNotEmpty()) {
                         val text = getNeededEmojis(icons, iconsLs)
                         createRow("Лічильник", "$counter $text", true)
                         iconsLs = ""
                     } else {
                         createRow("Лічильник", counter, true)
-                    }
+                    }*/
                 }
                 "Rozr" -> {
                     capacity = value
@@ -875,20 +874,25 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         super.onSaveInstanceState(savedInstanceState)
     }
 
-    /*private fun getBasicInfo(basicInfo: BasicInfo) {
-        binding.personalAccount?.text = basicInfo.personalAccount
-        binding.address?.text = basicInfo.address
-        binding.name?.text = basicInfo.name
-        binding.counter?.text = basicInfo.counter
-        binding.otherInfo?.text = basicInfo.other
+    private fun getBasicInfo(basicInfo: List<Pair<String, String>>) {
+        binding.basicTable.removeAllViews()
+
+        basicInfo.forEach {
+            createRow(it.first, it.second, true)
+        }
+        /* binding.personalAccount?.text = basicInfo.personalAccount
+         binding.address?.text = basicInfo.address
+         binding.name?.text = basicInfo.name
+         binding.counter?.text = basicInfo.counter
+         binding.otherInfo?.text = basicInfo.other*/
 
         if (!isFirstLoad) {
             loadResultTab()
         }
         isFirstLoad = false
-    }*/
+    }
 
-    private fun getBasicInfo(taskId: Int) {
+    /*private fun getBasicInfo(taskId: Int) {
 
         binding.basicTable.removeAllViews()
         val fields = viewModel.getFieldsByBlockName("", taskId)
@@ -944,7 +948,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         isFirstLoad = false
         basicFieldsTxt.clear()
         tdHash.clear()
-    }
+    }*/
 
     private fun updateView(fieldsArray: List<String>) {
         val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray, "TD$taskId", index)

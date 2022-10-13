@@ -41,7 +41,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
 
         @Ignore
         fun getFieldsByBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
-            Log.d("testim1", fields.joinToString())
+            //Log.d("testim1", fields.joinToString())
             var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
             var data : HashMap<String, String> = HashMap()
             var data2 : HashMap<String, String> = HashMap()
@@ -53,7 +53,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
                 }
             } while (csr.moveToNext())
             csr.close()
-            Log.d("testim", data.toString())
+            //Log.d("testim", data.toString())
             val sl = ArrayList<String>()
             for (i in fields.indices) {
                 sl.add("\"${fields[i]}\"")
