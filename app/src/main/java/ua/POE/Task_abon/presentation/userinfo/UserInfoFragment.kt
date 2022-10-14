@@ -183,7 +183,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             count = arguments?.getInt("count") ?: throw NullPointerException("count is null")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
-        viewModel.customerIndex.value = index
+        viewModel.setSelectedCustomer(index)
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
@@ -652,10 +652,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun goPrevious() {
+        viewModel.selectPreviousCustomer()
         selectCustomer(R.id.previous)
     }
 
     private fun goNext() {
+        viewModel.selectNextCustomer()
         selectCustomer(R.id.next)
     }
 
@@ -675,7 +677,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 count
             }
         }
-        viewModel.customerIndex.value = index
+        viewModel.setSelectedCustomer(index)
+
         if (fieldsArray.isNotEmpty())
             updateView(fieldsArray)
         //getBasicInfo(taskId)
@@ -702,10 +705,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
             R.id.status_spinner -> {
-                viewModel.statusSpinnerPosition.value = position
+                viewModel.setStatusSpinnerPosition(position)
             }
             R.id.source_spinner -> {
-                viewModel.sourceSpinnerPosition.value = position
+                viewModel.setSourceSpinnerPosition(position)
             }
         }
     }
@@ -813,7 +816,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         try {
             val result = viewModel.getResult(taskId, index)
             //statusSpinnerPosition = result.notDone?.toInt() ?: 0
-            viewModel.statusSpinnerPosition.value = result.notDone?.toInt() ?: 0
+            viewModel.setStatusSpinnerPosition(result.notDone?.toInt() ?: 0)
             binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
             loadSpinners(result.point_condition)
             binding.results.date.text = result.doneDate
@@ -845,7 +848,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         } catch (e: Exception) {
             try {
-                viewModel.statusSpinnerPosition.value = 0
+                viewModel.setStatusSpinnerPosition(0)
                 loadSpinners("")
                 binding.results.date.text = sdformat.format(calendar.time)
                 binding.results.newDate.text = sdformat.format(calendar.time)

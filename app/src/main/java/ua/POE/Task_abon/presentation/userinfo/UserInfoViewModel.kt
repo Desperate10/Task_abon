@@ -36,14 +36,16 @@ class UserInfoViewModel @Inject constructor(
     private val catalogDao: CatalogDao
 ) : ViewModel() {
 
-    val statusSpinnerPosition = MutableStateFlow(0)
-    val sourceSpinnerPosition = MutableStateFlow(0)
-    val customerIndex = MutableStateFlow(1)
+    private val _statusSpinnerPosition = MutableStateFlow(0)
+    val statusSpinnerPosition :StateFlow<Int> = _statusSpinnerPosition
+    private val _sourceSpinnerPosition = MutableStateFlow(0)
+    val sourceSpinnerPosition :StateFlow<Int> = _sourceSpinnerPosition
+
+    private val _customerIndex = MutableStateFlow(1)
+    val customerIndex: StateFlow<Int> = _customerIndex
 
     private val _blockNames = MutableStateFlow(listOf("Результати"))
     val blockNames: StateFlow<List<String>> = _blockNames
-
-    private var basicInfoFields = listOf<String>()
 
     private var personalAccount = ""
     private var personalAccountKey = ""
@@ -318,5 +320,26 @@ class UserInfoViewModel @Inject constructor(
             .flowOn(Dispatchers.Default)
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     }
+
+    fun setStatusSpinnerPosition(position: Int) {
+        _statusSpinnerPosition.value = position
+    }
+
+    fun setSourceSpinnerPosition(position: Int) {
+        _sourceSpinnerPosition.value = position
+    }
+
+    fun setSelectedCustomer(index: Int) {
+        _customerIndex.value = index
+    }
+
+    fun selectPreviousCustomer() {
+        TODO("Not yet implemented")
+    }
+
+    fun selectNextCustomer() {
+        TODO("Not yet implemented")
+    }
+
 
 }
