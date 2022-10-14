@@ -1,8 +1,8 @@
 package ua.POE.Task_abon.presentation.userinfo
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,7 +12,6 @@ import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.entities.Directory
 import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.TaskEntity
-import ua.POE.Task_abon.data.entities.TestEntity.Companion.getBasicInfoBlock
 import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
 import ua.POE.Task_abon.data.repository.DirectoryRepository
@@ -25,9 +24,10 @@ import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
 import java.util.*
-import kotlin.collections.ArrayList
+import javax.inject.Inject
 
-class UserInfoViewModel @ViewModelInject constructor(
+@HiltViewModel
+class UserInfoViewModel @Inject constructor(
     private val directoryRepository: DirectoryRepository,
     private val taskRepository: TaskRepository,
     private val testEntityRepository: TestEntityRepository,
@@ -54,6 +54,7 @@ class UserInfoViewModel @ViewModelInject constructor(
     private var counterValue = ""
     private var counterEmoji = ""
 
+    private val timer = Timer()
     var time = 0
 
     init {
@@ -61,10 +62,14 @@ class UserInfoViewModel @ViewModelInject constructor(
         getBlockNames()
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        timer.cancel()
+    }
+
     private fun startTimer() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                val timer = Timer()
                 timer.scheduleAtFixedRate(object : TimerTask() {
                     override fun run() {
                         time++
@@ -75,13 +80,12 @@ class UserInfoViewModel @ViewModelInject constructor(
     }
 
     private fun getBlockNames() {
-        val job = viewModelScope.launch {
+        viewModelScope.launch {
             val blockNameList = mutableListOf<String>()
             blockNameList.addAll(directoryRepository.getBlockNames())
             blockNameList.add(0, "Результати")
             _blockNames.value = blockNameList
         }
-        job.cancel()
     }
 
     fun getCustomerBasicInfo(taskId: Int, index: Int, icons: ArrayList<Icons>) =
@@ -91,7 +95,6 @@ class UserInfoViewModel @ViewModelInject constructor(
             basicInfoFieldsList.addAll(basicFields)
             basicInfoFieldsList.add("Counter_numb")
             val tdHash = getTextFieldsByBlockName(basicInfoFieldsList, "TD$taskId", index)
-            val basicInfoNameValue = mutableListOf<Pair<String,String>>()
             var pillar = ""
             val otherInfo = StringBuilder()
             tdHash.forEach { (key, value) ->
@@ -100,60 +103,48 @@ class UserInfoViewModel @ViewModelInject constructor(
                         "О/р" -> {
                             personalAccountKey = key
                             personalAccount = value
-                          //  emit(key to "$personalAccount $personalAccountEmoji")
                         }
                         "icons_account" -> {
                             val text = getNeededEmojis(icons, value)
                             personalAccountEmoji = "$personalAccount $text"
-                            basicInfoNameValue.add(personalAccountKey to personalAccountEmoji)
-                            //emit(key to "$personalAccount $text")//personalAccountEmoji = "$personalAccount $text"
                         }
                         "Адреса" -> {
                             address = value
-                            basicInfoNameValue.add(key to address)
-                         //   emit(key to "$address")
                         }
                         "ПІБ" -> {
                             name = value
-                            basicInfoNameValue.add(key to name)
-                        //    emit(key to name)
                         }
                         "Опора" -> {
                             pillar = "Оп.$value"
                         }
                         "№ ліч." -> {
-                            counterKey = key
                             counterValue = value
+                            counterEmoji = "$counterValue $counterKey"
                         }
                         "icons_counter" -> {
-                            val icons = getNeededEmojis(icons, value)
-                            counterEmoji = "$counterValue $icons"
-                            basicInfoNameValue.add(counterKey to counterEmoji)
-                           // emit(key to "$counterEmoji")
+                            counterKey = getNeededEmojis(icons, value)
                         }
-                        //"tp", "Lep", "fider" -> {
                         else -> {
+                            if(value.isNotEmpty())
                             otherInfo.append("$value ")
                         }
                     }
                 }
             }
-            //otherInfo.append(pillar).toString()
-            basicInfoNameValue.add("Інше/Фiдер" to otherInfo.append(pillar).toString())
+            otherInfo.append(pillar).toString()
             emit(
-                /*BasicInfo(
+                BasicInfo(
                     personalAccount = personalAccountEmoji,
                     address = address,
                     name = name,
                     counter = counterEmoji,
                     other = otherInfo.toString()
-                )*/
-            basicInfoNameValue
+                )
             )
         }.flowOn(Dispatchers.Default).stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(5000),
-            null
+            BasicInfo("","","", "", "")
         )
 
     fun getBasicInfo(fields: List<String>, tableName: String, num: Int) =

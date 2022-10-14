@@ -36,6 +36,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
                 }
             } while (csr.moveToNext())
             csr.close()
+
             return data
         }
 

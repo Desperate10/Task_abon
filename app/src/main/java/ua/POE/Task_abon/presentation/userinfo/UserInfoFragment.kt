@@ -151,7 +151,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                         //и попробовать так
                         viewModel.getCustomerBasicInfo(taskId, index, icons)
                     }.collectLatest {
-                        it?.let { it1 -> getBasicInfo(it1) }
+                        getBasicInfo(it)
                     }
             }
         }
@@ -195,7 +195,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         checkPermissions()
         setupSecondarySpinners()
-
         registerClickListeners()
         setupImageAdapter()
         observeViewModel()
@@ -217,6 +216,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             )
         binding.blockName.adapter = adapter
         binding.blockName.onItemSelectedListener = this
+        adapter.notifyDataSetChanged()
     }
 
     private fun setupSecondarySpinners() {
@@ -874,81 +874,24 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         super.onSaveInstanceState(savedInstanceState)
     }
 
-    private fun getBasicInfo(basicInfo: List<Pair<String, String>>) {
-        binding.basicTable.removeAllViews()
+    private fun getBasicInfo(basicInfo: BasicInfo) {
+        //binding.basicTable.removeAllViews()
 
-        basicInfo.forEach {
+        /*basicInfo.forEach {
             createRow(it.first, it.second, true)
-        }
-        /* binding.personalAccount?.text = basicInfo.personalAccount
+        }*/
+         binding.personalAccount?.text = basicInfo.personalAccount
          binding.address?.text = basicInfo.address
          binding.name?.text = basicInfo.name
          binding.counter?.text = basicInfo.counter
-         binding.otherInfo?.text = basicInfo.other*/
+         binding.otherInfo?.text = basicInfo.other
+
 
         if (!isFirstLoad) {
             loadResultTab()
         }
         isFirstLoad = false
     }
-
-    /*private fun getBasicInfo(taskId: Int) {
-
-        binding.basicTable.removeAllViews()
-        val fields = viewModel.getFieldsByBlockName("", taskId)
-        for (element in fields) {
-            element.fieldName?.let { basicFieldsTxt.add(it) }
-        }
-        val tdHash = viewModel.getTextFieldsByBlockName(basicFieldsTxt, "TD$taskId", index)
-        val stringBuilder = StringBuilder()
-        var opora = ""
-
-        tdHash.forEach { (key, value) ->
-            if (key.isNotEmpty()) {
-                when (key) {
-                    "О/р" -> {
-                        numbersField = key
-                        numbpers = value
-                    }
-                    "icons_account" -> {
-                    //    if (value.isNotEmpty()) {
-                            val text = getNeededEmojis(icons, value)
-                            createRow(numbersField, "$numbpers $text", true)
-                    //    } else {
-                     //       createRow(numbersField, numbpers, true)
-                    //    }
-                    }
-                    "Адреса" -> {
-                        createRow(key, value, true)
-                        adress = value
-                    }
-                    "ПІБ" -> {
-                        createRow(key, value, true)
-                        family = value
-                    }
-                    "Опора" -> {
-                        opora = "Оп.$value"
-                    }
-                    "icons_counter" -> {
-                        if (value.isNotEmpty()) {
-                            iconsLs = value
-                        }
-                    }
-                    else -> {
-                        if (!key.contains("Значки".lowercase(Locale.getDefault())))
-                            stringBuilder.append("$value ")
-                    }
-                }
-            }
-        }
-        createRow("Інше/Фiдер", stringBuilder.append(opora).toString(), true)
-        if (!isFirstLoad) {
-            loadResultTab()
-        }
-        isFirstLoad = false
-        basicFieldsTxt.clear()
-        tdHash.clear()
-    }*/
 
     private fun updateView(fieldsArray: List<String>) {
         val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray, "TD$taskId", index)
@@ -986,10 +929,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 val text: TextView = row.findViewById(R.id.data)
                 text.text = data
                 text.setOnClickListener {
-                    try {
-                        showIconsDialog(data.substringAfter(" "))
-                    } catch (e: IndexOutOfBoundsException) {
-                    }
+
                 }
             }
             name != "Телефон" -> {
