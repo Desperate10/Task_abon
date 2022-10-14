@@ -42,6 +42,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
+import ua.POE.Task_abon.domain.model.BasicInfo
 import ua.POE.Task_abon.domain.model.Catalog
 import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.domain.model.Image
@@ -142,6 +143,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.customerIndex
+                    .flatMapLatest {
+                        //добавить запрос во viewModel для получения названия полей
+                        //и попробовать так
+                        viewModel.getCustomerBasicInfo(taskId, index, icons)
+                    }.collectLatest {
+                        getBasicInfo(it)
+                    }
+            }
+        }
         /*viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.customerIndex.flatMapMerge { index ->
@@ -170,19 +183,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             count = arguments?.getInt("count") ?: throw NullPointerException("count is null")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
+        viewModel.customerIndex.value = index
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         //читаем иконки
         icons = resources.getRawTextFile(R.raw.icons)
 
-        getBasicInfo(taskId)
-
+        //getBasicInfo(taskId)
 
 
         checkPermissions()
         setupSecondarySpinners()
-
         registerClickListeners()
         setupImageAdapter()
         observeViewModel()
@@ -204,6 +216,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             )
         binding.blockName.adapter = adapter
         binding.blockName.onItemSelectedListener = this
+        adapter.notifyDataSetChanged()
     }
 
     private fun setupSecondarySpinners() {
@@ -649,7 +662,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun selectCustomer(viewId: Int) {
         resetTimer()
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-        index = if ( viewId == R.id.next) {
+        index = if (viewId == R.id.next) {
             if (index != count) {
                 index.plus(1)
             } else {
@@ -665,7 +678,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         viewModel.customerIndex.value = index
         if (fieldsArray.isNotEmpty())
             updateView(fieldsArray)
-        getBasicInfo(taskId)
+        //getBasicInfo(taskId)
     }
 
     /**
@@ -753,13 +766,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
                 "Counter_numb" -> {
                     counter = value
-                    if (iconsLs.isNotEmpty()) {
+                    /*if (iconsLs.isNotEmpty()) {
                         val text = getNeededEmojis(icons, iconsLs)
                         createRow("Лічильник", "$counter $text", true)
                         iconsLs = ""
                     } else {
                         createRow("Лічильник", counter, true)
-                    }
+                    }*/
                 }
                 "Rozr" -> {
                     capacity = value
@@ -861,62 +874,23 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         super.onSaveInstanceState(savedInstanceState)
     }
 
-    private fun getBasicInfo(taskId: Int) {
+    private fun getBasicInfo(basicInfo: BasicInfo) {
+        //binding.basicTable.removeAllViews()
 
-        binding.basicTable.removeAllViews()
-        val fields = viewModel.getFieldsByBlockName("", taskId)
-        for (element in fields) {
-            element.fieldName?.let { basicFieldsTxt.add(it) }
-        }
-        val tdHash = viewModel.getTextFieldsByBlockName(basicFieldsTxt, "TD$taskId", index)
-        val stringBuilder = StringBuilder()
-        var opora = ""
+        /*basicInfo.forEach {
+            createRow(it.first, it.second, true)
+        }*/
+         binding.personalAccount?.text = basicInfo.personalAccount
+         binding.address?.text = basicInfo.address
+         binding.name?.text = basicInfo.name
+         binding.counter?.text = basicInfo.counter
+         binding.otherInfo?.text = basicInfo.other
 
-        tdHash.forEach { (key, value) ->
-            if (key.isNotEmpty()) {
-                when (key) {
-                    "О/р" -> {
-                        numbersField = key
-                        numbpers = value
-                    }
-                    "icons_account" -> {
-                    //    if (value.isNotEmpty()) {
-                            val text = getNeededEmojis(icons, value)
-                            createRow(numbersField, "$numbpers $text", true)
-                    //    } else {
-                     //       createRow(numbersField, numbpers, true)
-                    //    }
-                    }
-                    "Адреса" -> {
-                        createRow(key, value, true)
-                        adress = value
-                    }
-                    "ПІБ" -> {
-                        createRow(key, value, true)
-                        family = value
-                    }
-                    "Опора" -> {
-                        opora = "Оп.$value"
-                    }
-                    "icons_counter" -> {
-                        if (value.isNotEmpty()) {
-                            iconsLs = value
-                        }
-                    }
-                    else -> {
-                        if (!key.contains("Значки".lowercase(Locale.getDefault())))
-                            stringBuilder.append("$value ")
-                    }
-                }
-            }
-        }
-        createRow("Інше/Фiдер", stringBuilder.append(opora).toString(), true)
+
         if (!isFirstLoad) {
             loadResultTab()
         }
         isFirstLoad = false
-        basicFieldsTxt.clear()
-        tdHash.clear()
     }
 
     private fun updateView(fieldsArray: List<String>) {
@@ -955,10 +929,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 val text: TextView = row.findViewById(R.id.data)
                 text.text = data
                 text.setOnClickListener {
-                    try {
-                        showIconsDialog(data.substringAfter(" "))
-                    } catch (e: IndexOutOfBoundsException) {
-                    }
+
                 }
             }
             name != "Телефон" -> {

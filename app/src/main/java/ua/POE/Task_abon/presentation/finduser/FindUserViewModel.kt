@@ -1,11 +1,13 @@
 package ua.POE.Task_abon.presentation.finduser
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.repository.TestEntityRepository
+import javax.inject.Inject
 
-class FindUserViewModel @ViewModelInject constructor(val directoryDao: DirectoryDao, val testEntityRepository: TestEntityRepository) : ViewModel() {
+@HiltViewModel
+class FindUserViewModel @Inject constructor(val directoryDao: DirectoryDao, val testEntityRepository: TestEntityRepository) : ViewModel() {
 
     fun getSearchFieldsTxt(taskId: Int) = directoryDao.getSearchFieldsTxt(taskId)
 

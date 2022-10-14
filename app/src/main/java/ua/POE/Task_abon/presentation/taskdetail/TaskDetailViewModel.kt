@@ -1,13 +1,15 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.data.repository.TaskDetailRepository
+import javax.inject.Inject
 
-class TaskDetailViewModel @ViewModelInject constructor( val repository: TaskDetailRepository) : ViewModel() {
+@HiltViewModel
+class TaskDetailViewModel @Inject constructor(val repository: TaskDetailRepository) : ViewModel() {
 
     var customersFilterStatus = MutableLiveData(ALL)
 
