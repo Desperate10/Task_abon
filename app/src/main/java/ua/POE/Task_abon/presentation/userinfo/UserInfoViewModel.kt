@@ -1,5 +1,7 @@
 package ua.POE.Task_abon.presentation.userinfo
 
+import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -28,6 +30,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserInfoViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val directoryRepository: DirectoryRepository,
     private val taskRepository: TaskRepository,
     private val testEntityRepository: TestEntityRepository,
@@ -60,6 +63,7 @@ class UserInfoViewModel @Inject constructor(
     var time = 0
 
     init {
+        Log.d("testim", savedStateHandle.keys().toString())
         startTimer()
         getBlockNames()
     }
@@ -330,15 +334,21 @@ class UserInfoViewModel @Inject constructor(
     }
 
     fun setSelectedCustomer(index: Int) {
+        savedStateHandle["num"] = index
         _customerIndex.value = index
     }
 
+    //use combine when listen to chenges of two flows
+    fun setTaskId(taskId: Int) {
+        savedStateHandle["taskId"] = taskId
+    }
+
     fun selectPreviousCustomer() {
-        TODO("Not yet implemented")
+
     }
 
     fun selectNextCustomer() {
-        TODO("Not yet implemented")
+
     }
 
 

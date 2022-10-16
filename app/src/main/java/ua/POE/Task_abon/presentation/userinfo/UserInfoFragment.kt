@@ -112,6 +112,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.statusSpinnerPosition
+                        //разделить эти штуки, потому что спиннер тут не нужен
                     .flatMapLatest { viewModel.getSourceList() }
                     .flowOn(Dispatchers.IO)
                     .collect {
