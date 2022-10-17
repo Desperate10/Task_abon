@@ -36,9 +36,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
@@ -48,11 +50,12 @@ import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.domain.model.Image
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.ImageAdapter
-import ua.POE.Task_abon.utils.*
+import ua.POE.Task_abon.utils.autoCleaned
+import ua.POE.Task_abon.utils.getEmojiByUnicode
+import ua.POE.Task_abon.utils.getRawTextFile
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 @AndroidEntryPoint
@@ -61,11 +64,11 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private var binding: FragmentUserInfoBinding by autoCleaned()
     private val viewModel: UserInfoViewModel by viewModels()
-    private var taskId: Int = 0
+    //private var taskId: Int = 0
     private var filial: String? = null
-    private var num: String? = null
-    private var index = 1
-    private var count = 1
+    //private var num: String? = null
+    //private var index = 1
+    //private var count = 1
     private var fieldsArray = listOf<String>()
     private val basicFieldsTxt = ArrayList<String>()
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
@@ -150,10 +153,26 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     .flatMapLatest {
                         //добавить запрос во viewModel для получения названия полей
                         //и попробовать так
-                        viewModel.getCustomerBasicInfo(taskId, index, icons)
-                    }.collectLatest {
+                        viewModel.getCustomerBasicInfo(icons)
+                    }
+                    .filter { it.name.isNotEmpty() }
+                    .collectLatest {
                         getBasicInfo(it)
                     }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            launch {
+                viewModel.result.collectLatest {
+                    Log.d("testim", it.toString())
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            launch {
+                viewModel.selectedBlockData.collectLatest {
+                    Log.d("testim1", it.toString())
+                }
             }
         }
         /*viewLifecycleOwner.lifecycleScope.launch {
@@ -173,26 +192,24 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         (activity as MainActivity).supportActionBar?.title = "Інформація"
 
         if (savedInstanceState != null) {
-            index = savedInstanceState.getInt("index")
+            viewModel.setSelectedCustomer(savedInstanceState.getInt("index"))
         }
 
         arguments?.let {
-            taskId = arguments?.getInt("taskId") ?: 0
+            //taskId = arguments?.getInt("taskId") ?: 0
             filial = arguments?.getString("filial")
-            num = arguments?.getString("num")
-            index = arguments?.getInt("id") ?: throw NullPointerException("index is null")
-            count = arguments?.getInt("count") ?: throw NullPointerException("count is null")
+            //num = arguments?.getString("num")
+           // index = arguments?.getInt("id") ?: throw NullPointerException("index is null")
+           // count = arguments?.getInt("count") ?: throw NullPointerException("count is null")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
-        viewModel.setSelectedCustomer(index)
+
+       // viewModel.setSelectedCustomer(index)
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         //читаем иконки
         icons = resources.getRawTextFile(R.raw.icons)
-
-        //getBasicInfo(taskId)
-
 
         checkPermissions()
         setupSecondarySpinners()
@@ -202,6 +219,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun registerClickListeners() {
+        (binding.personalAccount as TextView).setOnClickListener(this)
+        (binding.counter as TextView).setOnClickListener(this)
         binding.previous.setOnClickListener(this)
         binding.next.setOnClickListener(this)
         binding.results.date.setOnClickListener(this)
@@ -447,10 +466,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     onGPS()
                 }
-                /* locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 1000,
-                    1f, locationListener
-                )*/
 
                 // 100 ->
                 if (grantResults[2] == PackageManager.PERMISSION_GRANTED) {
@@ -470,17 +485,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun loadSpinners(savedConditions: String?) {
-
-        //updateSourceSpinner(catalog)
-        /*binding.results.sourceSpinner.adapter = sourceAdapter
-        binding.results.sourceSpinner.onItemSelectedListener = this*/
-
-
-        // massiv2.add("-Не выбрано-")
         val result = if (!savedConditions.isNullOrEmpty()) {
             savedConditions
         } else {
-            viewModel.getCheckedConditions(taskId, index)
+            viewModel.getCheckedConditions()
         }.split(",").map { it.trim() }
         massiv2.clear()
         for (feature in featureList) {
@@ -590,26 +598,37 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     override fun onClick(v: View) {
-        if (v.id == R.id.previous) {
-            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                showSaveOrNotDialog(false)
-            } else {
-                goPrevious()
+        when(v.id) {
+            R.id.previous -> {
+                if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+                    showSaveOrNotDialog(false)
+                } else {
+                    goPrevious()
+                }
             }
-        } else if (v.id == R.id.next) {
-            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                showSaveOrNotDialog(true)
-            } else {
-                goNext()
+            R.id.next -> {
+                if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+                    showSaveOrNotDialog(true)
+                } else {
+                    goNext()
+                }
             }
-        } else if (v.id == R.id.date || v.id == R.id.new_date) {
-            val dialog = DatePickerDialog(
-                requireContext(), this,
-                calendar[Calendar.YEAR], calendar[Calendar.MONTH],
-                calendar[Calendar.DAY_OF_MONTH]
-            )
-            dialog.show()
+            R.id.personal_account, R.id.counter -> {
+                showIconsDialog((v as TextView).text.toString())
+            }
+            R.id.date, R.id.new_date -> {
+                showDatePickerDialog()
+            }
         }
+    }
+
+    private fun showDatePickerDialog() {
+        val dialog = DatePickerDialog(
+            requireContext(), this,
+            calendar[Calendar.YEAR], calendar[Calendar.MONTH],
+            calendar[Calendar.DAY_OF_MONTH]
+        )
+        dialog.show()
     }
 
     private fun showSaveOrNotDialog(next: Boolean) {
@@ -647,38 +666,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             .setNegativeButton(getString(R.string.no), dialogClickListener).show()
     }
 
-    //сбрасываем таймер при переключении юзера
-    private fun resetTimer() {
-        viewModel.time = 0
-    }
-
     private fun goPrevious() {
         viewModel.selectPreviousCustomer()
-        selectCustomer(R.id.previous)
+        selectCustomer()
     }
 
     private fun goNext() {
         viewModel.selectNextCustomer()
-        selectCustomer(R.id.next)
+        selectCustomer()
     }
 
-    private fun selectCustomer(viewId: Int) {
-        resetTimer()
+    private fun selectCustomer() {
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-        index = if (viewId == R.id.next) {
-            if (index != count) {
-                index.plus(1)
-            } else {
-                1
-            }
-        } else {
-            if (index != 1) {
-                index.minus(1)
-            } else {
-                count
-            }
-        }
-        viewModel.setSelectedCustomer(index)
 
         if (fieldsArray.isNotEmpty())
             updateView(fieldsArray)
@@ -693,9 +692,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         when (parent.id) {
             R.id.block_name -> {
                 val selectedItem = parent.getItemAtPosition(position).toString()
+                viewModel.setSelectedBlock(selectedItem)
                 if (selectedItem != "Результати") {
-                    val fields = viewModel.getFieldsByBlockName(selectedItem, taskId)
-                    fieldsArray = fields.map { it.fieldName.toString() }
+                    fieldsArray = viewModel.getFieldsByBlockName(selectedItem)
                     updateView(fieldsArray)
                     binding.infoTables.visibility = VISIBLE
                     binding.results.root.visibility = GONE
@@ -725,7 +724,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun loadResultTab() {
 
-        val techHash = viewModel.getTechInfoTextByFields(taskId, index)
+        val techHash = viewModel.getTechInfoTextByFields()
         val controlInfo = StringBuilder()
 
         techHash.forEach { (key, value) ->
@@ -814,8 +813,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             binding.results.difference3,
             binding.results.previousMeters3
         )
-        try {
-            val result = viewModel.getResult(taskId, index)
+        /*try {
+            val result = viewModel.getResult()
             //statusSpinnerPosition = result.notDone?.toInt() ?: 0
             viewModel.setStatusSpinnerPosition(result.notDone?.toInt() ?: 0)
             binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
@@ -868,22 +867,17 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             } catch (e: Exception) {
                 //Log.d("errortestim", e.message.toString())
             }
-        }
+        }*/
 
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
-        savedInstanceState.putInt("index", index)
+        savedInstanceState.putInt("index", viewModel.customerIndex.value)
         //declare values before saving the state
         super.onSaveInstanceState(savedInstanceState)
     }
 
     private fun getBasicInfo(basicInfo: BasicInfo) {
-        //binding.basicTable.removeAllViews()
-
-        /*basicInfo.forEach {
-            createRow(it.first, it.second, true)
-        }*/
          binding.personalAccount?.text = basicInfo.personalAccount
          binding.address?.text = basicInfo.address
          binding.name?.text = basicInfo.name
@@ -891,66 +885,45 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
          binding.otherInfo?.text = basicInfo.other
 
 
-        if (!isFirstLoad) {
+        if (!isFirstLoad && viewModel.selectedBlock.value == "Результати") {
             loadResultTab()
         }
         isFirstLoad = false
     }
 
     private fun updateView(fieldsArray: List<String>) {
-        val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray, "TD$taskId", index)
+        val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray)
         binding.infoTable.removeAllViews()
 
         tdHash.forEach { (key, value) ->
             if (key.isNotEmpty()) {
-                createRow(key, value, false)
+                createRow(key, value)
             }
         }
-
         tdHash.clear()
     }
 
-    private fun createRow(name: String, data: String, isBasic: Boolean) {
+    private fun createRow(name: String, data: String) {
         val inflater = LayoutInflater.from(activity)
 
         val row: TableRow = inflater.inflate(R.layout.user_info_row, null) as TableRow
 
         val nameText: TextView = row.findViewById(R.id.name)
         nameText.text = name
-        when {
-            name == "Лічильник" -> {
-                val text: TextView = row.findViewById(R.id.data)
-                text.text = data
-                text.setOnClickListener {
-                    try {
-                        showIconsDialog(data.substringAfter(" "))
 
-                    } catch (e: IndexOutOfBoundsException) {
-                    }
-                }
-            }
-            name == "О/р" -> {
-                val text: TextView = row.findViewById(R.id.data)
-                text.text = data
-                text.setOnClickListener {
-
-                }
-            }
-            name != "Телефон" -> {
-                val text: TextView = row.findViewById(R.id.data)
-                text.text = data
-            }
-            else -> {
+        when (name) {
+            "Телефон" -> {
                 val text: TextView = row.findViewById(R.id.data)
                 text.text = data
                 Linkify.addLinks(text, Linkify.PHONE_NUMBERS)
                 text.linksClickable = true
             }
+            else -> {
+                val text: TextView = row.findViewById(R.id.data)
+                text.text = data
+            }
         }
-
-        if (!isBasic)
-            binding.infoTable.addView(row)
-        else binding.basicTable.addView(row)
+        binding.infoTable.addView(row)
     }
 
     override fun onDateSet(view: DatePicker?, year: Int, month: Int, dayOfMonth: Int) {
@@ -967,9 +940,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         if (binding.results.newMeters1.text.isNotEmpty() || (viewModel.statusSpinnerPosition.value == 1 && viewModel.sourceSpinnerPosition.value != 0)) {
             val date1: String = binding.results.newDate.text.toString()
-            //val isDone: String = statusSpinnerPosition.toString()
             //возможно убрать все отсюда
-            val isDone = viewModel.statusSpinnerPosition.value.toString()
             val zone1 = binding.results.newMeters1.text.toString()
             val zone2 = binding.results.newMeters2.text.toString()
             val zone3 = binding.results.newMeters3.text.toString()
@@ -990,15 +961,11 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
             val currentDateAndTime =
                 SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-            viewModel.saveEditTiming(taskId, index.toString(), firstEditDate, currentDateAndTime)
-            resetTimer()
+            viewModel.saveEditTiming(firstEditDate, currentDateAndTime)
 
             viewLifecycleOwner.lifecycleScope.launch {
                 viewModel.saveResults(
-                    taskId,
-                    index,
                     date1,
-                    isDone,
                     source,
                     source2.joinToString(),
                     zone1,
@@ -1031,6 +998,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun showIconsDialog(iconsText: String) {
+        val currentIcons = iconsText.substringAfter(" ")
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Повідомлення")
         var i = 0
@@ -1038,7 +1006,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         do {
             val icon = getEmojiByUnicode(icons[i].emoji!!)
-            if (iconsText.contains(icon)) {
+            if (currentIcons.contains(icon)) {
                 message += "$icon  ${icons[i].hint}\n"
             }
             i++

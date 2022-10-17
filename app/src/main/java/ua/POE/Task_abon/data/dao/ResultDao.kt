@@ -30,7 +30,7 @@ interface ResultDao {
     suspend fun updateNewData(taskId: Int, num: String, date: String, isDone: String, source: String, zone1: String, zone2: String, zone3: String, note: String)
 
     @Query("SELECT * from result WHERE TSzdn_id= :taskId AND Id = :index")
-    fun getResultUser(taskId: Int, index: Int): Result
+    fun getResultUser(taskId: Int, index: Int): Flow<Result>
 
     @Query("DELETE FROM result WHERE TSzdn_id = :taskId")
     suspend fun delete(taskId: Int)
