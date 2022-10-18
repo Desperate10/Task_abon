@@ -61,16 +61,15 @@ class UserInfoViewModel @Inject constructor(
     private val taskCustomerQuantity =
         savedStateHandle.get<Int>("count") ?: throw RuntimeException("Customer's quantity is null ")
 
-    val result = _customerIndex
-        .combine(_selectedBlock) { id, selectedBlock->
+    /*val result = _customerIndex
+        .combine(_selectedBlock) { id, selectedBlock ->
             if (selectedBlock == "Результати") {
                 getResult()
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyFlow<Result>())
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyFlow<Result>())*/
 
     val selectedBlockData = _customerIndex
-        .combine(_selectedBlock) {
-            id, selectedBlock ->
+        .combine(_selectedBlock) { id, selectedBlock ->
             if (selectedBlock == "Результати") {
                 getTechInfoTextByFields()
             } else {
@@ -79,6 +78,14 @@ class UserInfoViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    val result = _customerIndex
+        .combine(_selectedBlock) { id, selectedBlock ->
+            if (selectedBlock == "Результати") {
+                getResult()
+            } else {
+                null
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
 
     private var personalAccount = ""
@@ -104,8 +111,6 @@ class UserInfoViewModel @Inject constructor(
         timer.cancel()
     }
 
-
-
     private fun startTimer() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -117,6 +122,33 @@ class UserInfoViewModel @Inject constructor(
             }
         }
     }
+
+    val sourceList: StateFlow<List<Catalog>> = statusSpinnerPosition
+        .flatMapLatest { getSourceList(it) }
+        .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
+    /*fun getSavedDataOfCustomer(): StateFlow<Result?> {
+        return selectedBlock
+            .filter { it == "Результати" }
+            .flatMapLatest {block->
+                customerIndex
+            }
+            .flatMapLatest {
+                getResult()
+            }
+            .stateIn(scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000L),
+                initialValue = null)
+        *//*return if (selectedBlock.value == "Результати") {
+            customerIndex
+                .flatMapLatest { getResult() }
+                .flowOn(Dispatchers.IO)
+        } else {
+            emptyFlow()
+        }*//*
+
+    }*/
 
     private fun getBlockNames() {
         viewModelScope.launch {
@@ -316,13 +348,13 @@ class UserInfoViewModel @Inject constructor(
 
     private suspend fun getTask(taskId: Int) = taskRepository.getTask(taskId)
 
-    fun getResult(): Flow<Result> {
+    suspend fun getResult(): Result {
         return resultDao.getResultUser(taskId, index)
     }
 
     //adding
-    fun getSourceList(): StateFlow<List<Catalog>> {
-        return if (statusSpinnerPosition.value == 0) {
+    fun getSourceList(position: Int): StateFlow<List<Catalog>> {
+        return if (position == 0) {
             catalogDao.getSourceList("2")
         } else {
             catalogDao.getSourceList("3")

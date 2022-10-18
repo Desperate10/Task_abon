@@ -114,11 +114,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.statusSpinnerPosition
-                        //разделить эти штуки, потому что спиннер тут не нужен
-                    .flatMapLatest { viewModel.getSourceList() }
-                    .flowOn(Dispatchers.IO)
-                    .collect {
+                viewModel.sourceList.collect {
                         catalog = it
                         updateSourceSpinner(it)
                     }
@@ -161,17 +157,31 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     }
             }
         }
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+        /*viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             launch {
                 viewModel.result.collectLatest {
                     Log.d("testim", it.toString())
                 }
             }
-        }
+        }*/
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             launch {
                 viewModel.selectedBlockData.collectLatest {
-                    Log.d("testim1", it.toString())
+                    if(viewModel.selectedBlock.value == "Результати") {
+                        Log.d("testim", it.toString())
+                        loadResultTab(it)
+                    } else {
+                        Log.d("testim", it.toString())
+                        updateView(it)
+                    }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.result.collectLatest {
+                    resetFields()
+                    it?.let { getResultIfExist(it) }
                 }
             }
         }
@@ -184,6 +194,25 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
         }*/
+    }
+
+    private fun resetFields() {
+        viewModel.setStatusSpinnerPosition(0)
+        loadSpinners("")
+        binding.results.date.text = sdformat.format(calendar.time)
+        binding.results.newDate.text = sdformat.format(calendar.time)
+        binding.results.statusSpinner.setSelection(0)
+        binding.results.sourceSpinner.setSelection(0)
+        binding.results.newMeters1.setText("", TextView.BufferType.EDITABLE)
+        binding.results.newMeters2.setText("", TextView.BufferType.EDITABLE)
+        binding.results.newMeters3.setText("", TextView.BufferType.EDITABLE)
+        binding.results.checkBox.isChecked = false
+        binding.results.difference1.text = ""
+        binding.results.note.setText("")
+        binding.results.phone.setText("")
+        binding.results.checkBox.isChecked = false
+        isResultSaved = false
+        imageAdapter.notifyDataSetChanged()
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -679,8 +708,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun selectCustomer() {
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
-        if (fieldsArray.isNotEmpty())
-            updateView(fieldsArray)
+        /*if (fieldsArray.isNotEmpty())
+            updateView(fieldsArray)*/
         //getBasicInfo(taskId)
     }
 
@@ -694,12 +723,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 val selectedItem = parent.getItemAtPosition(position).toString()
                 viewModel.setSelectedBlock(selectedItem)
                 if (selectedItem != "Результати") {
-                    fieldsArray = viewModel.getFieldsByBlockName(selectedItem)
-                    updateView(fieldsArray)
+                   /* fieldsArray = viewModel.getFieldsByBlockName(selectedItem)
+                    updateView(fieldsArray)*/
                     binding.infoTables.visibility = VISIBLE
                     binding.results.root.visibility = GONE
                 } else {
-                    loadResultTab()
+                    /*loadResultTab()*/
                     binding.infoTables.visibility = GONE
                     binding.results.root.visibility = VISIBLE
                 }
@@ -722,9 +751,44 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         sourceAdapter.notifyDataSetChanged()
     }
 
-    private fun loadResultTab() {
+    private fun getResultIfExist(result : ua.POE.Task_abon.data.entities.Result) {
+        Log.d("testim", result.toString())
+        viewModel.setStatusSpinnerPosition(result.notDone?.toInt() ?: 0)
+        binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
+        loadSpinners(result.point_condition)
+        binding.results.date.text = result.doneDate
+        binding.results.newDate.text = result.doneDate
+        binding.results.newMeters1.setText(result.zone1)
+        binding.results.newMeters2.setText(result.zone2)
+        binding.results.newMeters3.setText(result.zone3)
+        binding.results.note.setText(result.note)
+        binding.results.phone.setText(result.phoneNumber)
+        binding.results.checkBox.isChecked = result.is_main == 1
 
-        val techHash = viewModel.getTechInfoTextByFields()
+        if (!result.photo.isNullOrEmpty()) {
+            imageAdapter.addSavedPhoto(Uri.parse(result.photo))
+        }
+        val type = if (viewModel.statusSpinnerPosition.value == 0) {
+            "2"
+        } else {
+            "3"
+        }
+
+        if (!result.dataSource.isNullOrEmpty()) {
+            val spinnerPosition: Int =
+                sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
+            binding.results.sourceSpinner.setSelection(spinnerPosition)
+        } else {
+            binding.results.sourceSpinner.setSelection(0)
+        }
+        isResultSaved = true
+    }
+
+    //сделать саспенд вызов гетТехИнфо и вызывать каждую смену независимо от вкладки?
+    //и вызывать гетрезал независимо от вкладки
+    private fun loadResultTab(techHash: Map<String,String>) {
+
+        //val techHash = viewModel.getTechInfoTextByFields()
         val controlInfo = StringBuilder()
 
         techHash.forEach { (key, value) ->
@@ -885,14 +949,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
          binding.otherInfo?.text = basicInfo.other
 
 
-        if (!isFirstLoad && viewModel.selectedBlock.value == "Результати") {
+        /*if (!isFirstLoad && viewModel.selectedBlock.value == "Результати") {
             loadResultTab()
-        }
+        }*/
         isFirstLoad = false
     }
 
-    private fun updateView(fieldsArray: List<String>) {
-        val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray)
+    private fun updateView(tdHash: Map<String,String>) {
+       // val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray)
         binding.infoTable.removeAllViews()
 
         tdHash.forEach { (key, value) ->
@@ -900,7 +964,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 createRow(key, value)
             }
         }
-        tdHash.clear()
+       // tdHash.clear()
     }
 
     private fun createRow(name: String, data: String) {
