@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.presentation.userinfo
 
 import android.util.Log
+import android.view.View
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +25,7 @@ import ua.POE.Task_abon.data.repository.TimingRepository
 import ua.POE.Task_abon.domain.model.BasicInfo
 import ua.POE.Task_abon.domain.model.Catalog
 import ua.POE.Task_abon.domain.model.Icons
+import ua.POE.Task_abon.domain.model.TechInfo
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
 import java.util.*
@@ -39,6 +41,15 @@ class UserInfoViewModel @Inject constructor(
     private val resultDao: ResultDao,
     private val catalogDao: CatalogDao
 ) : ViewModel() {
+
+    private var checkDate = ""
+    private var type = ""
+    private var lastCount = ""
+    private var counter = ""
+    private var zoneCount = ""
+    private var capacity = ""
+    private var avgUsage = ""
+    private var lastDate = ""
 
     private val _statusSpinnerPosition = MutableStateFlow(0)
     val statusSpinnerPosition: StateFlow<Int> = _statusSpinnerPosition
@@ -87,7 +98,6 @@ class UserInfoViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-
     private var personalAccount = ""
     private var personalAccountKey = ""
     private var personalAccountEmoji = ""
@@ -123,32 +133,12 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
+
+
     val sourceList: StateFlow<List<Catalog>> = statusSpinnerPosition
         .flatMapLatest { getSourceList(it) }
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
-
-    /*fun getSavedDataOfCustomer(): StateFlow<Result?> {
-        return selectedBlock
-            .filter { it == "Результати" }
-            .flatMapLatest {block->
-                customerIndex
-            }
-            .flatMapLatest {
-                getResult()
-            }
-            .stateIn(scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000L),
-                initialValue = null)
-        *//*return if (selectedBlock.value == "Результати") {
-            customerIndex
-                .flatMapLatest { getResult() }
-                .flowOn(Dispatchers.IO)
-        } else {
-            emptyFlow()
-        }*//*
-
-    }*/
 
     private fun getBlockNames() {
         viewModelScope.launch {
@@ -158,6 +148,66 @@ class UserInfoViewModel @Inject constructor(
             _blockNames.value = blockNameList
         }
     }
+
+    val preloadResultTab = _customerIndex.flatMapLatest {
+        _selectedBlock
+    }
+        .flatMapLatest {
+        getTechInfo()
+    }
+
+    fun getTechInfo() = flow {
+        val techHash = getTechInfoTextByFields()
+        val controlInfo = StringBuilder()
+
+        techHash.forEach { (key, value) ->
+            when (key) {
+                "TimeZonalId" -> {
+                    zoneCount = value
+                }
+                "Lastdate" -> {
+                    lastDate = value
+                }
+                "Lastlcount" -> {
+                    lastCount = value
+                }
+                "srnach" -> {
+                    avgUsage = value
+                }
+                "type" -> {
+                    type = value
+                }
+                "Counter_numb" -> {
+                    counter = value
+                }
+                "Rozr" -> {
+                    capacity = value
+                }
+                "contr_date" -> {
+                    checkDate = value
+                    controlInfo.append(" $value")
+                }
+                "contr_pok" -> {
+                    controlInfo.append(" $value")
+                }
+                "contr_name" -> {
+                    controlInfo.append(" $value")
+                }
+            }
+        }
+        emit(
+            TechInfo(
+                zoneCount = zoneCount,
+                lastDate = lastDate,
+                lastCount = lastCount,
+                averageUsage = avgUsage,
+                type = type,
+                capacity = capacity,
+                checkDate = checkDate,
+                inspector = controlInfo.toString()
+            )
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TechInfo())
 
     fun getCustomerBasicInfo(icons: ArrayList<Icons>) =
         flow {
@@ -212,11 +262,7 @@ class UserInfoViewModel @Inject constructor(
                     other = otherInfo.toString()
                 )
             )
-        }.stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            BasicInfo("", "", "", "", "")
-        )
+        }
 
     /*fun getBasicInfo(fields: List<String>, tableName: String, num: Int) =
         testEntityRepository.getBasicInfoBlock(fields, tableName, num)*/
@@ -291,16 +337,8 @@ class UserInfoViewModel @Inject constructor(
         note: String,
         phoneNumber: String,
         is_main: Int,
-        type: String,
-        counter: String,
-        zoneCount: String,
-        capacity: String,
-        avgUsage: String,
         lat: String,
         lng: String,
-        numbpers: String,
-        family: String,
-        adress: String,
         photo: String?
     ) {
         resetTimer()
@@ -335,9 +373,9 @@ class UserInfoViewModel @Inject constructor(
             avgUsage,
             lat,
             lng,
-            numbpers,
-            family,
-            adress,
+            personalAccount,
+            user["family"],
+            user["Adress"],
             photo,
             user["counpleas"]
         )

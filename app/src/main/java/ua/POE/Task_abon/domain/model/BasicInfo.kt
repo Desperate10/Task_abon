@@ -6,4 +6,7 @@ data class BasicInfo(
     val name: String,
     val counter: String,
     val other: String
-    )
+) {
+    constructor() : this("", "", "", "", "")
+
+}
