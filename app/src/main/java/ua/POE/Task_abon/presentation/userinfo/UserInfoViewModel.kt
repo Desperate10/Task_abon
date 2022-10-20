@@ -28,6 +28,7 @@ import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.domain.model.TechInfo
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
+import java.lang.Thread.State
 import java.util.*
 import javax.inject.Inject
 
@@ -50,6 +51,7 @@ class UserInfoViewModel @Inject constructor(
     private var capacity = ""
     private var avgUsage = ""
     private var lastDate = ""
+    private var sourceList = listOf<Catalog>()
 
     private val _statusSpinnerPosition = MutableStateFlow(0)
     val statusSpinnerPosition: StateFlow<Int> = _statusSpinnerPosition
@@ -133,10 +135,28 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
+    val selectedSourceCode: StateFlow<String> =
+        sourceSpinnerPosition.map {
+              if (it != 0) {
+                  Log.d("testim", sourceList[it - 1].code!!)
+            sourceList[it - 1].code!!
+             } else ""
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, "")
 
+    private fun getSourceListFlow(position: Int) = flow {
+        sourceList = if (position == 0) {
+            catalogDao.getSourceList("2")
+        } else {
+            catalogDao.getSourceList("3")
+        }.map { mapCatalogEntityToCatalog(it) }
+        val sourceTextList = mutableListOf<String>()
+        sourceTextList.add(0, "-Не вибрано-")
+        sourceTextList.addAll(sourceList.map { it.text.toString() })
+        emit(sourceTextList)
+    }
 
-    val sourceList: StateFlow<List<Catalog>> = statusSpinnerPosition
-        .flatMapLatest { getSourceList(it) }
+    val getSourceList: StateFlow<List<String>> = statusSpinnerPosition
+        .flatMapLatest { getSourceListFlow(it) }
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
@@ -149,12 +169,13 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    val preloadResultTab = _customerIndex.flatMapLatest {
-        _selectedBlock
-    }
+    val preloadResultTab = _customerIndex
         .flatMapLatest {
-        getTechInfo()
-    }
+            selectedBlock
+        }
+        .flatMapLatest {
+            getTechInfo()
+        }
 
     fun getTechInfo() = flow {
         val techHash = getTechInfoTextByFields()
@@ -391,15 +412,14 @@ class UserInfoViewModel @Inject constructor(
     }
 
     //adding
-    fun getSourceList(position: Int): StateFlow<List<Catalog>> {
+    /*fun getSourceList(position: Int): Flow<List<Catalog>> {
         return if (position == 0) {
             catalogDao.getSourceList("2")
         } else {
             catalogDao.getSourceList("3")
         }.mapLatestIterable { mapCatalogEntityToCatalog(it) }
             .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    }
+    }*/
 
     /*fun getSourceList(type: String): List<Catalog> {
         return catalogDao.getSourceList(type).map {

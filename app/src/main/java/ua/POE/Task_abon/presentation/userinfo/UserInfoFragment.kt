@@ -68,12 +68,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private var isFirstLoad = false
     var source = ""
-    private var source2 = ArrayList<String>()
+    private var source2 = listOf<String>()
     private var isResultSaved = false
-    var massiv = ArrayList<String>()
+    private var sourceText = listOf<String>()
     var massiv2 = ArrayList<KeyPairBoolData>()
     private val operators by lazy { viewModel.getOperatorsList() }
-    lateinit var sourceAdapter: ArrayAdapter<String>
+    private val sourceAdapter: ArrayAdapter<String> by lazy {
+        ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            sourceText
+        )
+    }
 
     lateinit var catalog: List<Catalog>
     lateinit var featureList: List<Catalog>
@@ -95,10 +101,11 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.sourceList.collect {
+                viewModel.getSourceList.collect {
                     //Каталог убрать во вьюмодель
-                    catalog = it
-                    updateSourceSpinner(it)
+                    //catalog = it
+                    sourceText = it
+                    sourceAdapter.notifyDataSetChanged()
                 }
             }
         }
@@ -155,13 +162,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.preloadResultTab.collectLatest {
-                    showResultTab(it)
+                    preloadResultTab(it)
                 }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.result.collectLatest {
+                    //Data и featurelist можно обработать во viewModel и отдать сюда готовыми?
                     loadSpinnersFromResult(it)
                     resetFields()
                     it?.let { getResultIfExist(it) }
@@ -170,7 +178,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun showResultTab(it: TechInfo) {
+    private fun preloadResultTab(it: TechInfo) {
         when(it.zoneCount) {
             "1" -> {
                 binding.results.secondZoneRow.visibility = GONE
@@ -187,14 +195,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
 
         binding.results.lastDate.text = it.lastDate
-        val pokaz: List<String> = it.lastCount.split("/")
+        val lastCount: List<String> = it.lastCount.split("/")
 
-        binding.results.previousMeters1.text = pokaz[0]
-        if (pokaz.size == 2) {
-            binding.results.previousMeters2.text = pokaz[1]
-        } else if (pokaz.size == 3) {
-            binding.results.previousMeters2.text = pokaz[1]
-            binding.results.previousMeters3.text = pokaz[2]
+        binding.results.previousMeters1.text = lastCount[0]
+        if (lastCount.size == 2) {
+            binding.results.previousMeters2.text = lastCount[1]
+        } else if (lastCount.size == 3) {
+            binding.results.previousMeters2.text = lastCount[1]
+            binding.results.previousMeters3.text = lastCount[2]
         }
 
         binding.results.differenceText.text = "Расход\nСредн ${it.averageUsage}"
@@ -277,14 +285,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun setupSecondarySpinners() {
-        binding.results.statusSpinner.onItemSelectedListener = this
-        //sourcespinner
-        sourceAdapter = ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            massiv
-        )
         binding.results.sourceSpinner.adapter = sourceAdapter
+        binding.results.statusSpinner.onItemSelectedListener = this
         binding.results.sourceSpinner.onItemSelectedListener = this
     }
 
@@ -525,17 +527,20 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
             hintText = "Можливий вибір декількох пунктів:"
             setClearText("Очистити все")
-            setItems(
-                massiv2
-            ) { items ->
-                source2.clear()
-                for (i in items.indices) {
+            setItems(massiv2) { items ->
+                //source2.clear()
+                source2 = items.flatMap { item ->
+                    featureList
+                        .filter { item.name == it.text }
+                        .map { it.code.toString() }
+                }
+                /*for (i in items.indices) {
                     for (feature in featureList) {
                         if (items[i].name == feature.text) {
                             feature.code?.let { source2.add(it) }
                         }
                     }
-                }
+                }*/
             }
         }
     }
@@ -703,7 +708,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun updateSourceSpinner(catalogList: List<Catalog>) {
+    private fun updateSourceSpinner(source: List<String>) {
         massiv.clear()
         massiv.add("-Не вибрано-")
         for (i in catalogList) {
