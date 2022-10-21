@@ -3,24 +3,23 @@ package ua.POE.Task_abon.presentation.userinfo
 import android.Manifest
 import android.app.Activity
 import android.app.DatePickerDialog
-import android.content.*
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.content.res.Configuration
 import android.graphics.Color
-import android.graphics.Typeface
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.Settings
 import android.text.TextWatcher
 import android.text.util.Linkify
-import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -36,11 +35,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
@@ -73,16 +70,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private var sourceText = listOf<String>()
     var massiv2 = ArrayList<KeyPairBoolData>()
     private val operators by lazy { viewModel.getOperatorsList() }
-    private val sourceAdapter: ArrayAdapter<String> by lazy {
-        ArrayAdapter(
-            requireContext(),
-            android.R.layout.simple_spinner_dropdown_item,
-            sourceText
-        )
-    }
+    private lateinit var sourceAdapter: ArrayAdapter<String>
 
     lateinit var catalog: List<Catalog>
-    lateinit var featureList: List<Catalog>
     lateinit var locationManager: LocationManager
     private val imageAdapter: ImageAdapter by autoCleaned {
         ImageAdapter(requireContext(), items, uri)
@@ -102,27 +92,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.getSourceList.collect {
-                    //Каталог убрать во вьюмодель
-                    //catalog = it
-                    sourceText = it
-                    sourceAdapter.notifyDataSetChanged()
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.sourceSpinnerPosition.collect {
-                    //после каталога убрать слушатель второго спиннера на вьюмодель
-                    source = if (it != 0) {
-                        catalog[it - 1].code!!
-                    } else ""
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.getFeatureList().collect {
-                    featureList = it
+                    setupSourceSpinner(it)
                 }
             }
         }
@@ -170,7 +140,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.result.collectLatest {
                     //Data и featurelist можно обработать во viewModel и отдать сюда готовыми?
-                    loadSpinnersFromResult(it)
+                    //loadSpinnersFromResult(it)
                     resetFields()
                     it?.let { getResultIfExist(it) }
                 }
@@ -179,7 +149,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun preloadResultTab(it: TechInfo) {
-        when(it.zoneCount) {
+        when (it.zoneCount) {
             "1" -> {
                 binding.results.secondZoneRow.visibility = GONE
                 binding.results.thirdZoneRow.visibility = GONE
@@ -251,14 +221,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
 
-       // viewModel.setSelectedCustomer(index)
+        // viewModel.setSelectedCustomer(index)
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         checkPermissions()
-        setupSecondarySpinners()
-        registerWatchers()
+        registerItemListeners()
         registerClickListeners()
+        registerWatchers()
         setupImageAdapter()
         observeViewModel()
     }
@@ -273,19 +243,25 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun setupMainBlockSpinner(list: List<String>) {
-        val adapter =
+        binding.blockName.adapter =
             ArrayAdapter(
                 requireContext(),
                 android.R.layout.simple_spinner_dropdown_item,
                 list
             )
-        binding.blockName.adapter = adapter
-        binding.blockName.onItemSelectedListener = this
-        adapter.notifyDataSetChanged()
     }
 
-    private fun setupSecondarySpinners() {
+    private fun setupSourceSpinner(list: List<String>) {
+        sourceAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_spinner_dropdown_item,
+            list
+        )
         binding.results.sourceSpinner.adapter = sourceAdapter
+    }
+
+    private fun registerItemListeners() {
+        binding.blockName.onItemSelectedListener = this
         binding.results.statusSpinner.onItemSelectedListener = this
         binding.results.sourceSpinner.onItemSelectedListener = this
     }
@@ -301,7 +277,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 } else {
                     Toast.makeText(
                         requireContext(),
-                        "Видалити фото, щоб створити нове",
+                        "Видаліть фото, щоб створити нове",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -496,8 +472,36 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun loadSpinnersFromResult(result: ua.POE.Task_abon.data.entities.Result?) {
-        val data = if (result == null) {
+    private fun loadFeatureSpinner(
+        customerFeatures: List<KeyPairBoolData>,
+        featureList: List<Catalog>
+    ) {
+
+        with(binding.results.featureSpinner) {
+            isSearchEnabled = false
+            isShowSelectAllButton = true
+            isColorSeparation = false
+
+            when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
+                Configuration.UI_MODE_NIGHT_YES ->
+                    setBackgroundColor(Color.GRAY)
+                Configuration.UI_MODE_NIGHT_NO ->
+                    setBackgroundColor(Color.WHITE)
+            }
+            hintText = "Можливий вибір декількох пунктів:"
+            setClearText("Очистити все")
+            setItems(customerFeatures) { items ->
+                source2 = items.flatMap { item ->
+                    featureList
+                        .filter { item.name == it.text }
+                        .map { it.code.toString() }
+                }
+            }
+        }
+    }
+
+    /*private fun loadSpinnersFromResult(savedCondition: List<String>?, featureList: List<Catalog> ) {
+        val data = if (savedCondition == null) {
             viewModel.getCheckedConditions()
         } else {
             result.point_condition
@@ -505,8 +509,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         massiv2.clear()
         for (feature in featureList) {
-            if (data != null) {
-                if (feature.code.toString() in data) {
+            if (savedCondition != null) {
+                if (feature.code.toString() in savedCondition) {
                     massiv2.add(KeyPairBoolData(feature.text!!, true))
                 } else {
                     massiv2.add(KeyPairBoolData(feature.text!!, false))
@@ -528,22 +532,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             hintText = "Можливий вибір декількох пунктів:"
             setClearText("Очистити все")
             setItems(massiv2) { items ->
-                //source2.clear()
                 source2 = items.flatMap { item ->
                     featureList
                         .filter { item.name == it.text }
                         .map { it.code.toString() }
                 }
-                /*for (i in items.indices) {
-                    for (feature in featureList) {
-                        if (items[i].name == feature.text) {
-                            feature.code?.let { source2.add(it) }
-                        }
-                    }
-                }*/
             }
         }
-    }
+    }*/
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -564,15 +560,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 return true
             }
             R.id.save_customer_data -> {
-                if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(3)
-                        .toString() !in operators || binding.results.phone.text.length < 10)
-                ) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Неправильний формат номера телефону",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else if (binding.lat.text != "0.0") {
+                if (binding.lat.text != "0.0") {
                     saveResult()
                 } else {
                     askAboutSavingWithoutCoords()
@@ -583,40 +571,50 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         return super.onOptionsItemSelected(item)
     }
 
+    private fun showSaveOrNotDialog(next: Boolean) {
+        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
+            when (which) {
+                DialogInterface.BUTTON_POSITIVE -> {
+                    saveResult()
+                    if (next) {
+                        goNext()
+                    } else
+                        goPrevious()
+                }
+                DialogInterface.BUTTON_NEGATIVE -> {
+                    dialog.dismiss()
+                    if (next) {
+                        goNext()
+                    } else
+                        goPrevious()
+                }
+            }
+        }
+        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
+        builder.setMessage("Зберегти зміни?")
+            .setPositiveButton(getString(R.string.yes), dialogClickListener)
+            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+    }
+
     private fun askAboutSavingWithoutCoords() {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
-                    if (binding.results.phone.text.isNotEmpty()
-                        && (binding.results.phone.text.take(3).toString() !in operators
-                                || binding.results.phone.text.length < 10)
-                    ) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Неправильний формат номера телефону",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        saveResult()
-                    }
+                    saveResult()
                 }
                 DialogInterface.BUTTON_NEGATIVE -> {
                     dialog.dismiss()
                 }
             }
         }
-
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Впевнені, що хочете зберегти без координат?").setPositiveButton(
-            getString(R.string.yes),
-            dialogClickListener
-        )
+        builder.setMessage("Впевнені, що хочете зберегти без координат?")
+            .setPositiveButton(getString(R.string.yes), dialogClickListener)
             .setNegativeButton(getString(R.string.no), dialogClickListener).show()
-
     }
 
     override fun onClick(v: View) {
-        when(v.id) {
+        when (v.id) {
             R.id.previous -> {
                 if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
                     showSaveOrNotDialog(false)
@@ -649,40 +647,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         dialog.show()
     }
 
-    private fun showSaveOrNotDialog(next: Boolean) {
-        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-            when (which) {
-                DialogInterface.BUTTON_POSITIVE -> {
-                    if (binding.results.phone.text.isNotEmpty()
-                        && (binding.results.phone.text.take(3).toString() !in operators
-                                || binding.results.phone.text.length < 10)
-                    ) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Неправильний формат номера телефону",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        saveResult()
-                        if (next) {
-                            goNext()
-                        } else goPrevious()
-                    }
-                }
-                DialogInterface.BUTTON_NEGATIVE -> {
-                    dialog.dismiss()
-                    if (next) {
-                        goNext()
-                    } else goPrevious()
-                }
-            }
-        }
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Зберегти зміни?")
-            .setPositiveButton(getString(R.string.yes), dialogClickListener)
-            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
-    }
-
     private fun goPrevious() {
         viewModel.selectPreviousCustomer()
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
@@ -708,15 +672,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun updateSourceSpinner(source: List<String>) {
-        massiv.clear()
-        massiv.add("-Не вибрано-")
-        for (i in catalogList) {
-            massiv.add(i.text!!)
-        }
-        sourceAdapter.notifyDataSetChanged()
-    }
-
     private fun resetFields() {
         viewModel.setStatusSpinnerPosition(0)
         binding.results.date.text = sdformat.format(calendar.time)
@@ -735,20 +690,20 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         imageAdapter.notifyDataSetChanged()
     }
 
-    private fun getResultIfExist(result : ua.POE.Task_abon.data.entities.Result) {
-        viewModel.setStatusSpinnerPosition(result.notDone?.toInt() ?: 0)
+    private fun getResultIfExist(savedData: SavedData) {
+        viewModel.setStatusSpinnerPosition(savedData.status?.toInt() ?: 0)
         binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
-        binding.results.date.text = result.doneDate
-        binding.results.newDate.text = result.doneDate
-        binding.results.newMeters1.setText(result.zone1)
-        binding.results.newMeters2.setText(result.zone2)
-        binding.results.newMeters3.setText(result.zone3)
-        binding.results.note.setText(result.note)
-        binding.results.phone.setText(result.phoneNumber)
-        binding.results.checkBox.isChecked = result.is_main == 1
+        binding.results.date.text = savedData.date
+        binding.results.newDate.text = savedData.date
+        binding.results.newMeters1.setText(savedData.zone1)
+        binding.results.newMeters2.setText(savedData.zone2)
+        binding.results.newMeters3.setText(savedData.zone3)
+        binding.results.note.setText(savedData.note)
+        binding.results.phone.setText(savedData.phoneNumber)
+        binding.results.checkBox.isChecked = savedData.isMainPhone?: false
 
-        if (!result.photo.isNullOrEmpty()) {
-            imageAdapter.addSavedPhoto(Uri.parse(result.photo))
+        if (!savedData.photo.isNullOrEmpty()) {
+            imageAdapter.addSavedPhoto(Uri.parse(savedData.photo))
         }
         val type = if (viewModel.statusSpinnerPosition.value == 0) {
             "2"
@@ -756,9 +711,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             "3"
         }
 
-        if (!result.dataSource.isNullOrEmpty()) {
+        if (!savedData.source.isNullOrEmpty()) {
             val spinnerPosition: Int =
-                sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
+                sourceAdapter.getPosition(viewModel.getSourceName(savedData.source, type))
             binding.results.sourceSpinner.setSelection(spinnerPosition)
         } else {
             binding.results.sourceSpinner.setSelection(0)
@@ -773,15 +728,15 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun getBasicInfo(basicInfo: BasicInfo) {
-         binding.personalAccount?.text = basicInfo.personalAccount
-         binding.address?.text = basicInfo.address
-         binding.name?.text = basicInfo.name
-         binding.counter?.text = basicInfo.counter
-         binding.otherInfo?.text = basicInfo.other
-         isFirstLoad = false
+        binding.personalAccount?.text = basicInfo.personalAccount
+        binding.address?.text = basicInfo.address
+        binding.name?.text = basicInfo.name
+        binding.counter?.text = basicInfo.counter
+        binding.otherInfo?.text = basicInfo.other
+        isFirstLoad = false
     }
 
-    private fun updateView(tdHash: Map<String,String>) {
+    private fun updateView(tdHash: Map<String, String>) {
         binding.infoTable.removeAllViews()
 
         tdHash.forEach { (key, value) ->
@@ -822,7 +777,15 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun saveResult() {
-        if (binding.results.newMeters1.text.isNotEmpty() || (viewModel.statusSpinnerPosition.value == 1 && viewModel.sourceSpinnerPosition.value != 0)) {
+        if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(3)
+                .toString() !in operators || binding.results.phone.text.length < 10)
+        ) {
+            Toast.makeText(
+                requireContext(),
+                "Неправильний формат номера телефону",
+                Toast.LENGTH_SHORT
+            ).show()
+        } else if (binding.results.newMeters1.text.isNotEmpty() || (viewModel.statusSpinnerPosition.value == 1 && viewModel.sourceSpinnerPosition.value != 0)) {
             val date1: String = binding.results.newDate.text.toString()
             //возможно убрать все отсюда
             val zone1 = binding.results.newMeters1.text.toString()
@@ -850,7 +813,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             viewLifecycleOwner.lifecycleScope.launch {
                 viewModel.saveResults(
                     date1,
-                    source,
                     source2.joinToString(),
                     zone1,
                     zone2,
