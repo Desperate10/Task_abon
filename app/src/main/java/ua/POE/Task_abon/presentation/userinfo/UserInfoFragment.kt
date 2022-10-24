@@ -35,9 +35,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
@@ -143,6 +141,13 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     //loadSpinnersFromResult(it)
                     resetFields()
                     it?.let { getResultIfExist(it) }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch{
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.resultil.combine(viewModel.featureList.asFlow()) {
+                //    result, list -> loadFeatureSpinner(result, list)
                 }
             }
         }
@@ -685,7 +690,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.difference1.text = ""
         binding.results.note.setText("")
         binding.results.phone.setText("")
-        binding.results.checkBox.isChecked = false
         isResultSaved = false
         imageAdapter.notifyDataSetChanged()
     }

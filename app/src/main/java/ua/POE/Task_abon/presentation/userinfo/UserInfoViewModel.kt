@@ -74,15 +74,6 @@ class UserInfoViewModel @Inject constructor(
     private val _selectedBlock = MutableStateFlow("Результати")
     val selectedBlock: StateFlow<String> = _selectedBlock
 
-
-
-    /*val result = _customerIndex
-        .combine(_selectedBlock) { id, selectedBlock ->
-            if (selectedBlock == "Результати") {
-                getResult()
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyFlow<Result>())*/
-
     val selectedBlockData = _customerIndex
         .combine(_selectedBlock) { id, selectedBlock ->
             if (selectedBlock == "Результати") {
@@ -96,7 +87,7 @@ class UserInfoViewModel @Inject constructor(
     val result = _customerIndex
         .combine(_selectedBlock) { id, selectedBlock ->
             if (selectedBlock == "Результати") {
-                getResult()
+                getSavedData()
             } else {
                 null
             }
@@ -139,7 +130,8 @@ class UserInfoViewModel @Inject constructor(
     }
 
     private val currentSelectedSourceCode: StateFlow<String> =
-       sourceSpinnerPosition.map { if (it != 0) {
+        sourceSpinnerPosition.map {
+            if (it != 0) {
                 Log.d("testim", sourceList[it - 1].code!!)
                 sourceList[it - 1].code!!
             } else ""
@@ -171,6 +163,28 @@ class UserInfoViewModel @Inject constructor(
             _blockNames.value = blockNameList
         }
     }
+
+    private fun getCustomerFeatures(condition: String?) = flow {
+        emit((condition ?: getCheckedConditions()).split(",").map { it.trim() })
+    }
+
+    private fun initFeatureSpinnerList(customerFeatures: List<String>) = flow {
+        val conditionArray = mutableListOf<KeyPairBoolData>()
+        for (feature in featureList) {
+            if (feature.code.toString() in customerFeatures) {
+                conditionArray.add(KeyPairBoolData(feature.text!!, true))
+            } else {
+                conditionArray.add(KeyPairBoolData(feature.text!!, false))
+            }
+        }
+        emit(conditionArray)
+    }
+
+    val resultil = result.flatMapLatest { getCustomerFeatures(result.value?.pointCondition)}
+        .flatMapLatest { initFeatureSpinnerList(it) }
+        //.combine(featureList.asFlow()) сделать его отдельным как стейтфлоу?
+
+
 
     /*private fun getCustomerFeatures(condition: SavedData?) = flow  {
         val data = if (condition == null) {
@@ -430,11 +444,10 @@ class UserInfoViewModel @Inject constructor(
     private suspend fun getTask(taskId: Int) = taskRepository.getTask(taskId)
 
     //ошибка
-    suspend fun getResult(): SavedData {
-        return mapResultToSavedData(
+    suspend fun getSavedData() =
+        mapResultToSavedData(
             resultDao.getResultUser(taskId, index)
         )
-    }
 
     fun getSourceName(code: String, type: String) = catalogDao.getSourceByCode(code, type)
 
