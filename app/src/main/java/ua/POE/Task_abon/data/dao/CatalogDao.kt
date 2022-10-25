@@ -29,6 +29,9 @@ interface CatalogDao {
     @Query("SELECT * FROM catalog WHERE type = :type")
     suspend fun getSourceList(type: String) : List<CatalogEntity>
 
+    @Query("SELECT * FROM catalog WHERE type = \"4\"")
+    suspend fun getFeatureList() : List<CatalogEntity>
+
     @Query("SELECT text FROM catalog WHERE code = :code AND type = :type")
     fun getSourceByCode(code: String, type: String) : String
 

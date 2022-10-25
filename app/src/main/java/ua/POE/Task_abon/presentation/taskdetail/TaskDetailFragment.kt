@@ -172,7 +172,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         val bundle = bundleOf(
             "taskId" to taskId,
             "filial" to extractFilialFromFileName(binding.fileName.text.toString()),
-            "num" to userData[position].num.toString(),
+            "num" to userData[position].num,
             "id" to userData[position]._id,
             "count" to adapter.itemCount,
             "isFirstLoad" to true

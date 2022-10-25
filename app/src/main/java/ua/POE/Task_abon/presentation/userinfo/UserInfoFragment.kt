@@ -20,6 +20,7 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.text.TextWatcher
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -62,15 +63,11 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
 
     private var isFirstLoad = false
-    var source = ""
-    private var source2 = listOf<String>()
     private var isResultSaved = false
-    private var sourceText = listOf<String>()
-    var massiv2 = ArrayList<KeyPairBoolData>()
     private val operators by lazy { viewModel.getOperatorsList() }
     private lateinit var sourceAdapter: ArrayAdapter<String>
 
-    lateinit var catalog: List<Catalog>
+    private var featureList = listOf<Catalog>()
     lateinit var locationManager: LocationManager
     private val imageAdapter: ImageAdapter by autoCleaned {
         ImageAdapter(requireContext(), items, uri)
@@ -136,18 +133,23 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.result.collectLatest {
-                    //Data и featurelist можно обработать во viewModel и отдать сюда готовыми?
-                    //loadSpinnersFromResult(it)
+                viewModel.result.collectLatest { savedData ->
                     resetFields()
-                    it?.let { getResultIfExist(it) }
+                    savedData?.status?.let { getResultIfExist(savedData) }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.featureList.collectLatest {
+                    featureList = it
                 }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch{
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.resultil.combine(viewModel.featureList.asFlow()) {
-                //    result, list -> loadFeatureSpinner(result, list)
+                viewModel.customerFeatures.collect {
+                    loadFeatureSpinner(it)
                 }
             }
         }
@@ -225,8 +227,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             filial = arguments?.getString("filial")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
-
-        // viewModel.setSelectedCustomer(index)
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
@@ -478,10 +478,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun loadFeatureSpinner(
-        customerFeatures: List<KeyPairBoolData>,
-        featureList: List<Catalog>
+        customerFeatures: List<KeyPairBoolData>
     ) {
-
         with(binding.results.featureSpinner) {
             isSearchEnabled = false
             isShowSelectAllButton = true
@@ -496,55 +494,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             hintText = "Можливий вибір декількох пунктів:"
             setClearText("Очистити все")
             setItems(customerFeatures) { items ->
-                source2 = items.flatMap { item ->
-                    featureList
-                        .filter { item.name == it.text }
-                        .map { it.code.toString() }
-                }
+                viewModel.setItems(items)
             }
         }
     }
-
-    /*private fun loadSpinnersFromResult(savedCondition: List<String>?, featureList: List<Catalog> ) {
-        val data = if (savedCondition == null) {
-            viewModel.getCheckedConditions()
-        } else {
-            result.point_condition
-        }?.split(",")?.map { it.trim() }
-
-        massiv2.clear()
-        for (feature in featureList) {
-            if (savedCondition != null) {
-                if (feature.code.toString() in savedCondition) {
-                    massiv2.add(KeyPairBoolData(feature.text!!, true))
-                } else {
-                    massiv2.add(KeyPairBoolData(feature.text!!, false))
-                }
-            }
-        }
-
-        with(binding.results.featureSpinner) {
-            isSearchEnabled = false
-            isShowSelectAllButton = true
-            isColorSeparation = false
-
-            when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
-                Configuration.UI_MODE_NIGHT_YES ->
-                    setBackgroundColor(Color.GRAY)
-                Configuration.UI_MODE_NIGHT_NO ->
-                    setBackgroundColor(Color.WHITE)
-            }
-            hintText = "Можливий вибір декількох пунктів:"
-            setClearText("Очистити все")
-            setItems(massiv2) { items ->
-                source2 = items.flatMap { item ->
-                    featureList
-                        .filter { item.name == it.text }
-                        .map { it.code.toString() }
-                }
-            }
-        }
-    }*/
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -704,7 +657,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.newMeters3.setText(savedData.zone3)
         binding.results.note.setText(savedData.note)
         binding.results.phone.setText(savedData.phoneNumber)
-        binding.results.checkBox.isChecked = savedData.isMainPhone?: false
+        binding.results.checkBox.isChecked = savedData.isMainPhone?: true
 
         if (!savedData.photo.isNullOrEmpty()) {
             imageAdapter.addSavedPhoto(Uri.parse(savedData.photo))
@@ -817,7 +770,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             viewLifecycleOwner.lifecycleScope.launch {
                 viewModel.saveResults(
                     date1,
-                    source2.joinToString(),
                     zone1,
                     zone2,
                     zone3,

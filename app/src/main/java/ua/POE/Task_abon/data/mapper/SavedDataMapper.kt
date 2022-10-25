@@ -14,6 +14,6 @@ fun mapResultToSavedData(result: Result?) = SavedData(
     pointCondition = result?.point_condition,
     note = result?.note,
     phoneNumber = result?.phoneNumber,
-    isMainPhone = result?.is_main != 1,
+    isMainPhone = result?.is_main != 0,
     photo = result?.photo
 )

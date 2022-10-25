@@ -42,6 +42,8 @@ class UserInfoViewModel @Inject constructor(
     private val catalogDao: CatalogDao
 ) : ViewModel() {
 
+    private var selectedSourceCode  = ""
+    private var multiSpinnerSelectedFeatures = listOf<String>()
     private var checkDate = ""
     private var type = ""
     private var lastCount = ""
@@ -50,8 +52,8 @@ class UserInfoViewModel @Inject constructor(
     private var capacity = ""
     private var avgUsage = ""
     private var lastDate = ""
-    private var sourceList = listOf<Catalog>()
-    var featureList = listOf<Catalog>()
+    private val sourceList = MutableStateFlow(emptyList<Catalog>())
+
 
     private val taskId =
         savedStateHandle.get<Int>("taskId") ?: throw RuntimeException("taskId is null")
@@ -74,6 +76,12 @@ class UserInfoViewModel @Inject constructor(
     private val _selectedBlock = MutableStateFlow("Результати")
     val selectedBlock: StateFlow<String> = _selectedBlock
 
+    val featureList: StateFlow<List<Catalog>> = flow {
+        val list = catalogDao.getFeatureList()
+            .map { mapCatalogEntityToCatalog(it) }
+        emit(list)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     val selectedBlockData = _customerIndex
         .combine(_selectedBlock) { id, selectedBlock ->
             if (selectedBlock == "Результати") {
@@ -84,14 +92,16 @@ class UserInfoViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    private fun getSavedData(index: Int): Flow<SavedData?> {
+        return resultDao.getResultUser(taskId, index).map {
+            mapResultToSavedData(it)
+        }
+    }
+
     val result = _customerIndex
-        .combine(_selectedBlock) { id, selectedBlock ->
-            if (selectedBlock == "Результати") {
-                getSavedData()
-            } else {
-                null
-            }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+        .flatMapLatest {
+            getSavedData(it)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
 
     private var personalAccount = ""
     private var personalAccountKey = ""
@@ -106,10 +116,8 @@ class UserInfoViewModel @Inject constructor(
     var time = 0
 
     init {
-        Log.d("testim", savedStateHandle.keys().toString())
         startTimer()
         getBlockNames()
-        getFeatureList()
     }
 
     override fun onCleared() {
@@ -129,24 +137,15 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    private val currentSelectedSourceCode: StateFlow<String> =
-        sourceSpinnerPosition.map {
-            if (it != 0) {
-                Log.d("testim", sourceList[it - 1].code!!)
-                sourceList[it - 1].code!!
-            } else ""
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), "")
-
-
     private fun getSourceListFlow(position: Int) = flow {
-        sourceList = if (position == 0) {
+        sourceList.value = if (position == 0) {
             catalogDao.getSourceList("2")
         } else {
             catalogDao.getSourceList("3")
         }.map { mapCatalogEntityToCatalog(it) }
         val sourceTextList = mutableListOf<String>()
         sourceTextList.add(0, "-Не вибрано-")
-        sourceTextList.addAll(sourceList.map { it.text.toString() })
+        sourceTextList.addAll(sourceList.value.map { it.text.toString() })
         emit(sourceTextList)
     }
 
@@ -164,47 +163,31 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    private fun getCustomerFeatures(condition: String?) = flow {
-        emit((condition ?: getCheckedConditions()).split(",").map { it.trim() })
-    }
+    val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
+        .flatMapLatest {
+            featureList.combine(result) { list, result ->
+                setupFeatureSpinner(result?.pointCondition, list)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
-    private fun initFeatureSpinnerList(customerFeatures: List<String>) = flow {
+
+    private fun setupFeatureSpinner(
+        condition: String?,
+        featureList: List<Catalog>
+    ): List<KeyPairBoolData> {
+        val savedCondition = (condition ?: getCheckedConditions()).split(",").map { it.trim() }
         val conditionArray = mutableListOf<KeyPairBoolData>()
+        Log.d("testim1", "zashlo ${featureList}")
         for (feature in featureList) {
-            if (feature.code.toString() in customerFeatures) {
+            if (feature.code.toString() in savedCondition) {
                 conditionArray.add(KeyPairBoolData(feature.text!!, true))
             } else {
                 conditionArray.add(KeyPairBoolData(feature.text!!, false))
             }
         }
-        emit(conditionArray)
+        Log.d("testim11", conditionArray.toString())
+        return conditionArray
     }
-
-    val resultil = result.flatMapLatest { getCustomerFeatures(result.value?.pointCondition)}
-        .flatMapLatest { initFeatureSpinnerList(it) }
-        //.combine(featureList.asFlow()) сделать его отдельным как стейтфлоу?
-
-
-
-    /*private fun getCustomerFeatures(condition: SavedData?) = flow  {
-        val data = if (condition == null) {
-            getCheckedConditions()
-        } else {
-            condition.pointCondition
-        }?.split(",")?.map { it.trim() }
-
-        val conditionArray = mutableListOf<KeyPairBoolData>()
-
-        for (feature in featureList) {
-            if (data != null) {
-                if (feature.code.toString() in data) {
-                    conditionArray.add(KeyPairBoolData(feature.text!!, true))
-                } else {
-                    conditionArray.add(KeyPairBoolData(feature.text!!, false))
-                }
-            }
-        }
-    }*/
 
     val preloadResultTab = _customerIndex
         .flatMapLatest {
@@ -322,9 +305,6 @@ class UserInfoViewModel @Inject constructor(
             )
         }
 
-    /*fun getBasicInfo(fields: List<String>, tableName: String, num: Int) =
-        testEntityRepository.getBasicInfoBlock(fields, tableName, num)*/
-
     fun getFieldsByBlockName(name: String): List<String> =
         directoryRepository.getFieldsByBlockName(name, taskId)
 
@@ -385,9 +365,8 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    suspend fun saveResults(
+    fun saveResults(
         date: String,
-        source2: String,
         zone1: String,
         zone2: String,
         zone3: String,
@@ -398,72 +377,61 @@ class UserInfoViewModel @Inject constructor(
         lng: String,
         photo: String?
     ) {
-        resetTimer()
-        val task: TaskEntity = getTask(taskId)
-        val fields = listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
-        val user = testEntityRepository.getTextByFields("TD$taskId", fields, index)
+        viewModelScope.launch(Dispatchers.Default) {
+            resetTimer()
+            val task: TaskEntity = getTask(taskId)
+            val fields =
+                listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
+            val user =
+                testEntityRepository.getTextByFields("TD$taskId", fields, customerIndex.value)
 
-        val result = Result(
-            task.name,
-            task.date,
-            taskId,
-            task.filial,
-            index,
-            user["num"]!!,
-            user["accountId"]!!,
-            date,
-            statusSpinnerPosition.value.toString(),
-            currentSelectedSourceCode.value,
-            source2,
-            zone1,
-            zone2,
-            zone3,
-            note,
-            user["tel"]!!,
-            phoneNumber,
-            is_main,
-            "",
-            type,
-            counter,
-            zoneCount,
-            capacity,
-            avgUsage,
-            lat,
-            lng,
-            personalAccount,
-            user["family"],
-            user["Adress"],
-            photo,
-            user["counpleas"]
-        )
-        resultDao.insertNewData(result)
+            val result = Result(
+                task.name,
+                task.date,
+                taskId,
+                task.filial,
+                customerIndex.value,
+                user["num"]!!,
+                user["accountId"]!!,
+                date,
+                statusSpinnerPosition.value.toString(),
+                selectedSourceCode,
+                multiSpinnerSelectedFeatures.joinToString(),
+                zone1,
+                zone2,
+                zone3,
+                note,
+                user["tel"]!!,
+                phoneNumber,
+                is_main,
+                "",
+                type,
+                counter,
+                zoneCount,
+                capacity,
+                avgUsage,
+                lat,
+                lng,
+                personalAccount,
+                user["family"],
+                user["Adress"],
+                photo,
+                user["counpleas"]
+            )
+            resultDao.insertNewData(result)
 
-        testEntityRepository.setDone(taskId, user["num"]!!)
+            testEntityRepository.setDone(taskId, user["num"]!!)
+        }
     }
 
     private suspend fun getTask(taskId: Int) = taskRepository.getTask(taskId)
-
-    //ошибка
-    suspend fun getSavedData() =
-        mapResultToSavedData(
-            resultDao.getResultUser(taskId, index)
-        )
 
     fun getSourceName(code: String, type: String) = catalogDao.getSourceByCode(code, type)
 
     fun getOperatorsList() = catalogDao.getOperatorsList()
 
     fun getCheckedConditions() =
-        testEntityRepository.getCheckedConditions(taskId, index)
-
-    fun getFeatureList() {
-        viewModelScope.launch {
-            featureList = catalogDao.getSourceList("4")
-                .map {
-                    mapCatalogEntityToCatalog(it)
-                }
-        }
-    }
+        testEntityRepository.getCheckedConditions(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
         _statusSpinnerPosition.value = position
@@ -471,10 +439,27 @@ class UserInfoViewModel @Inject constructor(
 
     fun setSourceSpinnerPosition(position: Int) {
         _sourceSpinnerPosition.value = position
+        getSelectedSourceCode(position)
+
     }
 
+    private fun getSelectedSourceCode(position: Int) {
+        selectedSourceCode = if (position != 0) {
+            sourceList.value[position - 1].code!!
+        } else ""
+    }
+
+
+    /*//исправить метод
+    private val currentSelectedSourceCode: StateFlow<String> =
+        sourceSpinnerPosition.flatMapLatest {
+            sourceList.value[it].code
+            *//*if (it != 0) {
+                sourceList.value[it - 1].code!!
+            } else emptyFlow()*//*
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), "")*/
+
     fun setSelectedCustomer(index: Int) {
-        savedStateHandle["num"] = index
         _customerIndex.value = index
     }
 
@@ -505,28 +490,12 @@ class UserInfoViewModel @Inject constructor(
         time = 0
     }
 
-
-    //adding
-    /*fun getSourceList(position: Int): Flow<List<Catalog>> {
-        return if (position == 0) {
-            catalogDao.getSourceList("2")
-        } else {
-            catalogDao.getSourceList("3")
-        }.mapLatestIterable { mapCatalogEntityToCatalog(it) }
-            .flowOn(Dispatchers.Default)
-    }*/
-
-    /*fun getSourceList(type: String): List<Catalog> {
-        return catalogDao.getSourceList(type).map {
-            mapCatalogEntityToCatalog(it)
+    fun setItems(items: List<KeyPairBoolData>) {
+        multiSpinnerSelectedFeatures = items.flatMap { item ->
+            featureList.value
+                .filter { item.name == it.text }
+                .map { it.code.toString() }
         }
-    }*/
-
-    /*fun getFeatureList(): StateFlow<List<Catalog>> {
-       return catalogDao.getSourceList("4")
-           .mapLatestIterable { mapCatalogEntityToCatalog(it) }
-           .flowOn(Dispatchers.Default)
-           .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-   }*/
+    }
 
 }
