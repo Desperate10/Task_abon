@@ -37,6 +37,4 @@ data class Result(
     @ColumnInfo(name = "adress") var adress: String?,
     @ColumnInfo(name = "photo") var photo: String?,
     @ColumnInfo(name = "counpleas") var counterPlace: String?
-) {
-
-}
+)

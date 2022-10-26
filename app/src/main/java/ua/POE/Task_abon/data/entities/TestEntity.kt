@@ -41,9 +41,9 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
         }
 
         @Ignore
-        fun getFieldsByBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
+        fun getFieldsByBlock(sdb: SupportSQLiteDatabase, taskId: Int, fields: List<String>, index: Int) : HashMap<String, String> {
             //Log.d("testim1", fields.joinToString())
-            var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
+            var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM TD$taskId WHERE _id = $index")
             var data : HashMap<String, String> = HashMap()
             var data2 : HashMap<String, String> = HashMap()
             csr.moveToFirst()
@@ -61,7 +61,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             }
             var sl1 = sl.toString().replace("[", "(")
             sl1 = sl1.replace("]", ")")
-            csr = sdb.query("SELECT fieldName ,fieldNameTxt FROM directory WHERE fieldName in $sl1 AND taskId = ${tableName.substring(2)}")
+            csr = sdb.query("SELECT fieldName ,fieldNameTxt FROM directory WHERE fieldName in $sl1 AND taskId = $taskId")
             csr.moveToFirst()
             while (csr.moveToNext()) {
                 data2[csr.getString(csr.getColumnIndex("fieldName"))] = csr.getString(csr.getColumnIndex("fieldNameTxt"))

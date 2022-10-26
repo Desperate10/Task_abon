@@ -3,17 +3,17 @@ package ua.POE.Task_abon.presentation.userinfo
 import android.Manifest
 import android.app.Activity
 import android.app.DatePickerDialog
-import android.content.*
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.content.res.Configuration
 import android.graphics.Color
-import android.graphics.Typeface
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
@@ -36,23 +36,19 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
-import ua.POE.Task_abon.domain.model.BasicInfo
-import ua.POE.Task_abon.domain.model.Catalog
-import ua.POE.Task_abon.domain.model.Icons
-import ua.POE.Task_abon.domain.model.Image
+import ua.POE.Task_abon.domain.model.*
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.ImageAdapter
-import ua.POE.Task_abon.utils.*
+import ua.POE.Task_abon.utils.autoCleaned
+import ua.POE.Task_abon.utils.getEmojiByUnicode
+import ua.POE.Task_abon.utils.getRawTextFile
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 
 @AndroidEntryPoint
@@ -61,48 +57,27 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private var binding: FragmentUserInfoBinding by autoCleaned()
     private val viewModel: UserInfoViewModel by viewModels()
-    private var taskId: Int = 0
     private var filial: String? = null
-    private var num: String? = null
-    private var index = 1
-    private var count = 1
-    private var fieldsArray = listOf<String>()
-    private val basicFieldsTxt = ArrayList<String>()
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
     private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
 
-    // private var statusSpinnerPosition: Int = 0
-    private var numbpers = ""
     private var isFirstLoad = false
-    var family = ""
-    var adress = ""
-    var numbersField = ""
-    var iconsLs = ""
-    private var type = ""
-    var counter = ""
-    var zoneCount = ""
-    var capacity = ""
-    var avgUsage = ""
-    var source = ""
-    private var source2 = ArrayList<String>()
     private var isResultSaved = false
-    var massiv = ArrayList<String>()
-    var massiv2 = ArrayList<KeyPairBoolData>()
     private val operators by lazy { viewModel.getOperatorsList() }
-    lateinit var sourceAdapter: ArrayAdapter<String>
+    private lateinit var sourceAdapter: ArrayAdapter<String>
 
-    lateinit var catalog: List<Catalog>
-    lateinit var featureList: List<Catalog>
+    private var featureList = listOf<Catalog>()
     lateinit var locationManager: LocationManager
     private val imageAdapter: ImageAdapter by autoCleaned {
         ImageAdapter(requireContext(), items, uri)
     }
     private val items = ArrayList<Image>()
     private val uri = ArrayList<String>()
-    private lateinit var tempImage: File
     private var imageUri: Uri? = null
-    private var icons = ArrayList<Icons>()
+    private val icons by lazy {
+        resources.getRawTextFile(R.raw.icons)
+    }
     private var firstEditDate: String = ""
     private var zone1watcher: TextWatcher? = null
     private var zone2watcher: TextWatcher? = null
@@ -111,28 +86,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.statusSpinnerPosition
-                    .flatMapLatest { viewModel.getSourceList() }
-                    .flowOn(Dispatchers.IO)
-                    .collect {
-                        catalog = it
-                        updateSourceSpinner(it)
-                    }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.sourceSpinnerPosition.collect {
-                    source = if (it != 0) {
-                        catalog[it - 1].code!!
-                    } else ""
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.getFeatureList().collect {
-                    featureList = it
+                viewModel.getSourceList.collect {
+                    setupSourceSpinner(it)
                 }
             }
         }
@@ -147,23 +102,116 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.customerIndex
                     .flatMapLatest {
-                        //добавить запрос во viewModel для получения названия полей
-                        //и попробовать так
-                        viewModel.getCustomerBasicInfo(taskId, index, icons)
-                    }.collectLatest {
+                        viewModel.getCustomerBasicInfo(icons)
+                    }
+                    .filter { it.name.isNotEmpty() }
+                    .collectLatest {
                         getBasicInfo(it)
                     }
             }
         }
-        /*viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.customerIndex.flatMapMerge { index ->
-                    viewModel.getFieldsByBlockName("", taskId).asFlow()
-                }.flatMapMerge {
-                    viewModel.getTextFieldsByBlockName(it, "TD$taskId", index)
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            launch {
+                viewModel.selectedBlockData.collectLatest {
+                    if (viewModel.selectedBlock.value != "Результати") {
+                        binding.infoTables.visibility = VISIBLE
+                        binding.results.root.visibility = GONE
+                        updateView(it)
+                    } else {
+                        binding.infoTables.visibility = GONE
+                        binding.results.root.visibility = VISIBLE
+                    }
                 }
             }
-        }*/
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.preloadResultTab.collectLatest {
+                    preloadResultTab(it)
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.result.collectLatest { savedData ->
+                    resetFields()
+                    savedData?.status?.let { getResultIfExist(savedData) }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.featureList.collectLatest {
+                    featureList = it
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch{
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.customerFeatures.collect {
+                    loadFeatureSpinner(it)
+                }
+            }
+        }
+    }
+
+    private fun preloadResultTab(it: TechInfo) {
+        when (it.zoneCount) {
+            "1" -> {
+                binding.results.secondZoneRow.visibility = GONE
+                binding.results.thirdZoneRow.visibility = GONE
+            }
+            "2" -> {
+                binding.results.secondZoneRow.visibility = VISIBLE
+                binding.results.thirdZoneRow.visibility = GONE
+            }
+            "3" -> {
+                binding.results.secondZoneRow.visibility = VISIBLE
+                binding.results.thirdZoneRow.visibility = VISIBLE
+            }
+        }
+
+        binding.results.lastDate.text = it.lastDate
+        val lastCount: List<String> = it.lastCount.split("/")
+
+        binding.results.previousMeters1.text = lastCount[0]
+        if (lastCount.size == 2) {
+            binding.results.previousMeters2.text = lastCount[1]
+        } else if (lastCount.size == 3) {
+            binding.results.previousMeters2.text = lastCount[1]
+            binding.results.previousMeters3.text = lastCount[2]
+        }
+
+        binding.results.differenceText.text = "Расход\nСредн ${it.averageUsage}"
+        binding.results.contrDate.text = it.checkDate
+        binding.results.contrText.text =
+            resources.getString(R.string.contr_pokaz) + it.inspector
+
+        imageAdapter.deletePhoto(requireContext())
+    }
+
+    private fun registerWatchers() {
+        zone1watcher = registerWatcher(
+            binding.results.newMeters1,
+            binding.results.difference1,
+            binding.results.previousMeters1
+        )
+        zone2watcher = registerWatcher(
+            binding.results.newMeters2,
+            binding.results.difference2,
+            binding.results.previousMeters2
+        )
+        zone3watcher = registerWatcher(
+            binding.results.newMeters3,
+            binding.results.difference3,
+            binding.results.previousMeters3
+        )
+    }
+
+    private fun removeTextWatchers() {
+        binding.results.newMeters1.removeTextChangedListener(zone1watcher)
+        binding.results.newMeters2.removeTextChangedListener(zone2watcher)
+        binding.results.newMeters3.removeTextChangedListener(zone3watcher)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -172,35 +220,27 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         (activity as MainActivity).supportActionBar?.title = "Інформація"
 
         if (savedInstanceState != null) {
-            index = savedInstanceState.getInt("index")
+            viewModel.setSelectedCustomer(savedInstanceState.getInt("index"))
         }
 
         arguments?.let {
-            taskId = arguments?.getInt("taskId") ?: 0
             filial = arguments?.getString("filial")
-            num = arguments?.getString("num")
-            index = arguments?.getInt("id") ?: throw NullPointerException("index is null")
-            count = arguments?.getInt("count") ?: throw NullPointerException("count is null")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
-        viewModel.setSelectedCustomer(index)
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
-        //читаем иконки
-        icons = resources.getRawTextFile(R.raw.icons)
-
-        //getBasicInfo(taskId)
-
-
         checkPermissions()
-        setupSecondarySpinners()
+        registerItemListeners()
         registerClickListeners()
+        registerWatchers()
         setupImageAdapter()
         observeViewModel()
     }
 
     private fun registerClickListeners() {
+        (binding.personalAccount as TextView).setOnClickListener(this)
+        (binding.counter as TextView).setOnClickListener(this)
         binding.previous.setOnClickListener(this)
         binding.next.setOnClickListener(this)
         binding.results.date.setOnClickListener(this)
@@ -208,26 +248,26 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun setupMainBlockSpinner(list: List<String>) {
-        val adapter =
+        binding.blockName.adapter =
             ArrayAdapter(
                 requireContext(),
                 android.R.layout.simple_spinner_dropdown_item,
                 list
             )
-        binding.blockName.adapter = adapter
-        binding.blockName.onItemSelectedListener = this
-        adapter.notifyDataSetChanged()
     }
 
-    private fun setupSecondarySpinners() {
-        binding.results.statusSpinner.onItemSelectedListener = this
-        //sourcespinner
+    private fun setupSourceSpinner(list: List<String>) {
         sourceAdapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
-            massiv
+            list
         )
         binding.results.sourceSpinner.adapter = sourceAdapter
+    }
+
+    private fun registerItemListeners() {
+        binding.blockName.onItemSelectedListener = this
+        binding.results.statusSpinner.onItemSelectedListener = this
         binding.results.sourceSpinner.onItemSelectedListener = this
     }
 
@@ -242,7 +282,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 } else {
                     Toast.makeText(
                         requireContext(),
-                        "Видалити фото, щоб створити нове",
+                        "Видаліть фото, щоб створити нове",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -270,17 +310,15 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     override fun onStop() {
         super.onStop()
-        binding.results.newMeters1.removeTextChangedListener(zone1watcher)
-        binding.results.newMeters2.removeTextChangedListener(zone2watcher)
-        binding.results.newMeters3.removeTextChangedListener(zone3watcher)
+        removeTextWatchers()
     }
 
     private fun takePhoto() {
-        val filename = filial + "_" + numbpers + "_"
+        val filename = filial + "_" + binding.personalAccount?.text + "_"
         val storageDirectory: File? =
             requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         try {
-            tempImage = File.createTempFile(filename, ".jpg", storageDirectory)
+            val tempImage = File.createTempFile(filename, ".jpg", storageDirectory)
             imageUri = FileProvider.getUriForFile(
                 requireContext(),
                 "ua.POE.Task_abon.fileprovider",
@@ -288,31 +326,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             )
             val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
-            when {
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP -> {
-                    intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                }
-                Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN -> {
-                    val clip = ClipData.newUri(
-                        requireActivity().contentResolver,
-                        "A photo",
-                        imageUri
-                    )
-                    intent.clipData = clip
-                    intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                }
-                else -> {
-                    val resInfoList: List<ResolveInfo> = requireActivity().packageManager
-                        .queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
-                    for (resolveInfo in resInfoList) {
-                        val packageName = resolveInfo.activityInfo.packageName
-                        requireActivity().grantUriPermission(
-                            packageName, imageUri,
-                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-                        )
-                    }
-                }
-            }
+            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             try {
                 startActivityForResult(intent, 1)
             } catch (e: ActivityNotFoundException) {
@@ -326,7 +340,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun checkPermissions() {
-
         locationManager =
             requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (ActivityCompat.checkSelfPermission(
@@ -446,10 +459,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     onGPS()
                 }
-                /* locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, 1000,
-                    1f, locationListener
-                )*/
 
                 // 100 ->
                 if (grantResults[2] == PackageManager.PERMISSION_GRANTED) {
@@ -468,28 +477,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun loadSpinners(savedConditions: String?) {
-
-        //updateSourceSpinner(catalog)
-        /*binding.results.sourceSpinner.adapter = sourceAdapter
-        binding.results.sourceSpinner.onItemSelectedListener = this*/
-
-
-        // massiv2.add("-Не выбрано-")
-        val result = if (!savedConditions.isNullOrEmpty()) {
-            savedConditions
-        } else {
-            viewModel.getCheckedConditions(taskId, index)
-        }.split(",").map { it.trim() }
-        massiv2.clear()
-        for (feature in featureList) {
-            if (feature.code.toString() in result) {
-                massiv2.add(KeyPairBoolData(feature.text!!, true))
-            } else {
-                massiv2.add(KeyPairBoolData(feature.text!!, false))
-            }
-        }
-
+    private fun loadFeatureSpinner(
+        customerFeatures: List<KeyPairBoolData>
+    ) {
         with(binding.results.featureSpinner) {
             isSearchEnabled = false
             isShowSelectAllButton = true
@@ -503,17 +493,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
             hintText = "Можливий вибір декількох пунктів:"
             setClearText("Очистити все")
-            setItems(
-                massiv2
-            ) { items ->
-                source2.clear()
-                for (i in items.indices) {
-                    for (feature in featureList) {
-                        if (items[i].name == feature.text) {
-                            feature.code?.let { source2.add(it) }
-                        }
-                    }
-                }
+            setItems(customerFeatures) { items ->
+                viewModel.setItems(items)
             }
         }
     }
@@ -537,15 +518,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 return true
             }
             R.id.save_customer_data -> {
-                if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(3)
-                        .toString() !in operators || binding.results.phone.text.length < 10)
-                ) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Неправильний формат номера телефону",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else if (binding.lat.text != "0.0") {
+                if (binding.lat.text != "0.0") {
                     saveResult()
                 } else {
                     askAboutSavingWithoutCoords()
@@ -556,153 +529,97 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         return super.onOptionsItemSelected(item)
     }
 
-    private fun askAboutSavingWithoutCoords() {
-        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-            when (which) {
-                DialogInterface.BUTTON_POSITIVE -> {
-                    if (binding.results.phone.text.isNotEmpty()
-                        && (binding.results.phone.text.take(3).toString() !in operators
-                                || binding.results.phone.text.length < 10)
-                    ) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Неправильний формат номера телефону",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        saveResult()
-                    }
-                }
-                DialogInterface.BUTTON_NEGATIVE -> {
-                    dialog.dismiss()
-                }
-            }
-        }
-
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Впевнені, що хочете зберегти без координат?").setPositiveButton(
-            getString(R.string.yes),
-            dialogClickListener
-        )
-            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
-
-    }
-
-    override fun onClick(v: View) {
-        if (v.id == R.id.previous) {
-            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                showSaveOrNotDialog(false)
-            } else {
-                goPrevious()
-            }
-        } else if (v.id == R.id.next) {
-            if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                showSaveOrNotDialog(true)
-            } else {
-                goNext()
-            }
-        } else if (v.id == R.id.date || v.id == R.id.new_date) {
-            val dialog = DatePickerDialog(
-                requireContext(), this,
-                calendar[Calendar.YEAR], calendar[Calendar.MONTH],
-                calendar[Calendar.DAY_OF_MONTH]
-            )
-            dialog.show()
-        }
-    }
-
     private fun showSaveOrNotDialog(next: Boolean) {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
-                    if (binding.results.phone.text.isNotEmpty()
-                        && (binding.results.phone.text.take(3).toString() !in operators
-                                || binding.results.phone.text.length < 10)
-                    ) {
-                        Toast.makeText(
-                            requireContext(),
-                            "Неправильний формат номера телефону",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        saveResult()
-                        if (next) {
-                            goNext()
-                        } else goPrevious()
-                    }
+                    saveResult()
+                    if (next) {
+                        goNext()
+                    } else
+                        goPrevious()
                 }
                 DialogInterface.BUTTON_NEGATIVE -> {
                     dialog.dismiss()
                     if (next) {
                         goNext()
-                    } else goPrevious()
+                    } else
+                        goPrevious()
                 }
             }
         }
-
         val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
         builder.setMessage("Зберегти зміни?")
             .setPositiveButton(getString(R.string.yes), dialogClickListener)
             .setNegativeButton(getString(R.string.no), dialogClickListener).show()
     }
 
-    //сбрасываем таймер при переключении юзера
-    private fun resetTimer() {
-        viewModel.time = 0
+    private fun askAboutSavingWithoutCoords() {
+        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
+            when (which) {
+                DialogInterface.BUTTON_POSITIVE -> {
+                    saveResult()
+                }
+                DialogInterface.BUTTON_NEGATIVE -> {
+                    dialog.dismiss()
+                }
+            }
+        }
+        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
+        builder.setMessage("Впевнені, що хочете зберегти без координат?")
+            .setPositiveButton(getString(R.string.yes), dialogClickListener)
+            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+    }
+
+    override fun onClick(v: View) {
+        when (v.id) {
+            R.id.previous -> {
+                if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+                    showSaveOrNotDialog(false)
+                } else {
+                    goPrevious()
+                }
+            }
+            R.id.next -> {
+                if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+                    showSaveOrNotDialog(true)
+                } else {
+                    goNext()
+                }
+            }
+            R.id.personal_account, R.id.counter -> {
+                showIconsDialog((v as TextView).text.toString())
+            }
+            R.id.date, R.id.new_date -> {
+                showDatePickerDialog()
+            }
+        }
+    }
+
+    private fun showDatePickerDialog() {
+        val dialog = DatePickerDialog(
+            requireContext(), this,
+            calendar[Calendar.YEAR], calendar[Calendar.MONTH],
+            calendar[Calendar.DAY_OF_MONTH]
+        )
+        dialog.show()
     }
 
     private fun goPrevious() {
         viewModel.selectPreviousCustomer()
-        selectCustomer(R.id.previous)
+        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
     }
 
     private fun goNext() {
         viewModel.selectNextCustomer()
-        selectCustomer(R.id.next)
-    }
-
-    private fun selectCustomer(viewId: Int) {
-        resetTimer()
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-        index = if (viewId == R.id.next) {
-            if (index != count) {
-                index.plus(1)
-            } else {
-                1
-            }
-        } else {
-            if (index != 1) {
-                index.minus(1)
-            } else {
-                count
-            }
-        }
-        viewModel.setSelectedCustomer(index)
-
-        if (fieldsArray.isNotEmpty())
-            updateView(fieldsArray)
-        //getBasicInfo(taskId)
     }
 
-    /**
-     * @param
-     *
-     */
     override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
         when (parent.id) {
             R.id.block_name -> {
                 val selectedItem = parent.getItemAtPosition(position).toString()
-                if (selectedItem != "Результати") {
-                    val fields = viewModel.getFieldsByBlockName(selectedItem, taskId)
-                    fieldsArray = fields.map { it.fieldName.toString() }
-                    updateView(fieldsArray)
-                    binding.infoTables.visibility = VISIBLE
-                    binding.results.root.visibility = GONE
-                } else {
-                    loadResultTab()
-                    binding.infoTables.visibility = GONE
-                    binding.results.root.visibility = VISIBLE
-                }
+                viewModel.setSelectedBlock(selectedItem)
             }
             R.id.status_spinner -> {
                 viewModel.setStatusSpinnerPosition(position)
@@ -713,243 +630,98 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun updateSourceSpinner(catalogList: List<Catalog>) {
-        massiv.clear()
-        massiv.add("-Не вибрано-")
-        for (i in catalogList) {
-            massiv.add(i.text!!)
-        }
-        sourceAdapter.notifyDataSetChanged()
+    private fun resetFields() {
+        viewModel.setStatusSpinnerPosition(0)
+        binding.results.date.text = sdformat.format(calendar.time)
+        binding.results.newDate.text = sdformat.format(calendar.time)
+        binding.results.statusSpinner.setSelection(0)
+        binding.results.sourceSpinner.setSelection(0)
+        binding.results.newMeters1.setText("", TextView.BufferType.EDITABLE)
+        binding.results.newMeters2.setText("", TextView.BufferType.EDITABLE)
+        binding.results.newMeters3.setText("", TextView.BufferType.EDITABLE)
+        binding.results.checkBox.isChecked = false
+        binding.results.difference1.text = ""
+        binding.results.note.setText("")
+        binding.results.phone.setText("")
+        isResultSaved = false
+        imageAdapter.notifyDataSetChanged()
     }
 
-    private fun loadResultTab() {
+    private fun getResultIfExist(savedData: SavedData) {
+        viewModel.setStatusSpinnerPosition(savedData.status?.toInt() ?: 0)
+        binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
+        binding.results.date.text = savedData.date
+        binding.results.newDate.text = savedData.date
+        binding.results.newMeters1.setText(savedData.zone1)
+        binding.results.newMeters2.setText(savedData.zone2)
+        binding.results.newMeters3.setText(savedData.zone3)
+        binding.results.note.setText(savedData.note)
+        binding.results.phone.setText(savedData.phoneNumber)
+        binding.results.checkBox.isChecked = savedData.isMainPhone?: true
 
-        val techHash = viewModel.getTechInfoTextByFields(taskId, index)
-        val controlInfo = StringBuilder()
-
-        techHash.forEach { (key, value) ->
-            when (key) {
-                "TimeZonalId" -> {
-                    zoneCount = value
-                    when (value) {
-                        "1" -> {
-                            binding.results.secondZoneRow.visibility = GONE
-                            binding.results.thirdZoneRow.visibility = GONE
-                        }
-                        "2" -> {
-                            binding.results.secondZoneRow.visibility = VISIBLE
-                            binding.results.thirdZoneRow.visibility = GONE
-                        }
-                        "3" -> {
-                            binding.results.secondZoneRow.visibility = VISIBLE
-                            binding.results.thirdZoneRow.visibility = VISIBLE
-                        }
-                    }
-                }
-                "Lastdate" -> {
-                    binding.results.lastDate.text = value
-                }
-                "Lastlcount" -> {
-                    val pokaz: List<String> = value.split("/")
-                    binding.results.previousMeters1.text = pokaz[0]
-                    if (pokaz.size == 2) {
-                        binding.results.previousMeters2.text = pokaz[1]
-                    } else if (pokaz.size == 3) {
-                        binding.results.previousMeters2.text = pokaz[1]
-                        binding.results.previousMeters3.text = pokaz[2]
-                    }
-                }
-                "srnach" -> {
-                    avgUsage = value
-                    binding.results.differenceText.text = "Расход\nСредн $value"
-
-                }
-                "type" -> {
-                    type = value
-                }
-                "Counter_numb" -> {
-                    counter = value
-                    /*if (iconsLs.isNotEmpty()) {
-                        val text = getNeededEmojis(icons, iconsLs)
-                        createRow("Лічильник", "$counter $text", true)
-                        iconsLs = ""
-                    } else {
-                        createRow("Лічильник", counter, true)
-                    }*/
-                }
-                "Rozr" -> {
-                    capacity = value
-                }
-                "contr_date" -> {
-                    binding.results.contrDate.text = value
-                    controlInfo.append(" $value")
-                }
-                "contr_pok" -> {
-                    controlInfo.append(" $value")
-                }
-                "contr_name" -> {
-                    controlInfo.append(" $value")
-                }
-            }
+        if (!savedData.photo.isNullOrEmpty()) {
+            imageAdapter.addSavedPhoto(Uri.parse(savedData.photo))
+        }
+        val type = if (viewModel.statusSpinnerPosition.value == 0) {
+            "2"
+        } else {
+            "3"
         }
 
-        binding.results.contrText.text =
-            resources.getString(R.string.contr_pokaz) + controlInfo.toString()
-        binding.results.contrText.setTextColor(Color.YELLOW)
-        binding.results.contrText.setTypeface(binding.results.contrText.typeface, Typeface.BOLD)
-        imageAdapter.deletePhoto(requireContext())
-        zone1watcher = registerWatcher(
-            binding.results.newMeters1,
-            binding.results.difference1,
-            binding.results.previousMeters1
-        )
-        zone2watcher = registerWatcher(
-            binding.results.newMeters2,
-            binding.results.difference2,
-            binding.results.previousMeters2
-        )
-        zone3watcher = registerWatcher(
-            binding.results.newMeters3,
-            binding.results.difference3,
-            binding.results.previousMeters3
-        )
-        try {
-            val result = viewModel.getResult(taskId, index)
-            //statusSpinnerPosition = result.notDone?.toInt() ?: 0
-            viewModel.setStatusSpinnerPosition(result.notDone?.toInt() ?: 0)
-            binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
-            loadSpinners(result.point_condition)
-            binding.results.date.text = result.doneDate
-            binding.results.newDate.text = result.doneDate
-            binding.results.newMeters1.setText(result.zone1)
-            binding.results.newMeters2.setText(result.zone2)
-            binding.results.newMeters3.setText(result.zone3)
-            binding.results.note.setText(result.note)
-            binding.results.phone.setText(result.phoneNumber)
-            binding.results.checkBox.isChecked = result.is_main == 1
-
-            if (!result.photo.isNullOrEmpty()) {
-                imageAdapter.addSavedPhoto(Uri.parse(result.photo))
-            }
-            val type = if (viewModel.statusSpinnerPosition.value == 0) {
-                "2"
-            } else {
-                "3"
-            }
-
-            if (!result.dataSource.isNullOrEmpty()) {
-                val spinnerPosition: Int =
-                    sourceAdapter.getPosition(viewModel.getSourceName(result.dataSource!!, type))
-                binding.results.sourceSpinner.setSelection(spinnerPosition)
-            } else {
-                binding.results.sourceSpinner.setSelection(0)
-            }
-            isResultSaved = true
-
-        } catch (e: Exception) {
-            try {
-                viewModel.setStatusSpinnerPosition(0)
-                loadSpinners("")
-                binding.results.date.text = sdformat.format(calendar.time)
-                binding.results.newDate.text = sdformat.format(calendar.time)
-                binding.results.statusSpinner.setSelection(0)
-                binding.results.sourceSpinner.setSelection(0)
-                binding.results.newMeters1.setText("", TextView.BufferType.EDITABLE)
-                binding.results.newMeters2.setText("", TextView.BufferType.EDITABLE)
-                binding.results.newMeters3.setText("", TextView.BufferType.EDITABLE)
-                binding.results.checkBox.isChecked = false
-                binding.results.difference1.text = ""
-                binding.results.note.setText("")
-                binding.results.phone.setText("")
-                binding.results.checkBox.isChecked = false
-                isResultSaved = false
-                imageAdapter.notifyDataSetChanged()
-            } catch (e: Exception) {
-                //Log.d("errortestim", e.message.toString())
-            }
+        if (!savedData.source.isNullOrEmpty()) {
+            val spinnerPosition: Int =
+                sourceAdapter.getPosition(viewModel.getSourceName(savedData.source, type))
+            binding.results.sourceSpinner.setSelection(spinnerPosition)
+        } else {
+            binding.results.sourceSpinner.setSelection(0)
         }
-
+        isResultSaved = true
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
-        savedInstanceState.putInt("index", index)
+        savedInstanceState.putInt("index", viewModel.customerIndex.value)
         //declare values before saving the state
         super.onSaveInstanceState(savedInstanceState)
     }
 
     private fun getBasicInfo(basicInfo: BasicInfo) {
-        //binding.basicTable.removeAllViews()
-
-        /*basicInfo.forEach {
-            createRow(it.first, it.second, true)
-        }*/
-         binding.personalAccount?.text = basicInfo.personalAccount
-         binding.address?.text = basicInfo.address
-         binding.name?.text = basicInfo.name
-         binding.counter?.text = basicInfo.counter
-         binding.otherInfo?.text = basicInfo.other
-
-
-        if (!isFirstLoad) {
-            loadResultTab()
-        }
+        binding.personalAccount?.text = basicInfo.personalAccount
+        binding.address?.text = basicInfo.address
+        binding.name?.text = basicInfo.name
+        binding.counter?.text = basicInfo.counter
+        binding.otherInfo?.text = basicInfo.other
         isFirstLoad = false
     }
 
-    private fun updateView(fieldsArray: List<String>) {
-        val tdHash = viewModel.getTextFieldsByBlockName(fieldsArray, "TD$taskId", index)
+    private fun updateView(tdHash: Map<String, String>) {
         binding.infoTable.removeAllViews()
 
         tdHash.forEach { (key, value) ->
             if (key.isNotEmpty()) {
-                createRow(key, value, false)
+                createRow(key, value)
             }
         }
-
-        tdHash.clear()
     }
 
-    private fun createRow(name: String, data: String, isBasic: Boolean) {
+    private fun createRow(name: String, data: String) {
         val inflater = LayoutInflater.from(activity)
-
         val row: TableRow = inflater.inflate(R.layout.user_info_row, null) as TableRow
-
         val nameText: TextView = row.findViewById(R.id.name)
         nameText.text = name
-        when {
-            name == "Лічильник" -> {
-                val text: TextView = row.findViewById(R.id.data)
-                text.text = data
-                text.setOnClickListener {
-                    try {
-                        showIconsDialog(data.substringAfter(" "))
 
-                    } catch (e: IndexOutOfBoundsException) {
-                    }
-                }
-            }
-            name == "О/р" -> {
-                val text: TextView = row.findViewById(R.id.data)
-                text.text = data
-                text.setOnClickListener {
-
-                }
-            }
-            name != "Телефон" -> {
-                val text: TextView = row.findViewById(R.id.data)
-                text.text = data
-            }
-            else -> {
+        when (name) {
+            "Телефон" -> {
                 val text: TextView = row.findViewById(R.id.data)
                 text.text = data
                 Linkify.addLinks(text, Linkify.PHONE_NUMBERS)
                 text.linksClickable = true
             }
+            else -> {
+                val text: TextView = row.findViewById(R.id.data)
+                text.text = data
+            }
         }
-
-        if (!isBasic)
-            binding.infoTable.addView(row)
-        else binding.basicTable.addView(row)
+        binding.infoTable.addView(row)
     }
 
     override fun onDateSet(view: DatePicker?, year: Int, month: Int, dayOfMonth: Int) {
@@ -962,13 +734,17 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun saveResult() {
-        //Log.d("testim", "${viewModel.statusSpinnerPosition.value} ${viewModel.sourceSpinnerPosition.value}")
-
-        if (binding.results.newMeters1.text.isNotEmpty() || (viewModel.statusSpinnerPosition.value == 1 && viewModel.sourceSpinnerPosition.value != 0)) {
+        if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(3)
+                .toString() !in operators || binding.results.phone.text.length < 10)
+        ) {
+            Toast.makeText(
+                requireContext(),
+                "Неправильний формат номера телефону",
+                Toast.LENGTH_SHORT
+            ).show()
+        } else if (binding.results.newMeters1.text.isNotEmpty() || (viewModel.statusSpinnerPosition.value == 1 && viewModel.sourceSpinnerPosition.value != 0)) {
             val date1: String = binding.results.newDate.text.toString()
-            //val isDone: String = statusSpinnerPosition.toString()
             //возможно убрать все отсюда
-            val isDone = viewModel.statusSpinnerPosition.value.toString()
             val zone1 = binding.results.newMeters1.text.toString()
             val zone2 = binding.results.newMeters2.text.toString()
             val zone3 = binding.results.newMeters3.text.toString()
@@ -989,33 +765,19 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             }
             val currentDateAndTime =
                 SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-            viewModel.saveEditTiming(taskId, index.toString(), firstEditDate, currentDateAndTime)
-            resetTimer()
+            viewModel.saveEditTiming(firstEditDate, currentDateAndTime)
 
             viewLifecycleOwner.lifecycleScope.launch {
                 viewModel.saveResults(
-                    taskId,
-                    index,
                     date1,
-                    isDone,
-                    source,
-                    source2.joinToString(),
                     zone1,
                     zone2,
                     zone3,
                     note,
                     phoneNumber,
                     isMainPhone,
-                    type,
-                    counter,
-                    zoneCount,
-                    capacity,
-                    avgUsage,
                     lat,
                     lng,
-                    numbpers,
-                    family,
-                    adress,
                     photo
                 )
             }
@@ -1030,6 +792,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun showIconsDialog(iconsText: String) {
+        val currentIcons = iconsText.substringAfter(" ")
         val builder = AlertDialog.Builder(requireContext())
         builder.setTitle("Повідомлення")
         var i = 0
@@ -1037,7 +800,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         do {
             val icon = getEmojiByUnicode(icons[i].emoji!!)
-            if (iconsText.contains(icon)) {
+            if (currentIcons.contains(icon)) {
                 message += "$icon  ${icons[i].hint}\n"
             }
             i++

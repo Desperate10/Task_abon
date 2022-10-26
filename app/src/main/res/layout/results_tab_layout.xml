@@ -194,7 +194,9 @@
                     android:layout_marginBottom="2dp"
                     android:background="@color/colorPrimary"
                     android:gravity="center"
+                    android:textColor="@color/yellow"
                     android:maxLines="2"
+                    android:textStyle="bold"
                     android:text="@string/contr_pokaz"
                     android:textSize="17sp" />
 

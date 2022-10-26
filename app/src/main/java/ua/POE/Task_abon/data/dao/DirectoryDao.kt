@@ -30,8 +30,8 @@ interface DirectoryDao {
     @Query("UPDATE directory SET fieldSort = :attributeValue WHERE taskId = :taskId AND fieldName = :attributeName")
     suspend fun updateSort(taskId: Int, attributeName : String, attributeValue: String)
 
-    @Query("SELECT * FROM directory WHERE fieldBlockName= :name and taskId = :taskId")
-    fun getFieldsByBlockName(name : String, taskId: Int) : List<Directory>
+    @Query("SELECT fieldName FROM directory WHERE fieldBlockName= :name and taskId = :taskId")
+    fun getFieldsByBlockName(name : String, taskId: Int) : List<String>
 
     @Query("SELECT fieldName FROM directory WHERE fieldBlockName= '' and taskId = :taskId")
     suspend fun getBasicFields(taskId: Int) : List<String>

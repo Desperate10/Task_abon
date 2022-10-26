@@ -1,12 +1,17 @@
 package ua.POE.Task_abon.presentation.userinfo
 
+import android.util.Log
+import android.view.View
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.entities.Directory
@@ -14,20 +19,21 @@ import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
+import ua.POE.Task_abon.data.mapper.mapResultToSavedData
 import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
-import ua.POE.Task_abon.domain.model.BasicInfo
-import ua.POE.Task_abon.domain.model.Catalog
-import ua.POE.Task_abon.domain.model.Icons
+import ua.POE.Task_abon.domain.model.*
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
+import java.lang.Thread.State
 import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
 class UserInfoViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
     private val directoryRepository: DirectoryRepository,
     private val taskRepository: TaskRepository,
     private val testEntityRepository: TestEntityRepository,
@@ -36,16 +42,66 @@ class UserInfoViewModel @Inject constructor(
     private val catalogDao: CatalogDao
 ) : ViewModel() {
 
-    private val _statusSpinnerPosition = MutableStateFlow(0)
-    val statusSpinnerPosition :StateFlow<Int> = _statusSpinnerPosition
-    private val _sourceSpinnerPosition = MutableStateFlow(0)
-    val sourceSpinnerPosition :StateFlow<Int> = _sourceSpinnerPosition
+    private var selectedSourceCode  = ""
+    private var multiSpinnerSelectedFeatures = listOf<String>()
+    private var checkDate = ""
+    private var type = ""
+    private var lastCount = ""
+    private var counter = ""
+    private var zoneCount = ""
+    private var capacity = ""
+    private var avgUsage = ""
+    private var lastDate = ""
+    private val sourceList = MutableStateFlow(emptyList<Catalog>())
 
-    private val _customerIndex = MutableStateFlow(1)
+
+    private val taskId =
+        savedStateHandle.get<Int>("taskId") ?: throw RuntimeException("taskId is null")
+    private var index =
+        savedStateHandle.get<Int>("id") ?: throw RuntimeException("Customer index is null")
+    private val taskCustomerQuantity =
+        savedStateHandle.get<Int>("count") ?: throw RuntimeException("Customer's quantity is null ")
+
+    private val _statusSpinnerPosition = MutableStateFlow(0)
+    val statusSpinnerPosition: StateFlow<Int> = _statusSpinnerPosition
+    private val _sourceSpinnerPosition = MutableStateFlow(0)
+    val sourceSpinnerPosition: StateFlow<Int> = _sourceSpinnerPosition
+
+    private val _customerIndex = MutableStateFlow(index)
     val customerIndex: StateFlow<Int> = _customerIndex
 
     private val _blockNames = MutableStateFlow(listOf("Результати"))
     val blockNames: StateFlow<List<String>> = _blockNames
+
+    private val _selectedBlock = MutableStateFlow("Результати")
+    val selectedBlock: StateFlow<String> = _selectedBlock
+
+    val featureList: StateFlow<List<Catalog>> = flow {
+        val list = catalogDao.getFeatureList()
+            .map { mapCatalogEntityToCatalog(it) }
+        emit(list)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val selectedBlockData = _customerIndex
+        .combine(_selectedBlock) { id, selectedBlock ->
+            if (selectedBlock == "Результати") {
+                getTechInfoTextByFields()
+            } else {
+                val fields = getFieldsByBlockName(selectedBlock)
+                getTextFieldsByBlockName(fields)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    private fun getSavedData(index: Int): Flow<SavedData?> {
+        return resultDao.getResultUser(taskId, index).map {
+            mapResultToSavedData(it)
+        }
+    }
+
+    val result = _customerIndex
+        .flatMapLatest {
+            getSavedData(it)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
 
     private var personalAccount = ""
     private var personalAccountKey = ""
@@ -81,6 +137,23 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
+    private fun getSourceListFlow(position: Int) = flow {
+        sourceList.value = if (position == 0) {
+            catalogDao.getSourceList("2")
+        } else {
+            catalogDao.getSourceList("3")
+        }.map { mapCatalogEntityToCatalog(it) }
+        val sourceTextList = mutableListOf<String>()
+        sourceTextList.add(0, "-Не вибрано-")
+        sourceTextList.addAll(sourceList.value.map { it.text.toString() })
+        emit(sourceTextList)
+    }
+
+    val getSourceList: StateFlow<List<String>> = statusSpinnerPosition
+        .flatMapLatest { getSourceListFlow(it) }
+        .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
     private fun getBlockNames() {
         viewModelScope.launch {
             val blockNameList = mutableListOf<String>()
@@ -90,13 +163,100 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    fun getCustomerBasicInfo(taskId: Int, index: Int, icons: ArrayList<Icons>) =
+    val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
+        .flatMapLatest {
+            featureList.combine(result) { list, result ->
+                setupFeatureSpinner(result?.pointCondition, list)
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+
+
+    private fun setupFeatureSpinner(
+        condition: String?,
+        featureList: List<Catalog>
+    ): List<KeyPairBoolData> {
+        val savedCondition = (condition ?: getCheckedConditions()).split(",").map { it.trim() }
+        val conditionArray = mutableListOf<KeyPairBoolData>()
+        Log.d("testim1", "zashlo ${featureList}")
+        for (feature in featureList) {
+            if (feature.code.toString() in savedCondition) {
+                conditionArray.add(KeyPairBoolData(feature.text!!, true))
+            } else {
+                conditionArray.add(KeyPairBoolData(feature.text!!, false))
+            }
+        }
+        Log.d("testim11", conditionArray.toString())
+        return conditionArray
+    }
+
+    val preloadResultTab = _customerIndex
+        .flatMapLatest {
+            selectedBlock
+        }
+        .flatMapLatest {
+            getTechInfo()
+        }
+
+    fun getTechInfo() = flow {
+        val techHash = getTechInfoTextByFields()
+        val controlInfo = StringBuilder()
+
+        techHash.forEach { (key, value) ->
+            when (key) {
+                "TimeZonalId" -> {
+                    zoneCount = value
+                }
+                "Lastdate" -> {
+                    lastDate = value
+                }
+                "Lastlcount" -> {
+                    lastCount = value
+                }
+                "srnach" -> {
+                    avgUsage = value
+                }
+                "type" -> {
+                    type = value
+                }
+                "Counter_numb" -> {
+                    counter = value
+                }
+                "Rozr" -> {
+                    capacity = value
+                }
+                "contr_date" -> {
+                    checkDate = value
+                    controlInfo.append(" $value")
+                }
+                "contr_pok" -> {
+                    controlInfo.append(" $value")
+                }
+                "contr_name" -> {
+                    controlInfo.append(" $value")
+                }
+            }
+        }
+        emit(
+            TechInfo(
+                zoneCount = zoneCount,
+                lastDate = lastDate,
+                lastCount = lastCount,
+                averageUsage = avgUsage,
+                type = type,
+                capacity = capacity,
+                checkDate = checkDate,
+                inspector = controlInfo.toString()
+            )
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TechInfo())
+
+    fun getCustomerBasicInfo(icons: ArrayList<Icons>) =
         flow {
             val basicInfoFieldsList = ArrayList<String>()
             val basicFields = directoryRepository.getBasicFields(taskId)
             basicInfoFieldsList.addAll(basicFields)
             basicInfoFieldsList.add("Counter_numb")
-            val tdHash = getTextFieldsByBlockName(basicInfoFieldsList, "TD$taskId", index)
+            val tdHash = getTextFieldsByBlockName(basicInfoFieldsList)
             var pillar = ""
             val otherInfo = StringBuilder()
             tdHash.forEach { (key, value) ->
@@ -127,8 +287,8 @@ class UserInfoViewModel @Inject constructor(
                             counterKey = getNeededEmojis(icons, value)
                         }
                         else -> {
-                            if(value.isNotEmpty())
-                            otherInfo.append("$value ")
+                            if (value.isNotEmpty())
+                                otherInfo.append("$value ")
                         }
                     }
                 }
@@ -143,39 +303,28 @@ class UserInfoViewModel @Inject constructor(
                     other = otherInfo.toString()
                 )
             )
-        }.flowOn(Dispatchers.Default).stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(5000),
-            BasicInfo("","","", "", "")
-        )
+        }
 
-    fun getBasicInfo(fields: List<String>, tableName: String, num: Int) =
-        testEntityRepository.getBasicInfoBlock(fields, tableName, num)
-
-    fun getFieldsByBlockName(name: String, taskId: Int): List<Directory> =
+    fun getFieldsByBlockName(name: String): List<String> =
         directoryRepository.getFieldsByBlockName(name, taskId)
 
-    fun getTextFieldsByBlockName(fields: List<String>, tableName: String, num: Int) =
-        testEntityRepository.getFieldsByBlock(tableName, fields, num)
+    fun getTextFieldsByBlockName(fields: List<String>) =
+        testEntityRepository.getFieldsByBlock(taskId, fields, index)
 
-    fun getTechInfoTextByFields(taskId: Int, index: Int): HashMap<String, String> {
-        val tech = ArrayList<String>()
-        val fields = getFieldsByBlockName("Тех.информация", taskId)
-        for (element in fields) {
-            element.fieldName?.let { tech.add(it) }
-        }
-        return testEntityRepository.getTextByFields("TD$taskId", tech, index)
+    fun getTechInfoTextByFields(): HashMap<String, String> {
+        val fields = getFieldsByBlockName("Тех.информация")
+        return testEntityRepository.getTextByFields("TD$taskId", fields, index)
     }
 
     //save date when pressing saveResult
-    fun saveEditTiming(taskId: Int, num: String, firstEditDate: String, date: String) {
+    fun saveEditTiming(firstEditDate: String, date: String) {
         viewModelScope.launch {
             //_isTrueEdit.value = true
-            if (timingRepository.isStartTaskDateEmpty(taskId, num)) {
+            if (timingRepository.isStartTaskDateEmpty(taskId, index.toString())) {
                 timingRepository.insertTiming(
                     Timing(
                         taskId,
-                        num,
+                        index.toString(),
                         firstEditDate,
                         date,
                         "",
@@ -184,16 +333,16 @@ class UserInfoViewModel @Inject constructor(
                         ""
                     )
                 )
-            } else if (timingRepository.isFirstEditDateEmpty(taskId, num)) {
-                timingRepository.updateFirstEditDate(taskId, num, firstEditDate)
-                timingRepository.updateEditCount(taskId, num, 1)
-                saveEndEditDate(taskId, num, date)
-                saveEditTime(taskId, num, time)
+            } else if (timingRepository.isFirstEditDateEmpty(taskId, index.toString())) {
+                timingRepository.updateFirstEditDate(taskId, index.toString(), firstEditDate)
+                timingRepository.updateEditCount(taskId, index.toString(), 1)
+                saveEndEditDate(taskId, index.toString(), date)
+                saveEditTime(taskId, index.toString(), time)
             } else {
                 //adding +1 to edit count
-                saveEditTime(taskId, num, time)
-                saveEndEditDate(taskId, num, date)
-                timingRepository.upEditCount(taskId, num)
+                saveEditTime(taskId, index.toString(), time)
+                saveEndEditDate(taskId, index.toString(), date)
+                timingRepository.upEditCount(taskId, index.toString())
 
             }
         }
@@ -216,110 +365,73 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    suspend fun saveResults(
-        taskId: Int,
-        index: Int,
+    fun saveResults(
         date: String,
-        isDone: String,
-        source: String,
-        source2: String,
         zone1: String,
         zone2: String,
         zone3: String,
         note: String,
         phoneNumber: String,
         is_main: Int,
-        type: String,
-        counter: String,
-        zoneCount: String,
-        capacity: String,
-        avgUsage: String,
         lat: String,
         lng: String,
-        numbpers: String,
-        family: String,
-        adress: String,
         photo: String?
     ) {
+        viewModelScope.launch(Dispatchers.Default) {
+            resetTimer()
+            val task: TaskEntity = getTask(taskId)
+            val fields =
+                listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
+            val user =
+                testEntityRepository.getTextByFields("TD$taskId", fields, customerIndex.value)
 
-        val task: TaskEntity = getTask(taskId)
-        val fields = listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
-        val user = testEntityRepository.getTextByFields("TD$taskId", fields, index)
+            val result = Result(
+                task.name,
+                task.date,
+                taskId,
+                task.filial,
+                customerIndex.value,
+                user["num"]!!,
+                user["accountId"]!!,
+                date,
+                statusSpinnerPosition.value.toString(),
+                selectedSourceCode,
+                multiSpinnerSelectedFeatures.joinToString(),
+                zone1,
+                zone2,
+                zone3,
+                note,
+                user["tel"]!!,
+                phoneNumber,
+                is_main,
+                "",
+                type,
+                counter,
+                zoneCount,
+                capacity,
+                avgUsage,
+                lat,
+                lng,
+                personalAccount,
+                user["family"],
+                user["Adress"],
+                photo,
+                user["counpleas"]
+            )
+            resultDao.insertNewData(result)
 
-        val result = Result(
-            task.name,
-            task.date,
-            taskId,
-            task.filial,
-            index,
-            user["num"]!!,
-            user["accountId"]!!,
-            date,
-            isDone,
-            source,
-            source2,
-            zone1,
-            zone2,
-            zone3,
-            note,
-            user["tel"]!!,
-            phoneNumber,
-            is_main,
-            "",
-            type,
-            counter,
-            zoneCount,
-            capacity,
-            avgUsage,
-            lat,
-            lng,
-            numbpers,
-            family,
-            adress,
-            photo,
-            user["counpleas"]
-        )
-        resultDao.insertNewData(result)
-
-        testEntityRepository.setDone(taskId, user["num"]!!)
+            testEntityRepository.setDone(taskId, user["num"]!!)
+        }
     }
 
     private suspend fun getTask(taskId: Int) = taskRepository.getTask(taskId)
 
-    fun getResult(taskId: Int, index: Int) = resultDao.getResultUser(taskId, index)
-
-    //adding
-    fun getSourceList(): StateFlow<List<Catalog>> {
-        return if (statusSpinnerPosition.value == 0) {
-            catalogDao.getSourceList("2")
-        } else {
-            catalogDao.getSourceList("3")
-        }.mapLatestIterable { mapCatalogEntityToCatalog(it) }
-            .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    }
-
-    /*fun getSourceList(type: String): List<Catalog> {
-        return catalogDao.getSourceList(type).map {
-            mapCatalogEntityToCatalog(it)
-        }
-    }*/
-
     fun getSourceName(code: String, type: String) = catalogDao.getSourceByCode(code, type)
-
-    fun getNoteName(code: String) = catalogDao.getSourceNoteByCode(code)
 
     fun getOperatorsList() = catalogDao.getOperatorsList()
 
-    fun getCheckedConditions(taskId: Int, index: Int) =
-        testEntityRepository.getCheckedConditions(taskId, index)
-
-    fun getFeatureList(): StateFlow<List<Catalog>> {
-        return catalogDao.getSourceList("4")
-            .mapLatestIterable { mapCatalogEntityToCatalog(it) }
-            .flowOn(Dispatchers.Default)
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-    }
+    fun getCheckedConditions() =
+        testEntityRepository.getCheckedConditions(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
         _statusSpinnerPosition.value = position
@@ -327,19 +439,63 @@ class UserInfoViewModel @Inject constructor(
 
     fun setSourceSpinnerPosition(position: Int) {
         _sourceSpinnerPosition.value = position
+        getSelectedSourceCode(position)
+
     }
+
+    private fun getSelectedSourceCode(position: Int) {
+        selectedSourceCode = if (position != 0) {
+            sourceList.value[position - 1].code!!
+        } else ""
+    }
+
+
+    /*//исправить метод
+    private val currentSelectedSourceCode: StateFlow<String> =
+        sourceSpinnerPosition.flatMapLatest {
+            sourceList.value[it].code
+            *//*if (it != 0) {
+                sourceList.value[it - 1].code!!
+            } else emptyFlow()*//*
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), "")*/
 
     fun setSelectedCustomer(index: Int) {
         _customerIndex.value = index
     }
 
+    fun setSelectedBlock(blockName: String) {
+        _selectedBlock.value = blockName
+    }
+
     fun selectPreviousCustomer() {
-        TODO("Not yet implemented")
+        index = if (index != 1) {
+            index.minus(1)
+        } else {
+            taskCustomerQuantity
+        }
+        setSelectedCustomer(index)
     }
 
     fun selectNextCustomer() {
-        TODO("Not yet implemented")
+        index = if (index != taskCustomerQuantity) {
+            index.plus(1)
+        } else {
+            1
+        }
+        setSelectedCustomer(index)
     }
 
+    //сбрасываем таймер при переключении юзера
+    private fun resetTimer() {
+        time = 0
+    }
+
+    fun setItems(items: List<KeyPairBoolData>) {
+        multiSpinnerSelectedFeatures = items.flatMap { item ->
+            featureList.value
+                .filter { item.name == it.text }
+                .map { it.code.toString() }
+        }
+    }
 
 }
