@@ -54,7 +54,6 @@ class UserInfoViewModel @Inject constructor(
     private var lastDate = ""
     private val sourceList = MutableStateFlow(emptyList<Catalog>())
 
-
     private val taskId =
         savedStateHandle.get<Int>("taskId") ?: throw RuntimeException("taskId is null")
     private var index =
@@ -64,17 +63,22 @@ class UserInfoViewModel @Inject constructor(
 
     private val _statusSpinnerPosition = MutableStateFlow(0)
     val statusSpinnerPosition: StateFlow<Int> = _statusSpinnerPosition
+
     private val _sourceSpinnerPosition = MutableStateFlow(0)
     val sourceSpinnerPosition: StateFlow<Int> = _sourceSpinnerPosition
 
     private val _customerIndex = MutableStateFlow(index)
     val customerIndex: StateFlow<Int> = _customerIndex
 
-    private val _blockNames = MutableStateFlow(listOf("Результати"))
-    val blockNames: StateFlow<List<String>> = _blockNames
-
     private val _selectedBlock = MutableStateFlow("Результати")
     val selectedBlock: StateFlow<String> = _selectedBlock
+
+    val blockNames = flow {
+        val blockNameList = mutableListOf<String>()
+        blockNameList.addAll(directoryRepository.getBlockNames())
+        blockNameList.add(0, "Результати")
+        emit(blockNameList)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("Результати"))
 
     val featureList: StateFlow<List<Catalog>> = flow {
         val list = catalogDao.getFeatureList()
@@ -83,7 +87,7 @@ class UserInfoViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val selectedBlockData = _customerIndex
-        .combine(_selectedBlock) { id, selectedBlock ->
+        .combine(_selectedBlock) { _, selectedBlock ->
             if (selectedBlock == "Результати") {
                 getTechInfoTextByFields()
             } else {
@@ -92,16 +96,16 @@ class UserInfoViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    val result = _customerIndex
+        .flatMapLatest {
+            getSavedData(it)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
+
     private fun getSavedData(index: Int): Flow<SavedData?> {
         return resultDao.getResultUser(taskId, index).map {
             mapResultToSavedData(it)
         }
     }
-
-    val result = _customerIndex
-        .flatMapLatest {
-            getSavedData(it)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
 
     private var personalAccount = ""
     private var personalAccountKey = ""
@@ -117,7 +121,6 @@ class UserInfoViewModel @Inject constructor(
 
     init {
         startTimer()
-        getBlockNames()
     }
 
     override fun onCleared() {
@@ -154,15 +157,6 @@ class UserInfoViewModel @Inject constructor(
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
-    private fun getBlockNames() {
-        viewModelScope.launch {
-            val blockNameList = mutableListOf<String>()
-            blockNameList.addAll(directoryRepository.getBlockNames())
-            blockNameList.add(0, "Результати")
-            _blockNames.value = blockNameList
-        }
-    }
-
     val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
         .flatMapLatest {
             featureList.combine(result) { list, result ->
@@ -177,7 +171,6 @@ class UserInfoViewModel @Inject constructor(
     ): List<KeyPairBoolData> {
         val savedCondition = (condition ?: getCheckedConditions()).split(",").map { it.trim() }
         val conditionArray = mutableListOf<KeyPairBoolData>()
-        Log.d("testim1", "zashlo ${featureList}")
         for (feature in featureList) {
             if (feature.code.toString() in savedCondition) {
                 conditionArray.add(KeyPairBoolData(feature.text!!, true))
@@ -185,7 +178,6 @@ class UserInfoViewModel @Inject constructor(
                 conditionArray.add(KeyPairBoolData(feature.text!!, false))
             }
         }
-        Log.d("testim11", conditionArray.toString())
         return conditionArray
     }
 
@@ -448,16 +440,6 @@ class UserInfoViewModel @Inject constructor(
             sourceList.value[position - 1].code!!
         } else ""
     }
-
-
-    /*//исправить метод
-    private val currentSelectedSourceCode: StateFlow<String> =
-        sourceSpinnerPosition.flatMapLatest {
-            sourceList.value[it].code
-            *//*if (it != 0) {
-                sourceList.value[it - 1].code!!
-            } else emptyFlow()*//*
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), "")*/
 
     fun setSelectedCustomer(index: Int) {
         _customerIndex.value = index

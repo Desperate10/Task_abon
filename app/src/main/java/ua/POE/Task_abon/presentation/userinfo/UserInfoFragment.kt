@@ -30,6 +30,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -146,7 +147,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 }
             }
         }
-        viewLifecycleOwner.lifecycleScope.launch{
+        viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.customerFeatures.collect {
                     loadFeatureSpinner(it)
@@ -236,6 +237,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         registerWatchers()
         setupImageAdapter()
         observeViewModel()
+        setupSaveConfirmationDialogFragmentListener()
+        setupSaveCoordinatesDialog()
     }
 
     private fun registerClickListeners() {
@@ -521,7 +524,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                 if (binding.lat.text != "0.0") {
                     saveResult()
                 } else {
-                    askAboutSavingWithoutCoords()
+                    showSaveCoordinatesDialog()
+                    //askAboutSavingWithoutCoords()
                 }
                 return true
             }
@@ -529,29 +533,41 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         return super.onOptionsItemSelected(item)
     }
 
-    private fun showSaveOrNotDialog(next: Boolean) {
-        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-            when (which) {
+    private fun showConfirmationDialog(isForward: Boolean) {
+        SaveConfirmationDialogFragment.show(parentFragmentManager, isForward)
+    }
+
+    private fun setupSaveConfirmationDialogFragmentListener() {
+        SaveConfirmationDialogFragment.setupListeners(parentFragmentManager, this) { isForward, which ->
+            when(which) {
                 DialogInterface.BUTTON_POSITIVE -> {
                     saveResult()
-                    if (next) {
+                    if (isForward) {
                         goNext()
                     } else
                         goPrevious()
                 }
                 DialogInterface.BUTTON_NEGATIVE -> {
-                    dialog.dismiss()
-                    if (next) {
+                    if (isForward) {
                         goNext()
                     } else
                         goPrevious()
                 }
             }
         }
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Зберегти зміни?")
-            .setPositiveButton(getString(R.string.yes), dialogClickListener)
-            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+
+    }
+
+    private fun showSaveCoordinatesDialog() {
+        SaveCoordinatesDialogFragment.show(parentFragmentManager)
+    }
+
+    private fun setupSaveCoordinatesDialog() {
+        SaveCoordinatesDialogFragment.setupListeners(parentFragmentManager,this) {
+            when(it) {
+                DialogInterface.BUTTON_POSITIVE -> saveResult()
+            }
+        }
     }
 
     private fun askAboutSavingWithoutCoords() {
@@ -575,20 +591,21 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         when (v.id) {
             R.id.previous -> {
                 if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                    showSaveOrNotDialog(false)
+                    //showSaveOrNotDialog(false)
+                    showConfirmationDialog(false)
                 } else {
                     goPrevious()
                 }
             }
             R.id.next -> {
                 if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                    showSaveOrNotDialog(true)
+                    showConfirmationDialog(true)
                 } else {
                     goNext()
                 }
             }
             R.id.personal_account, R.id.counter -> {
-                showIconsDialog((v as TextView).text.toString())
+                showIconsDialogFragment((v as TextView).text.toString())
             }
             R.id.date, R.id.new_date -> {
                 showDatePickerDialog()
@@ -657,7 +674,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.newMeters3.setText(savedData.zone3)
         binding.results.note.setText(savedData.note)
         binding.results.phone.setText(savedData.phoneNumber)
-        binding.results.checkBox.isChecked = savedData.isMainPhone?: true
+        binding.results.checkBox.isChecked = savedData.isMainPhone ?: true
 
         if (!savedData.photo.isNullOrEmpty()) {
             imageAdapter.addSavedPhoto(Uri.parse(savedData.photo))
@@ -791,27 +808,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun showIconsDialog(iconsText: String) {
-        val currentIcons = iconsText.substringAfter(" ")
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Повідомлення")
-        var i = 0
-        var message = ""
-
-        do {
-            val icon = getEmojiByUnicode(icons[i].emoji!!)
-            if (currentIcons.contains(icon)) {
-                message += "$icon  ${icons[i].hint}\n"
-            }
-            i++
-        } while (i < icons.size)
-
-        builder.setMessage(message)
-
-        builder.setPositiveButton("Ок") { dialog, _ ->
-            dialog.dismiss()
-        }
-        builder.show()
+    private fun showIconsDialogFragment(icons: String) {
+        IconsDialogFragment.show(parentFragmentManager, icons)
     }
 
     override fun onNothingSelected(parent: AdapterView<*>?) {}
