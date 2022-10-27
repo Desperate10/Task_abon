@@ -62,6 +62,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val myFormat = "dd.MM.yyyy"
     private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
+    private var zone1 = ""
+    private var zone2 = ""
+    private var zone3 = ""
 
     private var isFirstLoad = false
     private var isResultSaved = false
@@ -73,7 +76,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val imageAdapter: ImageAdapter by autoCleaned {
         ImageAdapter(requireContext(), items, uri)
     }
-    private val items = ArrayList<Image>()
+    private val items = ArrayList<Image>(2)
     private val uri = ArrayList<String>()
     private var imageUri: Uri? = null
     private val icons by lazy {
@@ -134,9 +137,10 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.result.collectLatest { savedData ->
+                viewModel.result.collect { savedData ->
                     resetFields()
                     savedData?.status?.let { getResultIfExist(savedData) }
+                    registerWatchers()
                 }
             }
         }
@@ -222,6 +226,9 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         if (savedInstanceState != null) {
             viewModel.setSelectedCustomer(savedInstanceState.getInt("index"))
+            zone1 = savedInstanceState.getString("zone1") ?: ""
+            zone2 = savedInstanceState.getString("zone2") ?: ""
+            zone3 = savedInstanceState.getString("zone3") ?: ""
         }
 
         arguments?.let {
@@ -231,19 +238,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
         firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
+        setupSaveConfirmationDialogFragmentListener()
+        setupSaveCoordinatesDialog()
         checkPermissions()
         registerItemListeners()
         registerClickListeners()
-        registerWatchers()
         setupImageAdapter()
         observeViewModel()
-        setupSaveConfirmationDialogFragmentListener()
-        setupSaveCoordinatesDialog()
     }
 
     private fun registerClickListeners() {
-        (binding.personalAccount as TextView).setOnClickListener(this)
-        (binding.counter as TextView).setOnClickListener(this)
+        binding.personalAccount.setOnClickListener(this)
+        binding.counter.setOnClickListener(this)
         binding.previous.setOnClickListener(this)
         binding.next.setOnClickListener(this)
         binding.results.date.setOnClickListener(this)
@@ -525,7 +531,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
                     saveResult()
                 } else {
                     showSaveCoordinatesDialog()
-                    //askAboutSavingWithoutCoords()
                 }
                 return true
             }
@@ -538,8 +543,11 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun setupSaveConfirmationDialogFragmentListener() {
-        SaveConfirmationDialogFragment.setupListeners(parentFragmentManager, this) { isForward, which ->
-            when(which) {
+        SaveConfirmationDialogFragment.setupListeners(
+            parentFragmentManager,
+            this
+        ) { isForward, which ->
+            when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
                     saveResult()
                     if (isForward) {
@@ -570,28 +578,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
-    private fun askAboutSavingWithoutCoords() {
-        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-            when (which) {
-                DialogInterface.BUTTON_POSITIVE -> {
-                    saveResult()
-                }
-                DialogInterface.BUTTON_NEGATIVE -> {
-                    dialog.dismiss()
-                }
-            }
-        }
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Впевнені, що хочете зберегти без координат?")
-            .setPositiveButton(getString(R.string.yes), dialogClickListener)
-            .setNegativeButton(getString(R.string.no), dialogClickListener).show()
+    private fun showIconsDialogFragment(icons: String) {
+        IconsDialogFragment.show(parentFragmentManager, icons)
     }
 
     override fun onClick(v: View) {
         when (v.id) {
             R.id.previous -> {
                 if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                    //showSaveOrNotDialog(false)
                     showConfirmationDialog(false)
                 } else {
                     goPrevious()
@@ -653,15 +647,19 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.newDate.text = sdformat.format(calendar.time)
         binding.results.statusSpinner.setSelection(0)
         binding.results.sourceSpinner.setSelection(0)
-        binding.results.newMeters1.setText("", TextView.BufferType.EDITABLE)
-        binding.results.newMeters2.setText("", TextView.BufferType.EDITABLE)
-        binding.results.newMeters3.setText("", TextView.BufferType.EDITABLE)
+        binding.results.newMeters1.setText(zone1, TextView.BufferType.EDITABLE)
+        binding.results.newMeters2.setText(zone2, TextView.BufferType.EDITABLE)
+        binding.results.newMeters3.setText(zone3, TextView.BufferType.EDITABLE)
+        zone1 = ""
+        zone2 = ""
+        zone3 = ""
         binding.results.checkBox.isChecked = false
         binding.results.difference1.text = ""
         binding.results.note.setText("")
         binding.results.phone.setText("")
         isResultSaved = false
         imageAdapter.notifyDataSetChanged()
+
     }
 
     private fun getResultIfExist(savedData: SavedData) {
@@ -697,16 +695,19 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
         savedInstanceState.putInt("index", viewModel.customerIndex.value)
+        savedInstanceState.putString("zone1", binding.results.newMeters1.text.toString())
+        savedInstanceState.putString("zone2", binding.results.newMeters2.text.toString())
+        savedInstanceState.putString("zone3", binding.results.newMeters3.text.toString())
         //declare values before saving the state
         super.onSaveInstanceState(savedInstanceState)
     }
 
     private fun getBasicInfo(basicInfo: BasicInfo) {
-        binding.personalAccount?.text = basicInfo.personalAccount
-        binding.address?.text = basicInfo.address
-        binding.name?.text = basicInfo.name
-        binding.counter?.text = basicInfo.counter
-        binding.otherInfo?.text = basicInfo.other
+        binding.personalAccount.text = basicInfo.personalAccount
+        binding.address.text = basicInfo.address
+        binding.name.text = basicInfo.name
+        binding.counter.text = basicInfo.counter
+        binding.otherInfo.text = basicInfo.other
         isFirstLoad = false
     }
 
@@ -806,10 +807,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             Toast.makeText(requireContext(), "Ви не ввели нові показники", Toast.LENGTH_SHORT)
                 .show()
         }
-    }
-
-    private fun showIconsDialogFragment(icons: String) {
-        IconsDialogFragment.show(parentFragmentManager, icons)
     }
 
     override fun onNothingSelected(parent: AdapterView<*>?) {}

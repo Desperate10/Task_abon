@@ -1,7 +1,5 @@
 package ua.POE.Task_abon.presentation.userinfo
 
-import android.util.Log
-import android.view.View
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,10 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
-import ua.POE.Task_abon.data.entities.Directory
 import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.data.entities.Timing
@@ -26,8 +22,6 @@ import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
 import ua.POE.Task_abon.domain.model.*
 import ua.POE.Task_abon.utils.getNeededEmojis
-import ua.POE.Task_abon.utils.mapLatestIterable
-import java.lang.Thread.State
 import java.util.*
 import javax.inject.Inject
 
@@ -52,6 +46,14 @@ class UserInfoViewModel @Inject constructor(
     private var capacity = ""
     private var avgUsage = ""
     private var lastDate = ""
+    private var personalAccount = ""
+    private var personalAccountKey = ""
+    private var personalAccountEmoji = ""
+    private var address = ""
+    private var name = ""
+    private var counterKey = ""
+    private var counterValue = ""
+    private var counterEmoji = ""
     private val sourceList = MutableStateFlow(emptyList<Catalog>())
 
     private val taskId =
@@ -99,22 +101,13 @@ class UserInfoViewModel @Inject constructor(
     val result = _customerIndex
         .flatMapLatest {
             getSavedData(it)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
+        }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     private fun getSavedData(index: Int): Flow<SavedData?> {
         return resultDao.getResultUser(taskId, index).map {
             mapResultToSavedData(it)
         }
     }
-
-    private var personalAccount = ""
-    private var personalAccountKey = ""
-    private var personalAccountEmoji = ""
-    private var address = ""
-    private var name = ""
-    private var counterKey = ""
-    private var counterValue = ""
-    private var counterEmoji = ""
 
     private val timer = Timer()
     var time = 0
@@ -189,7 +182,7 @@ class UserInfoViewModel @Inject constructor(
             getTechInfo()
         }
 
-    fun getTechInfo() = flow {
+    private fun getTechInfo() = flow {
         val techHash = getTechInfoTextByFields()
         val controlInfo = StringBuilder()
 
@@ -240,7 +233,7 @@ class UserInfoViewModel @Inject constructor(
                 inspector = controlInfo.toString()
             )
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TechInfo())
+    }
 
     fun getCustomerBasicInfo(icons: ArrayList<Icons>) =
         flow {
