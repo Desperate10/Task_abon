@@ -1,7 +1,5 @@
 package ua.POE.Task_abon.presentation.userinfo
 
-import android.util.Log
-import android.view.View
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -11,10 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
-import ua.POE.Task_abon.data.entities.Directory
 import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.data.entities.Timing
@@ -26,8 +22,6 @@ import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
 import ua.POE.Task_abon.domain.model.*
 import ua.POE.Task_abon.utils.getNeededEmojis
-import ua.POE.Task_abon.utils.mapLatestIterable
-import java.lang.Thread.State
 import java.util.*
 import javax.inject.Inject
 
@@ -52,8 +46,15 @@ class UserInfoViewModel @Inject constructor(
     private var capacity = ""
     private var avgUsage = ""
     private var lastDate = ""
+    private var personalAccount = ""
+    private var personalAccountKey = ""
+    private var personalAccountEmoji = ""
+    private var address = ""
+    private var name = ""
+    private var counterKey = ""
+    private var counterValue = ""
+    private var counterEmoji = ""
     private val sourceList = MutableStateFlow(emptyList<Catalog>())
-
 
     private val taskId =
         savedStateHandle.get<Int>("taskId") ?: throw RuntimeException("taskId is null")
@@ -64,17 +65,22 @@ class UserInfoViewModel @Inject constructor(
 
     private val _statusSpinnerPosition = MutableStateFlow(0)
     val statusSpinnerPosition: StateFlow<Int> = _statusSpinnerPosition
+
     private val _sourceSpinnerPosition = MutableStateFlow(0)
     val sourceSpinnerPosition: StateFlow<Int> = _sourceSpinnerPosition
 
     private val _customerIndex = MutableStateFlow(index)
     val customerIndex: StateFlow<Int> = _customerIndex
 
-    private val _blockNames = MutableStateFlow(listOf("Результати"))
-    val blockNames: StateFlow<List<String>> = _blockNames
-
     private val _selectedBlock = MutableStateFlow("Результати")
     val selectedBlock: StateFlow<String> = _selectedBlock
+
+    val blockNames = flow {
+        val blockNameList = mutableListOf<String>()
+        blockNameList.addAll(directoryRepository.getBlockNames())
+        blockNameList.add(0, "Результати")
+        emit(blockNameList)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("Результати"))
 
     val featureList: StateFlow<List<Catalog>> = flow {
         val list = catalogDao.getFeatureList()
@@ -83,7 +89,7 @@ class UserInfoViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val selectedBlockData = _customerIndex
-        .combine(_selectedBlock) { id, selectedBlock ->
+        .combine(_selectedBlock) { _, selectedBlock ->
             if (selectedBlock == "Результати") {
                 getTechInfoTextByFields()
             } else {
@@ -92,32 +98,22 @@ class UserInfoViewModel @Inject constructor(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    val result = _customerIndex
+        .flatMapLatest {
+            getSavedData(it)
+        }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
+
     private fun getSavedData(index: Int): Flow<SavedData?> {
         return resultDao.getResultUser(taskId, index).map {
             mapResultToSavedData(it)
         }
     }
 
-    val result = _customerIndex
-        .flatMapLatest {
-            getSavedData(it)
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
-
-    private var personalAccount = ""
-    private var personalAccountKey = ""
-    private var personalAccountEmoji = ""
-    private var address = ""
-    private var name = ""
-    private var counterKey = ""
-    private var counterValue = ""
-    private var counterEmoji = ""
-
     private val timer = Timer()
     var time = 0
 
     init {
         startTimer()
-        getBlockNames()
     }
 
     override fun onCleared() {
@@ -154,15 +150,6 @@ class UserInfoViewModel @Inject constructor(
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
-    private fun getBlockNames() {
-        viewModelScope.launch {
-            val blockNameList = mutableListOf<String>()
-            blockNameList.addAll(directoryRepository.getBlockNames())
-            blockNameList.add(0, "Результати")
-            _blockNames.value = blockNameList
-        }
-    }
-
     val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
         .flatMapLatest {
             featureList.combine(result) { list, result ->
@@ -177,7 +164,6 @@ class UserInfoViewModel @Inject constructor(
     ): List<KeyPairBoolData> {
         val savedCondition = (condition ?: getCheckedConditions()).split(",").map { it.trim() }
         val conditionArray = mutableListOf<KeyPairBoolData>()
-        Log.d("testim1", "zashlo ${featureList}")
         for (feature in featureList) {
             if (feature.code.toString() in savedCondition) {
                 conditionArray.add(KeyPairBoolData(feature.text!!, true))
@@ -185,7 +171,6 @@ class UserInfoViewModel @Inject constructor(
                 conditionArray.add(KeyPairBoolData(feature.text!!, false))
             }
         }
-        Log.d("testim11", conditionArray.toString())
         return conditionArray
     }
 
@@ -197,7 +182,7 @@ class UserInfoViewModel @Inject constructor(
             getTechInfo()
         }
 
-    fun getTechInfo() = flow {
+    private fun getTechInfo() = flow {
         val techHash = getTechInfoTextByFields()
         val controlInfo = StringBuilder()
 
@@ -248,7 +233,7 @@ class UserInfoViewModel @Inject constructor(
                 inspector = controlInfo.toString()
             )
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TechInfo())
+    }
 
     fun getCustomerBasicInfo(icons: ArrayList<Icons>) =
         flow {
@@ -448,16 +433,6 @@ class UserInfoViewModel @Inject constructor(
             sourceList.value[position - 1].code!!
         } else ""
     }
-
-
-    /*//исправить метод
-    private val currentSelectedSourceCode: StateFlow<String> =
-        sourceSpinnerPosition.flatMapLatest {
-            sourceList.value[it].code
-            *//*if (it != 0) {
-                sourceList.value[it - 1].code!!
-            } else emptyFlow()*//*
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), "")*/
 
     fun setSelectedCustomer(index: Int) {
         _customerIndex.value = index

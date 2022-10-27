@@ -28,6 +28,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:windowSoftInputMode="stateVisible|adjustResize"
         android:supportsRtl="true"
+        android:configChanges="orientation"
         android:theme="@style/Theme.Task_abon">
 
         <activity android:name=".presentation.MainActivity"
