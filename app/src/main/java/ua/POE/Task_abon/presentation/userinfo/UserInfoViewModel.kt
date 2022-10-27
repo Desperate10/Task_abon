@@ -1,11 +1,14 @@
 package ua.POE.Task_abon.presentation.userinfo
 
+import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -22,6 +25,7 @@ import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
 import ua.POE.Task_abon.domain.model.*
 import ua.POE.Task_abon.utils.getNeededEmojis
+import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
@@ -36,7 +40,9 @@ class UserInfoViewModel @Inject constructor(
     private val catalogDao: CatalogDao
 ) : ViewModel() {
 
-    private var selectedSourceCode  = ""
+    private var isResultSaved = false
+    private var startEditTime: String = ""
+    private var selectedSourceCode = ""
     private var multiSpinnerSelectedFeatures = listOf<String>()
     private var checkDate = ""
     private var type = ""
@@ -55,6 +61,9 @@ class UserInfoViewModel @Inject constructor(
     private var counterValue = ""
     private var counterEmoji = ""
     private val sourceList = MutableStateFlow(emptyList<Catalog>())
+    private val operators by lazy(LazyThreadSafetyMode.NONE) { getOperatorsList() }
+    private val dateAndTime = "dd.MM.yyyy HH:mm:ss"
+    private val dateAndTimeformat = SimpleDateFormat(dateAndTime, Locale.getDefault())
 
     private val taskId =
         savedStateHandle.get<Int>("taskId") ?: throw RuntimeException("taskId is null")
@@ -114,6 +123,7 @@ class UserInfoViewModel @Inject constructor(
 
     init {
         startTimer()
+        setStartEditTime()
     }
 
     override fun onCleared() {
@@ -294,22 +304,22 @@ class UserInfoViewModel @Inject constructor(
         directoryRepository.getFieldsByBlockName(name, taskId)
 
     fun getTextFieldsByBlockName(fields: List<String>) =
-        testEntityRepository.getFieldsByBlock(taskId, fields, index)
+        testEntityRepository.getFieldsByBlock(taskId, fields, _customerIndex.value)
 
     fun getTechInfoTextByFields(): HashMap<String, String> {
         val fields = getFieldsByBlockName("Тех.информация")
-        return testEntityRepository.getTextByFields("TD$taskId", fields, index)
+        return testEntityRepository.getTextByFields("TD$taskId", fields, _customerIndex.value)
     }
 
     //save date when pressing saveResult
     fun saveEditTiming(firstEditDate: String, date: String) {
         viewModelScope.launch {
             //_isTrueEdit.value = true
-            if (timingRepository.isStartTaskDateEmpty(taskId, index.toString())) {
+            if (timingRepository.isStartTaskDateEmpty(taskId, _customerIndex.value)) {
                 timingRepository.insertTiming(
                     Timing(
                         taskId,
-                        index.toString(),
+                        _customerIndex.value,
                         firstEditDate,
                         date,
                         "",
@@ -318,23 +328,23 @@ class UserInfoViewModel @Inject constructor(
                         ""
                     )
                 )
-            } else if (timingRepository.isFirstEditDateEmpty(taskId, index.toString())) {
-                timingRepository.updateFirstEditDate(taskId, index.toString(), firstEditDate)
-                timingRepository.updateEditCount(taskId, index.toString(), 1)
-                saveEndEditDate(taskId, index.toString(), date)
-                saveEditTime(taskId, index.toString(), time)
+            } else if (timingRepository.isFirstEditDateEmpty(taskId, _customerIndex.value)) {
+                timingRepository.updateFirstEditDate(taskId, _customerIndex.value, firstEditDate)
+                timingRepository.updateEditCount(taskId, _customerIndex.value, 1)
+                saveEndEditDate(taskId, _customerIndex.value, date)
+                saveEditTime(taskId, _customerIndex.value, time)
             } else {
                 //adding +1 to edit count
-                saveEditTime(taskId, index.toString(), time)
-                saveEndEditDate(taskId, index.toString(), date)
-                timingRepository.upEditCount(taskId, index.toString())
+                saveEditTime(taskId, _customerIndex.value, time)
+                saveEndEditDate(taskId, _customerIndex.value, date)
+                timingRepository.upEditCount(taskId, _customerIndex.value)
 
             }
         }
     }
 
     //save date when finish editing task when onStop() userInfoFragment
-    private fun saveEndEditDate(taskId: Int, num: String, date: String) {
+    private fun saveEndEditDate(taskId: Int, num: Int, date: String) {
         viewModelScope.launch {
             if (!timingRepository.isFirstEditDateEmpty(taskId, num)) {
                 timingRepository.updateLastEditDate(taskId, num, date)
@@ -342,7 +352,7 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    private fun saveEditTime(taskId: Int, num: String, time: Int) {
+    private fun saveEditTime(taskId: Int, num: Int, time: Int) {
         viewModelScope.launch {
             val seconds: Int = timingRepository.getEditTime(taskId, num)
             val newEditTime = seconds + time
@@ -351,6 +361,83 @@ class UserInfoViewModel @Inject constructor(
     }
 
     fun saveResults(
+        date: String,
+        zone1: String,
+        zone2: String,
+        zone3: String,
+        note: String,
+        phoneNumber: String,
+        isMainPhone: Boolean,
+        lat: String,
+        lng: String,
+        photo: String
+    ) {
+        viewModelScope.launch(Dispatchers.Main) {
+            Log.d("testim", customerIndex.value.toString())
+            if (phoneNumber.isNotEmpty() && (phoneNumber.take(3) !in operators || phoneNumber.length < 10)) {
+                Log.d("testim", "Неправильний формат номера телефону")
+            } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
+                Log.d("testim", "Ви забули вказати джерело")
+            } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
+                resetTimer()
+                val task: TaskEntity = getTask(taskId)
+                val fields =
+                    listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
+                val user =
+                    testEntityRepository.getTextByFields("TD$taskId", fields, customerIndex.value)
+                val isMainPhoneInt = if (isMainPhone) 1 else 0
+                val photoValid = if (photo.length > 4) {photo} else { null}
+
+                val result = Result(
+                    task.name,
+                    task.date,
+                    taskId,
+                    task.filial,
+                    _customerIndex.value,
+                    user["num"]!!,
+                    user["accountId"]!!,
+                    date,
+                    statusSpinnerPosition.value.toString(),
+                    selectedSourceCode,
+                    multiSpinnerSelectedFeatures.joinToString(),
+                    zone1,
+                    zone2,
+                    zone3,
+                    note,
+                    user["tel"]!!,
+                    phoneNumber,
+                    isMainPhoneInt,
+                    "",
+                    type,
+                    counter,
+                    zoneCount,
+                    capacity,
+                    avgUsage,
+                    lat,
+                    lng,
+                    personalAccount,
+                    user["family"],
+                    user["Adress"],
+                    photoValid,
+                    user["counpleas"]
+                )
+
+                val currentDateAndTime =
+                    dateAndTime.format(Date())
+                saveEditTiming(startEditTime, currentDateAndTime)
+                resultDao.insertNewData(result)
+                Log.d("testim", "zashlo2")
+                testEntityRepository.setDone(taskId, user["num"]!!)
+                setResultSavedState(true)
+                Log.d("testim", "Результати збережено")
+            } else {
+                Log.d("testim", "Ви не ввели нові показники")
+
+            }
+        }
+    }
+
+    /*fun saveResults(
         date: String,
         zone1: String,
         zone2: String,
@@ -369,6 +456,7 @@ class UserInfoViewModel @Inject constructor(
                 listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
             val user =
                 testEntityRepository.getTextByFields("TD$taskId", fields, customerIndex.value)
+
 
             val result = Result(
                 task.name,
@@ -407,7 +495,7 @@ class UserInfoViewModel @Inject constructor(
 
             testEntityRepository.setDone(taskId, user["num"]!!)
         }
-    }
+    }*/
 
     private suspend fun getTask(taskId: Int) = taskRepository.getTask(taskId)
 
@@ -436,13 +524,14 @@ class UserInfoViewModel @Inject constructor(
 
     fun setSelectedCustomer(index: Int) {
         _customerIndex.value = index
+        Log.d("testim", "zashlo")
     }
 
     fun setSelectedBlock(blockName: String) {
         _selectedBlock.value = blockName
     }
 
-    fun selectPreviousCustomer() {
+    /*fun selectPreviousCustomer() {
         index = if (index != 1) {
             index.minus(1)
         } else {
@@ -458,7 +547,7 @@ class UserInfoViewModel @Inject constructor(
             1
         }
         setSelectedCustomer(index)
-    }
+    }*/
 
     //сбрасываем таймер при переключении юзера
     private fun resetTimer() {
@@ -471,6 +560,38 @@ class UserInfoViewModel @Inject constructor(
                 .filter { item.name == it.text }
                 .map { it.code.toString() }
         }
+    }
+
+    fun selectCustomer(next: Boolean) {
+        viewModelScope.launch {
+            index = if (next) {
+                if (index != taskCustomerQuantity) {
+                    index.plus(1)
+                } else {
+                    1
+                }
+            } else {
+                if (index != 1) {
+                    index.minus(1)
+                } else {
+                    taskCustomerQuantity
+                }
+            }
+            setSelectedCustomer(index)
+            setStartEditTime()
+        }
+    }
+
+    private fun setStartEditTime() {
+        startEditTime = dateAndTimeformat.format(Date())
+    }
+
+    fun setResultSavedState(IsSaved: Boolean) {
+        isResultSaved = IsSaved
+    }
+
+    fun isResultSaved() : Boolean {
+        return isResultSaved
     }
 
 }

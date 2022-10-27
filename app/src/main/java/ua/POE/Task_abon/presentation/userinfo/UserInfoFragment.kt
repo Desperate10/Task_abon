@@ -60,15 +60,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val viewModel: UserInfoViewModel by viewModels()
     private var filial: String? = null
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
-    private val myFormat = "dd.MM.yyyy"
-    private val sdformat = SimpleDateFormat(myFormat, Locale.getDefault())
+    private val date = "dd.MM.yyyy"
+    private val dateFormat = SimpleDateFormat(date, Locale.getDefault())
     private var zone1 = ""
     private var zone2 = ""
     private var zone3 = ""
 
     private var isFirstLoad = false
-    private var isResultSaved = false
-    private val operators by lazy { viewModel.getOperatorsList() }
+    //private var isResultSaved = false
     private lateinit var sourceAdapter: ArrayAdapter<String>
 
     private var featureList = listOf<Catalog>()
@@ -82,7 +81,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private val icons by lazy {
         resources.getRawTextFile(R.raw.icons)
     }
-    private var firstEditDate: String = ""
     private var zone1watcher: TextWatcher? = null
     private var zone2watcher: TextWatcher? = null
     private var zone3watcher: TextWatcher? = null
@@ -235,8 +233,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             filial = arguments?.getString("filial")
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
-
-        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
 
         setupSaveConfirmationDialogFragmentListener()
         setupSaveCoordinatesDialog()
@@ -546,24 +542,12 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         SaveConfirmationDialogFragment.setupListeners(
             parentFragmentManager,
             this
-        ) { isForward, which ->
-            when (which) {
-                DialogInterface.BUTTON_POSITIVE -> {
-                    saveResult()
-                    if (isForward) {
-                        goNext()
-                    } else
-                        goPrevious()
-                }
-                DialogInterface.BUTTON_NEGATIVE -> {
-                    if (isForward) {
-                        goNext()
-                    } else
-                        goPrevious()
-                }
+        ) { isNext, buttonPressed ->
+            if (buttonPressed == DialogInterface.BUTTON_POSITIVE) {
+                saveResult()
             }
+            selectCustomer(isNext)
         }
-
     }
 
     private fun showSaveCoordinatesDialog() {
@@ -571,8 +555,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun setupSaveCoordinatesDialog() {
-        SaveCoordinatesDialogFragment.setupListeners(parentFragmentManager,this) {
-            when(it) {
+        SaveCoordinatesDialogFragment.setupListeners(parentFragmentManager, this) {
+            when (it) {
                 DialogInterface.BUTTON_POSITIVE -> saveResult()
             }
         }
@@ -582,21 +566,21 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         IconsDialogFragment.show(parentFragmentManager, icons)
     }
 
+    private fun changeCustomer(isNext: Boolean) {
+        if (!viewModel.isResultSaved() && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+            showConfirmationDialog(isNext)
+        } else {
+            selectCustomer(isNext)
+        }
+    }
+
     override fun onClick(v: View) {
         when (v.id) {
             R.id.previous -> {
-                if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                    showConfirmationDialog(false)
-                } else {
-                    goPrevious()
-                }
+                changeCustomer(isNext = false)
             }
             R.id.next -> {
-                if (!isResultSaved && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
-                    showConfirmationDialog(true)
-                } else {
-                    goNext()
-                }
+                changeCustomer(isNext = true)
             }
             R.id.personal_account, R.id.counter -> {
                 showIconsDialogFragment((v as TextView).text.toString())
@@ -616,14 +600,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         dialog.show()
     }
 
-    private fun goPrevious() {
-        viewModel.selectPreviousCustomer()
-        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-    }
-
-    private fun goNext() {
-        viewModel.selectNextCustomer()
-        firstEditDate = SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
+    private fun selectCustomer(isNext: Boolean) {
+        viewModel.selectCustomer(isNext)
     }
 
     override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
@@ -643,8 +621,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun resetFields() {
         viewModel.setStatusSpinnerPosition(0)
-        binding.results.date.text = sdformat.format(calendar.time)
-        binding.results.newDate.text = sdformat.format(calendar.time)
+        binding.results.date.text = dateFormat.format(calendar.time)
+        binding.results.newDate.text = dateFormat.format(calendar.time)
         binding.results.statusSpinner.setSelection(0)
         binding.results.sourceSpinner.setSelection(0)
         binding.results.newMeters1.setText(zone1, TextView.BufferType.EDITABLE)
@@ -657,7 +635,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.difference1.text = ""
         binding.results.note.setText("")
         binding.results.phone.setText("")
-        isResultSaved = false
+        viewModel.setResultSavedState(false)
+        //isResultSaved = false
         imageAdapter.notifyDataSetChanged()
 
     }
@@ -690,7 +669,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         } else {
             binding.results.sourceSpinner.setSelection(0)
         }
-        isResultSaved = true
+        viewModel.setResultSavedState(true)
+        //isResultSaved = true
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
@@ -747,66 +727,23 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         calendar.set(Calendar.MONTH, month)
         calendar.set(Calendar.DAY_OF_MONTH, dayOfMonth)
 
-        binding.results.date.text = sdformat.format(calendar.time)
-        binding.results.newDate.text = sdformat.format(calendar.time)
+        binding.results.date.text = dateFormat.format(calendar.time)
+        binding.results.newDate.text = dateFormat.format(calendar.time)
     }
 
     private fun saveResult() {
-        if (binding.results.phone.text.isNotEmpty() && (binding.results.phone.text.take(3)
-                .toString() !in operators || binding.results.phone.text.length < 10)
-        ) {
-            Toast.makeText(
-                requireContext(),
-                "Неправильний формат номера телефону",
-                Toast.LENGTH_SHORT
-            ).show()
-        } else if (binding.results.newMeters1.text.isNotEmpty() || (viewModel.statusSpinnerPosition.value == 1 && viewModel.sourceSpinnerPosition.value != 0)) {
-            val date1: String = binding.results.newDate.text.toString()
-            //возможно убрать все отсюда
-            val zone1 = binding.results.newMeters1.text.toString()
-            val zone2 = binding.results.newMeters2.text.toString()
-            val zone3 = binding.results.newMeters3.text.toString()
-
-            val note = binding.results.note.text.toString()
-            val phoneNumber = binding.results.phone.text.toString()
-            val lat = binding.lat.text.toString()
-            val lng = binding.lng.text.toString()
-            val isMainPhone = if (binding.results.checkBox.isChecked) {
-                1
-            } else {
-                0
-            }
-            val photo = if (imageUri.toString().length > 4) {
-                imageUri.toString()
-            } else {
-                null
-            }
-            val currentDateAndTime =
-                SimpleDateFormat("dd.MM.yyyy HH:mm:ss", Locale.getDefault()).format(Date())
-            viewModel.saveEditTiming(firstEditDate, currentDateAndTime)
-
-            viewLifecycleOwner.lifecycleScope.launch {
-                viewModel.saveResults(
-                    date1,
-                    zone1,
-                    zone2,
-                    zone3,
-                    note,
-                    phoneNumber,
-                    isMainPhone,
-                    lat,
-                    lng,
-                    photo
-                )
-            }
-            isResultSaved = true
-            Toast.makeText(requireContext(), "Результати збережені", Toast.LENGTH_SHORT).show()
-        } else if (binding.results.statusSpinner.selectedItemPosition == 1 && binding.results.sourceSpinner.selectedItemPosition == 0) {
-            Toast.makeText(requireContext(), "Ви забули вказати джерело", Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(requireContext(), "Ви не ввели нові показники", Toast.LENGTH_SHORT)
-                .show()
-        }
+        viewModel.saveResults(
+            date = binding.results.newDate.text.toString(),
+            zone1 = binding.results.newMeters1.text.toString(),
+            zone2 = binding.results.newMeters2.text.toString(),
+            zone3 = binding.results.newMeters3.text.toString(),
+            note = binding.results.note.text.toString(),
+            phoneNumber = binding.results.phone.text.toString(),
+            lat = binding.lat.text.toString(),
+            lng = binding.lng.text.toString(),
+            isMainPhone = binding.results.checkBox.isChecked,
+            photo = imageUri.toString()
+        )
     }
 
     override fun onNothingSelected(parent: AdapterView<*>?) {}
