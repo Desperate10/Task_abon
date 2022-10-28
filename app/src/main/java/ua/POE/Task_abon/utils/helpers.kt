@@ -3,6 +3,7 @@ package ua.POE.Task_abon.utils
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.net.Uri
 import android.provider.OpenableColumns
@@ -10,7 +11,9 @@ import android.text.Editable
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.RawRes
+import androidx.core.content.ContextCompat
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
@@ -26,6 +29,12 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 
+
+fun Fragment.requestPermissions(request: ActivityResultLauncher<Array<String>>, permissions: Array<String>) = request.launch(permissions)
+
+fun Fragment.isAllPermissionsGranted(permissions: Array<String>) = permissions.all {
+    ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
+}
 
 fun <T : Any> Fragment.autoCleaned(initializer: (() -> T)? = null): AutoCleanedValue<T> {
     return AutoCleanedValue(this, initializer)

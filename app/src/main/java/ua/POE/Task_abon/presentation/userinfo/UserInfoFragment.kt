@@ -30,7 +30,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -45,7 +44,6 @@ import ua.POE.Task_abon.domain.model.*
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.ImageAdapter
 import ua.POE.Task_abon.utils.autoCleaned
-import ua.POE.Task_abon.utils.getEmojiByUnicode
 import ua.POE.Task_abon.utils.getRawTextFile
 import java.io.File
 import java.text.SimpleDateFormat
@@ -53,8 +51,8 @@ import java.util.*
 
 
 @AndroidEntryPoint
-class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.OnClickListener,
-    DatePickerDialog.OnDateSetListener {
+class UserInfoFragment : Fragment(), View.OnClickListener,
+    DatePickerDialog.OnDateSetListener, ItemSelectedListener {
 
     private var binding: FragmentUserInfoBinding by autoCleaned()
     private val viewModel: UserInfoViewModel by viewModels()
@@ -67,7 +65,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private var zone3 = ""
 
     private var isFirstLoad = false
-    //private var isResultSaved = false
+
     private lateinit var sourceAdapter: ArrayAdapter<String>
 
     private var featureList = listOf<Catalog>()
@@ -85,10 +83,18 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private var zone2watcher: TextWatcher? = null
     private var zone3watcher: TextWatcher? = null
 
+    companion object {
+        private val PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.CAMERA)
+    }
+
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.getSourceList.collect {
+                viewModel.sources.collect {
                     setupSourceSpinner(it)
                 }
             }
@@ -267,6 +273,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             android.R.layout.simple_spinner_dropdown_item,
             list
         )
+        //sourceAdapter.notifyDataSetChanged()
         binding.results.sourceSpinner.adapter = sourceAdapter
     }
 
@@ -567,7 +574,8 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     }
 
     private fun changeCustomer(isNext: Boolean) {
-        if (!viewModel.isResultSaved() && (binding.results.newMeters1.text.isNotEmpty() || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+        if (!viewModel.isResultSaved() && (binding.results.newMeters1.text.isNotEmpty()
+                    || binding.results.sourceSpinner.selectedItemPosition == 1)) {
             showConfirmationDialog(isNext)
         } else {
             selectCustomer(isNext)
@@ -636,9 +644,7 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         binding.results.note.setText("")
         binding.results.phone.setText("")
         viewModel.setResultSavedState(false)
-        //isResultSaved = false
         imageAdapter.notifyDataSetChanged()
-
     }
 
     private fun getResultIfExist(savedData: SavedData) {
@@ -663,14 +669,14 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
 
         if (!savedData.source.isNullOrEmpty()) {
-            val spinnerPosition: Int =
-                sourceAdapter.getPosition(viewModel.getSourceName(savedData.source, type))
-            binding.results.sourceSpinner.setSelection(spinnerPosition)
+            val spinnerPosition =
+                binding.results.sourceSpinner.adapter.getItemId((viewModel.getSourceName(savedData.source, type)).toInt())
+
+            binding.results.sourceSpinner.setSelection(spinnerPosition.toInt())
         } else {
             binding.results.sourceSpinner.setSelection(0)
         }
         viewModel.setResultSavedState(true)
-        //isResultSaved = true
     }
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
@@ -693,7 +699,6 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
 
     private fun updateView(tdHash: Map<String, String>) {
         binding.infoTable.removeAllViews()
-
         tdHash.forEach { (key, value) ->
             if (key.isNotEmpty()) {
                 createRow(key, value)
@@ -745,8 +750,5 @@ class UserInfoFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             photo = imageUri.toString()
         )
     }
-
-    override fun onNothingSelected(parent: AdapterView<*>?) {}
-
 
 }

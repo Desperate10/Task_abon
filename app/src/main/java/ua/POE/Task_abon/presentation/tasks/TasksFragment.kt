@@ -76,7 +76,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         (activity as MainActivity).supportActionBar?.title = "Список завдань"
 
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)

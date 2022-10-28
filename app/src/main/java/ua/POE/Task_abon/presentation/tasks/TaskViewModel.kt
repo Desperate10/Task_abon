@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.data.repository.DirectoryRepository
@@ -19,9 +20,16 @@ import ua.POE.Task_abon.domain.model.TaskInfo
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskViewModel @Inject constructor(private val repository: TaskRepository, private val testEntityRepository: TestEntityRepository, private val taskRepository: TaskRepository, private val directoryRepository: DirectoryRepository, val resultDao: ResultDao, private val timingRepository: TimingRepository) : ViewModel() {
+class TaskViewModel @Inject constructor(
+    private val repository: TaskRepository,
+    private val testEntityRepository: TestEntityRepository,
+    private val taskRepository: TaskRepository,
+    private val directoryRepository: DirectoryRepository,
+    private val resultDao: ResultDao,
+    private val timingRepository: TimingRepository
+) : ViewModel() {
 
-    val tasks : Flow<List<TaskInfo>> =
+    val tasks: Flow<List<TaskInfo>> =
         repository.getTasks().map { listOfTasks ->
             listOfTasks.map { taskEntity ->
                 taskEntity.toTaskInfo()
@@ -49,9 +57,9 @@ class TaskViewModel @Inject constructor(private val repository: TaskRepository, 
 
     private suspend fun getResult(taskId: Int) = resultDao.getResultByTaskId(taskId)
 
-    suspend fun getPhotos(taskId: Int) : List<String> = resultDao.getAllPhotos(taskId)
+    suspend fun getPhotos(taskId: Int): List<String> = resultDao.getAllPhotos(taskId)
 
-    suspend fun createXml(taskId: Int) :String {
+    suspend fun createXml(taskId: Int): String {
         val result = getResult(taskId)
         val timing = getTiming(taskId)
         return repository.createXml(result, timing)

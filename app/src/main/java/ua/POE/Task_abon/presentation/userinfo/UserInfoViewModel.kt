@@ -60,7 +60,7 @@ class UserInfoViewModel @Inject constructor(
     private var counterKey = ""
     private var counterValue = ""
     private var counterEmoji = ""
-    private val sourceList = MutableStateFlow(emptyList<Catalog>())
+    private var sourceList = listOf<Catalog>()
     private val operators by lazy(LazyThreadSafetyMode.NONE) { getOperatorsList() }
     private val dateAndTime = "dd.MM.yyyy HH:mm:ss"
     private val dateAndTimeformat = SimpleDateFormat(dateAndTime, Locale.getDefault())
@@ -112,6 +112,18 @@ class UserInfoViewModel @Inject constructor(
             getSavedData(it)
         }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
+   /* private fun getSavedData(index: Int) = flow {
+        val savedData = mapResultToSavedData(resultDao.getResultUser(taskId, index))
+        Log.d("testim", sourceList.toString())
+        val spinnerPosition = if (!savedData.source.isNullOrEmpty()) {
+            sourceList.map { it.code }.indexOf(savedData.source)
+        } else {
+            0
+        }
+
+        emit(savedData.copy(source = spinnerPosition.toString()))
+    }*/
+
     private fun getSavedData(index: Int): Flow<SavedData?> {
         return resultDao.getResultUser(taskId, index).map {
             mapResultToSavedData(it)
@@ -143,22 +155,24 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
+
     private fun getSourceListFlow(position: Int) = flow {
-        sourceList.value = if (position == 0) {
+        sourceList = if (position == 0) {
             catalogDao.getSourceList("2")
         } else {
             catalogDao.getSourceList("3")
         }.map { mapCatalogEntityToCatalog(it) }
         val sourceTextList = mutableListOf<String>()
-        sourceTextList.add(0, "-Не вибрано-")
-        sourceTextList.addAll(sourceList.value.map { it.text.toString() })
+        sourceTextList.add("-Не вибрано-")
+        sourceTextList.addAll(sourceList.map { it.text.toString() })
         emit(sourceTextList)
     }
 
-    val getSourceList: StateFlow<List<String>> = statusSpinnerPosition
+    val sources: SharedFlow<List<String>> = statusSpinnerPosition
         .flatMapLatest { getSourceListFlow(it) }
-        .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+        //.flowOn(Dispatchers.IO)
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
+
 
     val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
         .flatMapLatest {
@@ -372,7 +386,7 @@ class UserInfoViewModel @Inject constructor(
         lng: String,
         photo: String
     ) {
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch {
             Log.d("testim", customerIndex.value.toString())
             if (phoneNumber.isNotEmpty() && (phoneNumber.take(3) !in operators || phoneNumber.length < 10)) {
                 Log.d("testim", "Неправильний формат номера телефону")
@@ -386,7 +400,11 @@ class UserInfoViewModel @Inject constructor(
                 val user =
                     testEntityRepository.getTextByFields("TD$taskId", fields, customerIndex.value)
                 val isMainPhoneInt = if (isMainPhone) 1 else 0
-                val photoValid = if (photo.length > 4) {photo} else { null}
+                val photoValid = if (photo.length > 4) {
+                    photo
+                } else {
+                    null
+                }
 
                 val result = Result(
                     task.name,
@@ -518,13 +536,12 @@ class UserInfoViewModel @Inject constructor(
 
     private fun getSelectedSourceCode(position: Int) {
         selectedSourceCode = if (position != 0) {
-            sourceList.value[position - 1].code!!
+            sourceList[position - 1].code!!
         } else ""
     }
 
     fun setSelectedCustomer(index: Int) {
         _customerIndex.value = index
-        Log.d("testim", "zashlo")
     }
 
     fun setSelectedBlock(blockName: String) {
@@ -590,7 +607,7 @@ class UserInfoViewModel @Inject constructor(
         isResultSaved = IsSaved
     }
 
-    fun isResultSaved() : Boolean {
+    fun isResultSaved(): Boolean {
         return isResultSaved
     }
 

@@ -44,7 +44,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
         (activity as MainActivity).supportActionBar?.title = "Список абонентів"
         hideKeyboard()
         readBundle()
