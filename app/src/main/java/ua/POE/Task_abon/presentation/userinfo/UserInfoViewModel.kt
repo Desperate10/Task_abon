@@ -1,7 +1,6 @@
 package ua.POE.Task_abon.presentation.userinfo
 
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -75,8 +74,26 @@ class UserInfoViewModel @Inject constructor(
     private val _statusSpinnerPosition = MutableStateFlow(0)
     val statusSpinnerPosition: StateFlow<Int> = _statusSpinnerPosition
 
-    private val _sourceSpinnerPosition = MutableStateFlow(0)
-    val sourceSpinnerPosition: StateFlow<Int> = _sourceSpinnerPosition
+    private val sourceSpinnerPosition = MutableStateFlow(0)
+
+    private val statusDoneSourceList = MutableStateFlow(listOf("-Не вибрано-"))
+    private val statusNotDoneSourceList = MutableStateFlow(listOf("-Не вибрано-"))
+
+    private fun getStatusDoneSourceList() {
+        viewModelScope.launch {
+            statusDoneSourceList.value = catalogDao.getSourceList("2")
+                .map { mapCatalogEntityToCatalog(it) }
+                .map { it.text.toString() }
+        }
+    }
+
+    private fun getStatusNotDoneSourceList() {
+        viewModelScope.launch {
+            statusDoneSourceList.value = catalogDao.getSourceList("3")
+                .map { mapCatalogEntityToCatalog(it) }
+                .map { it.text.toString() }
+        }
+    }
 
     private val _customerIndex = MutableStateFlow(index)
     val customerIndex: StateFlow<Int> = _customerIndex
@@ -86,8 +103,9 @@ class UserInfoViewModel @Inject constructor(
 
     val blockNames = flow {
         val blockNameList = mutableListOf<String>()
-        blockNameList.addAll(directoryRepository.getBlockNames())
         blockNameList.add(0, "Результати")
+        emit(blockNameList)
+        blockNameList.addAll(directoryRepository.getBlockNames())
         emit(blockNameList)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("Результати"))
 
@@ -112,17 +130,17 @@ class UserInfoViewModel @Inject constructor(
             getSavedData(it)
         }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
-   /* private fun getSavedData(index: Int) = flow {
-        val savedData = mapResultToSavedData(resultDao.getResultUser(taskId, index))
-        Log.d("testim", sourceList.toString())
-        val spinnerPosition = if (!savedData.source.isNullOrEmpty()) {
-            sourceList.map { it.code }.indexOf(savedData.source)
-        } else {
-            0
-        }
+    /* private fun getSavedData(index: Int) = flow {
+         val savedData = mapResultToSavedData(resultDao.getResultUser(taskId, index))
+         Log.d("testim", sourceList.toString())
+         val spinnerPosition = if (!savedData.source.isNullOrEmpty()) {
+             sourceList.map { it.code }.indexOf(savedData.source)
+         } else {
+             0
+         }
 
-        emit(savedData.copy(source = spinnerPosition.toString()))
-    }*/
+         emit(savedData.copy(source = spinnerPosition.toString()))
+     }*/
 
     private fun getSavedData(index: Int): Flow<SavedData?> {
         return resultDao.getResultUser(taskId, index).map {
@@ -155,21 +173,21 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-
     private fun getSourceListFlow(position: Int) = flow {
+        val sourceTextList = mutableListOf<String>()
+        sourceTextList.add("-Не вибрано-")
+        emit(sourceTextList)
         sourceList = if (position == 0) {
             catalogDao.getSourceList("2")
         } else {
             catalogDao.getSourceList("3")
         }.map { mapCatalogEntityToCatalog(it) }
-        val sourceTextList = mutableListOf<String>()
-        sourceTextList.add("-Не вибрано-")
         sourceTextList.addAll(sourceList.map { it.text.toString() })
         emit(sourceTextList)
     }
 
     val sources: SharedFlow<List<String>> = statusSpinnerPosition
-        .flatMapLatest { getSourceListFlow(it) }
+        .flatMapConcat { getSourceListFlow(it) }
         //.flowOn(Dispatchers.IO)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
@@ -202,11 +220,11 @@ class UserInfoViewModel @Inject constructor(
         .flatMapLatest {
             selectedBlock
         }
-        .flatMapLatest {
+        .mapLatest {
             getTechInfo()
         }
 
-    private fun getTechInfo() = flow {
+    private fun getTechInfo(): TechInfo {
         val techHash = getTechInfoTextByFields()
         val controlInfo = StringBuilder()
 
@@ -245,17 +263,15 @@ class UserInfoViewModel @Inject constructor(
                 }
             }
         }
-        emit(
-            TechInfo(
-                zoneCount = zoneCount,
-                lastDate = lastDate,
-                lastCount = lastCount,
-                averageUsage = avgUsage,
-                type = type,
-                capacity = capacity,
-                checkDate = checkDate,
-                inspector = controlInfo.toString()
-            )
+        return TechInfo(
+            zoneCount = zoneCount,
+            lastDate = lastDate,
+            lastCount = lastCount,
+            averageUsage = avgUsage,
+            type = type,
+            capacity = capacity,
+            checkDate = checkDate,
+            inspector = controlInfo.toString()
         )
     }
 
@@ -314,45 +330,50 @@ class UserInfoViewModel @Inject constructor(
             )
         }
 
-    fun getFieldsByBlockName(name: String): List<String> =
+    private fun getFieldsByBlockName(name: String): List<String> =
         directoryRepository.getFieldsByBlockName(name, taskId)
 
-    fun getTextFieldsByBlockName(fields: List<String>) =
+    private fun getTextFieldsByBlockName(fields: List<String>) =
         testEntityRepository.getFieldsByBlock(taskId, fields, _customerIndex.value)
 
-    fun getTechInfoTextByFields(): HashMap<String, String> {
+    private fun getTechInfoTextByFields(): HashMap<String, String> {
         val fields = getFieldsByBlockName("Тех.информация")
         return testEntityRepository.getTextByFields("TD$taskId", fields, _customerIndex.value)
     }
 
     //save date when pressing saveResult
-    fun saveEditTiming(firstEditDate: String, date: String) {
+    private fun saveEditTiming(firstEditDate: String, date: String) {
         viewModelScope.launch {
-            //_isTrueEdit.value = true
-            if (timingRepository.isStartTaskDateEmpty(taskId, _customerIndex.value)) {
-                timingRepository.insertTiming(
-                    Timing(
+            coroutineScope {
+                if (timingRepository.isStartTaskDateEmpty(taskId, _customerIndex.value)) {
+                    timingRepository.insertTiming(
+                        Timing(
+                            taskId = taskId,
+                            num = _customerIndex.value,
+                            startTaskTime = firstEditDate,
+                            endTaskTime = date,
+                            "",
+                            0,
+                            0,
+                            ""
+                        )
+                    )
+                } else if (timingRepository.isFirstEditDateEmpty(taskId, _customerIndex.value)) {
+                    timingRepository.updateFirstEditDate(
                         taskId,
                         _customerIndex.value,
-                        firstEditDate,
-                        date,
-                        "",
-                        0,
-                        0,
-                        ""
+                        firstEditDate
                     )
-                )
-            } else if (timingRepository.isFirstEditDateEmpty(taskId, _customerIndex.value)) {
-                timingRepository.updateFirstEditDate(taskId, _customerIndex.value, firstEditDate)
-                timingRepository.updateEditCount(taskId, _customerIndex.value, 1)
-                saveEndEditDate(taskId, _customerIndex.value, date)
-                saveEditTime(taskId, _customerIndex.value, time)
-            } else {
-                //adding +1 to edit count
-                saveEditTime(taskId, _customerIndex.value, time)
-                saveEndEditDate(taskId, _customerIndex.value, date)
-                timingRepository.upEditCount(taskId, _customerIndex.value)
+                    timingRepository.updateEditCount(taskId, _customerIndex.value, 1)
+                    saveEndEditDate(taskId, _customerIndex.value, date)
+                    saveEditTime(taskId, _customerIndex.value, time)
+                } else {
+                    //adding +1 to edit count
+                    saveEditTime(taskId, _customerIndex.value, time)
+                    saveEndEditDate(taskId, _customerIndex.value, date)
+                    timingRepository.upEditCount(taskId, _customerIndex.value)
 
+                }
             }
         }
     }
@@ -519,9 +540,9 @@ class UserInfoViewModel @Inject constructor(
 
     fun getSourceName(code: String, type: String) = catalogDao.getSourceByCode(code, type)
 
-    fun getOperatorsList() = catalogDao.getOperatorsList()
+    private fun getOperatorsList() = catalogDao.getOperatorsList()
 
-    fun getCheckedConditions() =
+    private fun getCheckedConditions() =
         testEntityRepository.getCheckedConditions(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
@@ -529,7 +550,7 @@ class UserInfoViewModel @Inject constructor(
     }
 
     fun setSourceSpinnerPosition(position: Int) {
-        _sourceSpinnerPosition.value = position
+        sourceSpinnerPosition.value = position
         getSelectedSourceCode(position)
 
     }

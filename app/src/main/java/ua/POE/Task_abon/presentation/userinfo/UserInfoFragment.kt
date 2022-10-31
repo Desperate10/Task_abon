@@ -83,14 +83,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private var zone2watcher: TextWatcher? = null
     private var zone3watcher: TextWatcher? = null
 
-    companion object {
-        private val PERMISSIONS = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.ACCESS_COARSE_LOCATION,
-            Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.CAMERA)
-    }
-
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -273,7 +265,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             android.R.layout.simple_spinner_dropdown_item,
             list
         )
-        //sourceAdapter.notifyDataSetChanged()
         binding.results.sourceSpinner.adapter = sourceAdapter
     }
 
@@ -670,9 +661,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         if (!savedData.source.isNullOrEmpty()) {
             val spinnerPosition =
-                binding.results.sourceSpinner.adapter.getItemId((viewModel.getSourceName(savedData.source, type)).toInt())
+                sourceAdapter.getPosition(viewModel.getSourceName(savedData.source, type))
 
-            binding.results.sourceSpinner.setSelection(spinnerPosition.toInt())
+            binding.results.sourceSpinner.setSelection(spinnerPosition)
         } else {
             binding.results.sourceSpinner.setSelection(0)
         }

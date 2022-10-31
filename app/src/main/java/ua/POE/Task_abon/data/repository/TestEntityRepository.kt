@@ -13,9 +13,6 @@ class TestEntityRepository @Inject constructor(appDatabase: AppDatabase) {
 
     private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
 
-    /*fun getBasicInfoBlock(fields: List<String>, tableName: String, num: Int) =
-        TestEntity.getBasicInfoBlock(sdb, tableName, fields, num)*/
-
     fun getFieldsByBlock(taskId: Int, fields: List<String>, num: Int) =
         TestEntity.getFieldsByBlock(sdb, taskId, fields, num)
 
