@@ -110,4 +110,7 @@ dependencies {
 
     // debugImplementation because LeakCanary should only run in debug builds.
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
+
+    //for manifext error 'android:exported needs to be explicitly specified for <activity>'
+    androidTestImplementation "androidx.test.ext:junit-ktx:1.1.3"
 }

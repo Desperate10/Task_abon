@@ -6,7 +6,7 @@ import javax.inject.Inject
 
 class TimingRepository @Inject constructor(private val timingDao: TimingDao) {
 
-    fun getTiming(taskId: Int) = timingDao.getTiming(taskId)
+    suspend fun getTiming(taskId: Int) = timingDao.getTiming(taskId)
 
     suspend fun updateFirstEditDate(taskId: Int, num: Int, firstEditDate: String) =
         timingDao.updateFirstEditDate(taskId, num, firstEditDate)

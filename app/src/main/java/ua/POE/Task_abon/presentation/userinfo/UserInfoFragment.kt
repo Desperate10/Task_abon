@@ -36,6 +36,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
@@ -63,12 +65,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private var zone1 = ""
     private var zone2 = ""
     private var zone3 = ""
-
     private var isFirstLoad = false
-
-    private lateinit var sourceAdapter: ArrayAdapter<String>
-
-    private var featureList = listOf<Catalog>()
+    private var sourceAdapter: ArrayAdapter<String>? = null
+    //private var featureList = listOf<Catalog>()
     lateinit var locationManager: LocationManager
     private val imageAdapter: ImageAdapter by autoCleaned {
         ImageAdapter(requireContext(), items, uri)
@@ -76,16 +75,20 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private val items = ArrayList<Image>(2)
     private val uri = ArrayList<String>()
     private var imageUri: Uri? = null
-    private val icons by lazy {
-        resources.getRawTextFile(R.raw.icons)
-    }
+
     private var zone1watcher: TextWatcher? = null
     private var zone2watcher: TextWatcher? = null
     private var zone3watcher: TextWatcher? = null
 
     private fun observeViewModel() {
+
+        viewModel.setStartEditTime()
+        viewModel.getTechInfoDataMap()
+        viewModel.getOperatorsList()
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                //combine с результатом сделать?
                 viewModel.sources.collect {
                     setupSourceSpinner(it)
                 }
@@ -100,14 +103,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.customerIndex
-                    .flatMapLatest {
-                        viewModel.getCustomerBasicInfo(icons)
-                    }
-                    .filter { it.name.isNotEmpty() }
-                    .collectLatest {
+                viewModel.basicInfo.collectLatest {
+                    if (it != null) {
                         getBasicInfo(it)
                     }
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
@@ -135,18 +135,18 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.result.collect { savedData ->
                     resetFields()
-                    savedData?.status?.let { getResultIfExist(savedData) }
+                    savedData.status?.let { getResultIfExist(savedData) }
                     registerWatchers()
                 }
             }
         }
-        viewLifecycleOwner.lifecycleScope.launch {
+        /*viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.featureList.collectLatest {
                     featureList = it
                 }
             }
-        }
+        }*/
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.customerFeatures.collect {
@@ -233,7 +233,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
 
         setupSaveConfirmationDialogFragmentListener()
-        setupSaveCoordinatesDialog()
+        setupSaveCoordinatesDialogFragmentListener()
         checkPermissions()
         registerItemListeners()
         registerClickListeners()
@@ -317,7 +317,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun takePhoto() {
-        val filename = filial + "_" + binding.personalAccount?.text + "_"
+        val filename = filial + "_" + binding.personalAccount.text + "_"
         val storageDirectory: File? =
             requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         try {
@@ -552,7 +552,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         SaveCoordinatesDialogFragment.show(parentFragmentManager)
     }
 
-    private fun setupSaveCoordinatesDialog() {
+    private fun setupSaveCoordinatesDialogFragmentListener() {
         SaveCoordinatesDialogFragment.setupListeners(parentFragmentManager, this) {
             when (it) {
                 DialogInterface.BUTTON_POSITIVE -> saveResult()
@@ -566,7 +566,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     private fun changeCustomer(isNext: Boolean) {
         if (!viewModel.isResultSaved() && (binding.results.newMeters1.text.isNotEmpty()
-                    || binding.results.sourceSpinner.selectedItemPosition == 1)) {
+                    || binding.results.sourceSpinner.selectedItemPosition == 1)
+        ) {
             showConfirmationDialog(isNext)
         } else {
             selectCustomer(isNext)
@@ -653,20 +654,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         if (!savedData.photo.isNullOrEmpty()) {
             imageAdapter.addSavedPhoto(Uri.parse(savedData.photo))
         }
-        val type = if (viewModel.statusSpinnerPosition.value == 0) {
-            "2"
-        } else {
-            "3"
-        }
+        val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
+        spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
 
-        if (!savedData.source.isNullOrEmpty()) {
-            val spinnerPosition =
-                sourceAdapter.getPosition(viewModel.getSourceName(savedData.source, type))
-
-            binding.results.sourceSpinner.setSelection(spinnerPosition)
-        } else {
-            binding.results.sourceSpinner.setSelection(0)
-        }
         viewModel.setResultSavedState(true)
     }
 

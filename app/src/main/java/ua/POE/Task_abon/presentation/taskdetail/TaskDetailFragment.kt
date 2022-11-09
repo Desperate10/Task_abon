@@ -9,17 +9,25 @@ import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
 import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
+import ua.POE.Task_abon.presentation.taskdetail.TaskDetailViewModel.Companion.ALL
+import ua.POE.Task_abon.presentation.taskdetail.TaskDetailViewModel.Companion.NOT_FINISHED
 import ua.POE.Task_abon.utils.*
+import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -36,7 +44,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private var taskName: String? = null
 
     private var userData = listOf<UserData>()
-    private var icons = ArrayList<Icons>()
+    //private var icons = ArrayList<Icons>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +54,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         (activity as MainActivity).supportActionBar?.title = "Список абонентів"
         hideKeyboard()
-        readBundle()
+        readArguments()
         bindViews()
         createCustomerListAdapter()
         observeViewModel()
@@ -55,18 +63,17 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
 
     private fun addClickListeners() {
         binding.isDoneCheckBox.setOnCheckedChangeListener { _, isChecked ->
-            viewModel.customersFilterStatus.value = if (isChecked) NOT_FINISHED
-            else ALL
+            viewModel.setCustomerStatus(isChecked)
         }
         adapter.onCustomerClickListener = this
     }
 
     private fun createCustomerListAdapter() {
         //read all icons from raw
-        icons = resources.getRawTextFile(R.raw.icons)
+        //icons = resources.getRawTextFile(R.raw.icons)
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
         binding.recyclerview.layoutManager = linearLayoutManager
-        adapter = CustomerListAdapter(requireContext(), icons)
+        adapter = CustomerListAdapter(requireContext())
         binding.recyclerview.adapter = adapter
     }
 
@@ -76,7 +83,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         binding.info.text = info
     }
 
-    private fun readBundle() {
+    private fun readArguments() {
         arguments?.let {
             taskId = it.getInt("taskId")
             searchList = it.get("searchList") as Map<String, String>?
@@ -87,7 +94,24 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun observeViewModel() {
-        viewModel.customersFilterStatus.observe(viewLifecycleOwner) { status ->
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.users.collectLatest {
+                    adapter.submitList(it)
+                    with(binding.recyclerview) {
+                        post { scrollToPosition(0) }
+                    }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.finishedCustomersCount.collectLatest { count ->
+                    binding.finished.text = getString(R.string.status_done, count, userData.size)
+                }
+            }
+        }
+        /*viewModel.customersFilterStatus.observe(viewLifecycleOwner) { status ->
             userData = if (status == ALL) {
                 viewModel.getUsers(taskId, searchList)
             } else {
@@ -100,22 +124,26 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         }
         viewModel.getFinishedCount(taskId).observe(viewLifecycleOwner) { count ->
             binding.finished.text = getString(R.string.status_done, count, userData.size)
-        }
+        }*/
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                findNavController().navigate(R.id.action_taskDetailFragment_to_tasksFragment)
+                navigateToTaskFragment()
             }
             R.id.find_user -> {
                 navigateToFindUserFragment()
             }
             R.id.marks -> {
-                showEmojiInfoDialog()
+                showIconsHelpHint()
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun navigateToTaskFragment() {
+        findNavController().navigate(R.id.action_taskDetailFragment_to_tasksFragment)
     }
 
     private fun navigateToFindUserFragment() {
@@ -131,7 +159,11 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         )
     }
 
-    private fun showEmojiInfoDialog() {
+    private fun showIconsHelpHint() {
+        IconsHelpDialogFragment.show(parentFragmentManager)
+    }
+
+    /*private fun showEmojiInfoDialog() {
 
         val message =
             icons.joinToString(separator = "") { "${it.emoji?.let { it1 -> getEmojiByUnicode(it1) }} - ${it.hint}\n" }
@@ -149,7 +181,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         textView.setScroller(Scroller(requireContext()))
         textView.isVerticalScrollBarEnabled = true
         textView.movementMethod = ScrollingMovementMethod()
-    }
+    }*/
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.task_detail_menu, menu)
@@ -184,8 +216,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     companion object {
-        private const val NOT_FINISHED = "Не виконано"
-        private const val ALL = "Всі"
         private const val FIRST_FILIAL_NUMBER = 1
         private const val LAST_FILIAL_NUMBER = 5
     }

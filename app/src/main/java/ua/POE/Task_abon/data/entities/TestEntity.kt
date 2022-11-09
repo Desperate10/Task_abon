@@ -1,5 +1,6 @@
 package ua.POE.Task_abon.data.entities
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.database.Cursor
 import android.util.Log
@@ -14,35 +15,13 @@ import java.util.stream.Collectors
 
 
 @Entity(tableName = "base")
-data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
+data class TestEntity(@PrimaryKey var name: String) {
 
     companion object {
 
-    const val BASETABLE_COL_NAME = "name"
-    const val BASETABLE_COL_VALUE = "value"
-
-    const val BASETABLE_NAME_PLACEHOLDER = ":tablename:"
-
-        @Ignore
-        fun getBasicInfoBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
-            var csr: Cursor =
-                sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
-            var data: HashMap<String, String> = HashMap()
-            csr.moveToFirst()
-            do {
-                for (i in fields.indices) {
-                    var field = csr.getString(csr.getColumnIndex(fields[i]))
-                    data[fields[i]] = field
-                }
-            } while (csr.moveToNext())
-            csr.close()
-
-            return data
-        }
-
+        @SuppressLint("Range")
         @Ignore
         fun getFieldsByBlock(sdb: SupportSQLiteDatabase, taskId: Int, fields: List<String>, index: Int) : HashMap<String, String> {
-            //Log.d("testim1", fields.joinToString())
             var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM TD$taskId WHERE _id = $index")
             var data : HashMap<String, String> = HashMap()
             var data2 : HashMap<String, String> = HashMap()
@@ -54,7 +33,6 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
                 }
             } while (csr.moveToNext())
             csr.close()
-            //Log.d("testim", data.toString())
             val sl = ArrayList<String>()
             for (i in fields.indices) {
                 sl.add("\"${fields[i]}\"")
@@ -77,6 +55,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             return common
         }
 
+        @SuppressLint("Range")
         @Ignore
         fun getTextByFields(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
             var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
@@ -93,6 +72,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             return data
         }
 
+        @SuppressLint("Range")
         @Ignore
         fun getCheckedConditions(sdb: SupportSQLiteDatabase, taskId: Int, index: Int) :String{
             var isExist = false
@@ -114,20 +94,9 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             } else {
                 ""
             }
-
-            /*val cursor1 = sdb.query("SELECT COUNT(*) FROM pragma_table_info('TD$tableName') WHERE name='point_condition'")
-            cursor1.moveToFirst()
-            val count = cursor1.getString(0)
-            return if (count.equals("0")) "" else {
-                val csr: Cursor =
-                    sdb.query("SELECT point_condition FROM TD$tableName WHERE _id = $index")
-                csr.moveToFirst()
-                val data = csr.getString(csr.getColumnIndex("point_condition"))
-                csr.close()
-                data
-            }*/
         }
 
+        @SuppressLint("Range")
         @Ignore
         fun getItemsByField(sdb: SupportSQLiteDatabase, tableName: String, field: String) : ArrayList<String> {
             var csr : Cursor = sdb.query("SELECT DISTINCT $field FROM $tableName")
@@ -144,7 +113,6 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
 
         @Ignore
         fun insertRows(sdb: SupportSQLiteDatabase, tableName: String?, cv: ContentValues): Long? {
-
             return tableName?.let { sdb.insert(it, OnConflictStrategy.IGNORE, cv) }
         }
 

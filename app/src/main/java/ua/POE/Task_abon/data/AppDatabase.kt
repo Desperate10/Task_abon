@@ -47,14 +47,6 @@ abstract class AppDatabase : RoomDatabase() {
                     catalogDao.insert(CatalogEntity(0, "1", "3", "Починається з"))
                     catalogDao.insert(CatalogEntity(0, "1", "4", "Не пусте"))
                     catalogDao.insert(CatalogEntity(0, "1", "5", "Пусте"))
-                    /*val passwordDao = database.passwordDao()
-                    //чистим пароли
-                    passwordDao.deleteAll()
-                    //добавляем
-                    var password = Password("123")
-                    passwordDao.insert(password)
-                    password = Password("321")
-                    passwordDao.insert(password)*/
                 }
             }
         }

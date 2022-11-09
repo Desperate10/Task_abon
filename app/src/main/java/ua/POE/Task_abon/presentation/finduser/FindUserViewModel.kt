@@ -1,21 +1,45 @@
 package ua.POE.Task_abon.presentation.finduser
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import javax.inject.Inject
 
 @HiltViewModel
-class FindUserViewModel @Inject constructor(val directoryDao: DirectoryDao, val testEntityRepository: TestEntityRepository) : ViewModel() {
+class FindUserViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
+    private val directoryDao: DirectoryDao,
+    private val testEntityRepository: TestEntityRepository
+) : ViewModel() {
 
-    fun getSearchFieldsTxt(taskId: Int) = directoryDao.getSearchFieldsTxt(taskId)
+    private val taskId =
+        savedStateHandle.get<Int>("taskId") ?: throw RuntimeException("taskId is null")
 
-    private fun getSearchFieldNameByTxt(taskId: Int, field: String) = directoryDao.getSearchFieldName(taskId, field)
+    private val _searchFieldsValues = MutableStateFlow<List<String>>(emptyList())
+    val searchFieldsValues: StateFlow<List<String>> = _searchFieldsValues
 
-    fun getSearchFieldValues(taskId: Int, value: String) : ArrayList<String> {
-        val fieldName = getSearchFieldNameByTxt(taskId, value)
+    val searchFields: StateFlow<List<String>> = directoryDao.getSearchFields(taskId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
-        return testEntityRepository.getSearchedItemsByField("TD$taskId", fieldName)
+    fun getSearchFieldValues(value: String) {
+        viewModelScope.launch {
+            val fieldName = getSearchFieldNameByTxt(taskId, value)
+            _searchFieldsValues.value =
+                testEntityRepository.getSearchedItemsByField("TD$taskId", fieldName)
+        }
+
     }
+
+    private suspend fun getSearchFieldNameByTxt(taskId: Int, field: String) =
+        directoryDao.getSearchFieldName(taskId, field)
+
+
 }

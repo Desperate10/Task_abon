@@ -190,9 +190,14 @@ class XmlLoader @Inject constructor(
                         "Field_source" -> {
                             while (parser.next() != XmlPullParser.END_TAG) {
                                 if (parser.eventType != XmlPullParser.START_TAG) {
-                                    continue;
+                                    continue
                                 }
                                 if (parser.name == "Field_block_source") {
+                                    insertCatalog(
+                                        "2",
+                                        "0",
+                                        "-Не вибрано-"
+                                    )
                                     for (i in 0 until parser.attributeCount) {
                                         if (parser.getAttributeName(i).isNotEmpty())
                                             insertCatalog(
@@ -205,6 +210,11 @@ class XmlLoader @Inject constructor(
                             }
                         }
                         "Field_block_prichina" -> {
+                            insertCatalog(
+                                "3",
+                                "0",
+                                "-Не вибрано-"
+                            )
                             for (i in 0 until parser.attributeCount) {
                                 if (parser.getAttributeName(i).isNotEmpty())
                                     insertCatalog(
@@ -236,8 +246,8 @@ class XmlLoader @Inject constructor(
     }
 
     private suspend fun insertCatalog(type: String, code: String, value: String) {
-        val exists = catalogDao.getCatalogItem(type, code)
-        if (!exists) {
+        val isExist = catalogDao.isCatalogItemExists(type, code)
+        if (!isExist) {
             catalogDao.insert(CatalogEntity(0, type, code, value))
         }
     }

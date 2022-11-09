@@ -14,23 +14,28 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentFindUserBinding
 import ua.POE.Task_abon.databinding.FragmentTasksBinding
 import ua.POE.Task_abon.presentation.MainActivity
+import ua.POE.Task_abon.presentation.userinfo.ItemSelectedListener
 import ua.POE.Task_abon.utils.autoCleaned
 
 
 @AndroidEntryPoint
-class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.OnClickListener {
+class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener {
 
     private var binding : FragmentFindUserBinding by autoCleaned()
     private val viewModel: FindUserViewModel by viewModels()
 
     private var adapter: ArrayAdapter<String>? = null
-    private var existAdapter: ArrayAdapter<String>? = null
     private var simpleAdapter: SimpleAdapter? = null
 
     private var taskId = 0
@@ -38,10 +43,9 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     private var fileName: String? = null
     private var info: String? = null
 
-    private var existFields = mutableListOf<String>()
     private var list = mutableListOf<Map<String, String>>()
-    private var listHash = mutableMapOf<String, String>()
-    private val searchFieldNames: MutableList<String>? = null
+    private var searchListHash = mutableMapOf<String, String>()
+    //private val searchFieldNames: MutableList<String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,9 +66,26 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         (activity as MainActivity).supportActionBar?.title = "Критерії пошуку"
 
         readArguments()
-        initSearchSpinner()
         initClickListeners()
         initAdapterForSearchCriteria()
+        observeViewModel()
+    }
+
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.searchFields.collectLatest {
+                    initSearchSpinner(it)
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.searchFieldsValues.collectLatest {
+                    initExistAdapter(it)
+                }
+            }
+        }
     }
 
     private fun readArguments() {
@@ -118,16 +139,7 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
     override fun onClick(v: View) {
         when (v.id) {
             R.id.add_filter -> {
-                var hash = mutableMapOf<String, String>()
-                val name = binding.filterSpinner.selectedItem.toString()
-                hash["name"] = name
-                hash["value"] = binding.editFilterValue.text.toString()
-                list.add(hash)
-                listHash[name] = binding.editFilterValue.text.toString()
-                searchFieldNames?.remove(name)
-                simpleAdapter?.notifyDataSetChanged()
-                adapter?.notifyDataSetChanged()
-                binding.filterSpinner.setSelection(1)
+                addFilterCriteria()
             }
             R.id.do_filter -> {
                 navigateToTaskDetailFragment()
@@ -138,11 +150,24 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         }
     }
 
+    private fun addFilterCriteria() {
+        val hash = mutableMapOf<String, String>()
+        val name = binding.filterSpinner.selectedItem.toString()
+        hash["name"] = name
+        hash["value"] = binding.editFilterValue.text.toString()
+        list.add(hash)
+        searchListHash[name] = binding.editFilterValue.text.toString()
+        // searchFieldNames?.remove(name)
+        simpleAdapter?.notifyDataSetChanged()
+        adapter?.notifyDataSetChanged()
+        binding.filterSpinner.setSelection(1)
+    }
+
     private fun navigateToTaskDetailFragment() {
         val bundle = bundleOf(
             "taskId" to taskId,
             "taskName" to taskName,
-            "searchList" to listHash,
+            "searchList" to searchListHash,
             "fileName" to fileName,
             "name" to taskName,
             "info" to info
@@ -152,15 +177,6 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
             bundle
         )
     }
-
-    /*private fun handleOnBackPressed() {
-        requireActivity().onBackPressedDispatcher.addCallback(this, object :
-            OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                requireActivity().onBackPressed()
-            }
-        })
-    }*/
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -176,37 +192,31 @@ class FindUserFragment : Fragment(), AdapterView.OnItemSelectedListener, View.On
         val selectedItem = parent.getItemAtPosition(position).toString()
         when (parent.id) {
             R.id.filter_spinner -> {
-                // CoroutineScope(Dispatchers.IO).launch {
-                existFields = viewModel.getSearchFieldValues(taskId, selectedItem)
-                existAdapter =
-                    ArrayAdapter(
-                        requireContext(),
-                        android.R.layout.simple_spinner_dropdown_item,
-                        existFields
-                    )
-                binding.existItemsSpinner.adapter = existAdapter
-                binding.existItemsSpinner.onItemSelectedListener = this
+                viewModel.getSearchFieldValues(selectedItem)
             }
             R.id.exist_items_spinner -> {
                 binding.editFilterValue.setText(selectedItem)
             }
         }
     }
+    private fun initExistAdapter(fieldValues: List<String>) {
+        val existAdapter =
+            ArrayAdapter(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                fieldValues
+            )
+        binding.existItemsSpinner.adapter = existAdapter
+        binding.existItemsSpinner.onItemSelectedListener = this
+    }
 
-    private fun initSearchSpinner() {
-        val spinner = binding.filterSpinner
-        val fieldNames = viewModel.getSearchFieldsTxt(taskId)
+    private fun initSearchSpinner(fieldNames: List<String>) {
         adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
             fieldNames
         )
-        spinner.adapter = adapter
-        spinner.onItemSelectedListener = this
-
+        binding.filterSpinner.adapter = adapter
+        binding.filterSpinner.onItemSelectedListener = this
     }
-
-    override fun onNothingSelected(parent: AdapterView<*>?) {}
-
-
 }

@@ -64,8 +64,7 @@ class TaskViewModel @Inject constructor(
         val timing = getTiming(taskId)
         return repository.createXml(result, timing)
     }
-
-    private fun getTiming(taskId: Int) = timingRepository.getTiming(taskId)
+    private suspend fun getTiming(taskId: Int) = timingRepository.getTiming(taskId)
 
 
 }

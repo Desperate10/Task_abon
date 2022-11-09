@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
 import ua.POE.Task_abon.data.entities.Directory
 
 @Dao
@@ -28,7 +29,7 @@ interface DirectoryDao {
     suspend fun updateSort(taskId: Int, attributeName: String, attributeValue: String)
 
     @Query("SELECT fieldName FROM directory WHERE fieldBlockName= :name and taskId = :taskId")
-    fun getFieldsByBlockName(name: String, taskId: Int): List<String>
+    suspend fun getFieldsByBlockName(name: String, taskId: Int): List<String>
 
     @Query("SELECT fieldName FROM directory WHERE fieldBlockName= '' and taskId = :taskId")
     suspend fun getBasicFields(taskId: Int): List<String>
@@ -40,12 +41,9 @@ interface DirectoryDao {
     suspend fun deleteByTaskId(taskId: Int)
 
     @Query("SELECT fieldSearch FROM directory WHERE taskId=:taskId AND fieldSearch != \"\"")
-    fun getSearchFieldsTxt(taskId: Int): MutableList<String>
+    fun getSearchFields(taskId: Int): Flow<List<String>>
 
     @Query("SELECT fieldName FROM directory WHERE taskId = :taskId AND fieldSearch = :field")
-    fun getSearchFieldName(taskId: Int, field: String): String
-
-    @Query("SELECT fieldName FROM directory WHERE taskId = :taskId AND fieldSearch = :field ")
-    fun getSearchFieldNames(taskId: Int, field: String): String
+    suspend fun getSearchFieldName(taskId: Int, field: String): String
 
 }

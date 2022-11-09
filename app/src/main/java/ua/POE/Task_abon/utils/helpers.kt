@@ -18,10 +18,14 @@ import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.viewbinding.ViewBinding
 import com.google.android.material.snackbar.Snackbar
+import dagger.Provides
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
+import ua.POE.Task_abon.R
 import ua.POE.Task_abon.domain.model.Icons
 import java.io.BufferedReader
 import java.io.FileNotFoundException
@@ -29,6 +33,9 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.Charset
 
+fun Context.getIcons() : List<Icons> {
+    return resources.getRawTextFile(R.raw.icons)
+}
 
 fun Fragment.requestPermissions(request: ActivityResultLauncher<Array<String>>, permissions: Array<String>) = request.launch(permissions)
 
@@ -86,7 +93,7 @@ fun Resources.getRawTextFile(@RawRes id: Int): ArrayList<Icons> {
     return iconsList
 }
 
-fun getNeededEmojis(iconsList: ArrayList<Icons>, neededIcons: String): String {
+fun getNeededEmojis(iconsList: List<Icons>, neededIcons: String): String {
     val mods = neededIcons.split("/", "\\")
     return iconsList.filter { it.id in mods }
         .joinToString { getEmojiByUnicode(it.emoji) }
@@ -128,5 +135,6 @@ suspend fun <T> saveReadFile(
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 inline fun <T, R> Flow<Iterable<T>>.mapLatestIterable(crossinline transform: (T) -> R): Flow<List<R>> =
     mapLatest { it.map(transform) }

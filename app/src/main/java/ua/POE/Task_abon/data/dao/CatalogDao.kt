@@ -18,27 +18,18 @@ interface CatalogDao {
     suspend fun deleteTypeOne()
 
     @Query("SELECT EXISTS (SELECT * FROM catalog WHERE type =:type and code = :code)")
-    fun getCatalogItem(type: String, code: String) : Boolean
-
-    @Query("SELECT * FROM catalog WHERE type = \"0\"")
-    fun getStatusList() : List<CatalogEntity>
-
-    /*@Query("SELECT * FROM catalog WHERE type = :type")
-    fun getSourceList(type: String) : Flow<List<CatalogEntity>>*/
+    suspend fun isCatalogItemExists(type: String, code: String) : Boolean
 
     @Query("SELECT * FROM catalog WHERE type = :type")
     suspend fun getSourceList(type: String) : List<CatalogEntity>
 
     @Query("SELECT * FROM catalog WHERE type = \"4\"")
-    suspend fun getFeatureList() : List<CatalogEntity>
+    fun getFeatureList() : Flow<List<CatalogEntity>>
 
     @Query("SELECT text FROM catalog WHERE code = :code AND type = :type")
-    fun getSourceByCode(code: String, type: String) : String
-
-    @Query("SELECT text FROM catalog WHERE code = :code AND type = 4")
-    fun getSourceNoteByCode(code: String) : String
+    suspend fun getSourceByCode(code: String, type: String) : String
 
     @Query("SELECT text FROM catalog WHERE type = 5")
-    fun getOperatorsList() : List<String>
+    suspend fun getOperatorsList() : List<String>
 
 }

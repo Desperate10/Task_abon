@@ -14,7 +14,7 @@ interface TimingDao {
     suspend fun insertTiming(timing: Timing)
 
     @Query("SELECT * FROM timing WHERE task_id = :taskId")
-    fun getTiming(taskId: Int): Flow<List<Timing>>
+    suspend fun getTiming(taskId: Int): List<Timing>
 
     @Query("SELECT startTaskTime FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
     suspend fun getStartTaskDate(taskId: Int, num: Int): String

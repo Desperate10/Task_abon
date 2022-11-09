@@ -8,15 +8,23 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.repository.*
+import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.utils.XmlLoader
+import ua.POE.Task_abon.utils.getRawTextFile
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    fun getIcons(@ApplicationContext appContext : Context) : List<Icons> {
+        return appContext.resources.getRawTextFile(R.raw.icons)
+    }
 
     @Provides
     fun provideCoroutineScope(): CoroutineScope {
@@ -91,7 +99,5 @@ object AppModule {
     @Singleton
     @Provides
     fun provideTimingRepository(timingDao: TimingDao) = TimingRepository(timingDao)
-
-
 
 }

@@ -12,23 +12,5 @@ import ua.POE.Task_abon.data.entities.UserData
 interface TestEntityDao {
 
     @RawQuery
-    fun getUserList(query: SimpleSQLiteQuery) : List<UserData>
-
-    @RawQuery
-    fun getSearchedUsersList(query: SimpleSQLiteQuery) : List<UserData>
-
-    @RawQuery
-    fun checkField(query: SimpleSQLiteQuery): Int
-
-    @Insert
-    fun insertRow(entity: TestEntity) : Long
-
-    @Query("INSERT INTO base (name) VALUES (:name)")
-    fun insertColumnName(name : String)
-
- /*   @Query("UPDATE base SET value = :value WHERE name = :name")
-    suspend fun insertColumnValue(tableName: String, name: String, value : String)
-
-    @Query("SELECT count() FROM base")
-    fun getRowCount() : Int*/
+    suspend fun getSearchedUsersList(query: SimpleSQLiteQuery) : List<UserData>
 }
