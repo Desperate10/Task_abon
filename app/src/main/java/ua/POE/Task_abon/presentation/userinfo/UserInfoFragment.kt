@@ -1,9 +1,7 @@
 package ua.POE.Task_abon.presentation.userinfo
 
 import android.Manifest
-import android.app.Activity
 import android.app.DatePickerDialog
-import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
@@ -16,7 +14,6 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.provider.MediaStore
 import android.provider.Settings
 import android.text.TextWatcher
 import android.text.util.Linkify
@@ -25,6 +22,7 @@ import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
@@ -36,17 +34,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
-import ua.POE.Task_abon.domain.model.*
+import ua.POE.Task_abon.domain.model.BasicInfo
+import ua.POE.Task_abon.domain.model.SavedData
+import ua.POE.Task_abon.domain.model.TechInfo
 import ua.POE.Task_abon.presentation.MainActivity
-import ua.POE.Task_abon.presentation.adapters.ImageAdapter
 import ua.POE.Task_abon.utils.autoCleaned
-import ua.POE.Task_abon.utils.getRawTextFile
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -67,18 +64,47 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private var zone3 = ""
     private var isFirstLoad = false
     private var sourceAdapter: ArrayAdapter<String>? = null
-    //private var featureList = listOf<Catalog>()
     lateinit var locationManager: LocationManager
-    private val imageAdapter: ImageAdapter by autoCleaned {
-        ImageAdapter(requireContext(), items, uri)
-    }
-    private val items = ArrayList<Image>(2)
-    private val uri = ArrayList<String>()
-    private var imageUri: Uri? = null
 
     private var zone1watcher: TextWatcher? = null
     private var zone2watcher: TextWatcher? = null
     private var zone3watcher: TextWatcher? = null
+
+    private var latestTmpUri: Uri? = null
+    private val takeImageResult =
+        registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+            if (isSuccess) {
+                latestTmpUri?.let { uri ->
+                    binding.results.addPhoto.setImageURI(uri)
+                    binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+                }
+            }
+        }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        setHasOptionsMenu(true)
+        (activity as MainActivity).supportActionBar?.title = "Інформація"
+
+        if (savedInstanceState != null) {
+            viewModel.setSelectedCustomer(savedInstanceState.getInt("index"))
+            zone1 = savedInstanceState.getString("zone1") ?: ""
+            zone2 = savedInstanceState.getString("zone2") ?: ""
+            zone3 = savedInstanceState.getString("zone3") ?: ""
+        }
+
+        arguments?.let {
+            filial = arguments?.getString("filial")
+            isFirstLoad = requireArguments().getBoolean("isFirstLoad")
+        }
+
+        setupSaveConfirmationDialogFragmentListener()
+        setupSaveCoordinatesDialogFragmentListener()
+        checkPermissions()
+        registerItemListeners()
+        registerClickListeners()
+        observeViewModel()
+    }
 
     private fun observeViewModel() {
 
@@ -178,8 +204,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.contrDate.text = it.checkDate
         binding.results.contrText.text =
             resources.getString(R.string.contr_pokaz) + it.inspector
-
-        imageAdapter.deletePhoto(requireContext())
     }
 
     private fun registerWatchers() {
@@ -206,32 +230,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.newMeters3.removeTextChangedListener(zone3watcher)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setHasOptionsMenu(true)
-        (activity as MainActivity).supportActionBar?.title = "Інформація"
-
-        if (savedInstanceState != null) {
-            viewModel.setSelectedCustomer(savedInstanceState.getInt("index"))
-            zone1 = savedInstanceState.getString("zone1") ?: ""
-            zone2 = savedInstanceState.getString("zone2") ?: ""
-            zone3 = savedInstanceState.getString("zone3") ?: ""
-        }
-
-        arguments?.let {
-            filial = arguments?.getString("filial")
-            isFirstLoad = requireArguments().getBoolean("isFirstLoad")
-        }
-
-        setupSaveConfirmationDialogFragmentListener()
-        setupSaveCoordinatesDialogFragmentListener()
-        checkPermissions()
-        registerItemListeners()
-        registerClickListeners()
-        setupImageAdapter()
-        observeViewModel()
-    }
-
     private fun registerClickListeners() {
         binding.personalAccount.setOnClickListener(this)
         binding.counter.setOnClickListener(this)
@@ -239,6 +237,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.next.setOnClickListener(this)
         binding.results.date.setOnClickListener(this)
         binding.results.newDate.setOnClickListener(this)
+        binding.results.addPhoto.setOnClickListener(this)
     }
 
     private fun setupMainBlockSpinner(list: List<String>) {
@@ -265,25 +264,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.sourceSpinner.onItemSelectedListener = this
     }
 
-    private fun setupImageAdapter() {
-        binding.results.photoLayout.adapter = imageAdapter
-        //imageAdapter.addAddButton(requireContext())
-
-        binding.results.photoLayout.setOnItemClickListener { _, _, position, _ ->
-            if (position == 0) {
-                if (items.size < 2) {
-                    takePhoto()
-                } else {
-                    Toast.makeText(
-                        requireContext(),
-                        "Видаліть фото, щоб створити нове",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-
     private fun registerWatcher(
         newMeters: EditText,
         difference: TextView,
@@ -307,32 +287,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         removeTextWatchers()
     }
 
-    private fun takePhoto() {
-        val filename = filial + "_" + binding.personalAccount.text + "_"
-        val storageDirectory: File? =
-            requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        try {
-            val tempImage = File.createTempFile(filename, ".jpg", storageDirectory)
-            imageUri = FileProvider.getUriForFile(
-                requireContext(),
-                "ua.POE.Task_abon.fileprovider",
-                tempImage
-            )
-            val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri)
-            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            try {
-                startActivityForResult(intent, 1)
-            } catch (e: ActivityNotFoundException) {
-                Toast.makeText(requireContext(), "Проблема з запуском камери", Toast.LENGTH_LONG)
-                    .show()
-                requireActivity().finish()
-            }
-        } catch (e: java.lang.Exception) {
-            e.printStackTrace()
-        }
-    }
-
     private fun checkPermissions() {
         locationManager =
             requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -343,19 +297,13 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             ActivityCompat.checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.CAMERA
             ) != PackageManager.PERMISSION_GRANTED
         ) {
             requestPermissions(
                 arrayOf(
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE,
                     Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.CAMERA
+                    Manifest.permission.ACCESS_FINE_LOCATION
                 ), 1
             )
         } else {
@@ -416,22 +364,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode == Activity.RESULT_OK) {
-            imageUri?.let { imageAdapter.addNewPhoto(it) }
-            val mediaScanIntent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
-            mediaScanIntent.data = imageUri
-            requireActivity().sendBroadcast(mediaScanIntent)
-        } else
-            super.onActivityResult(requestCode, resultCode, data)
-    }
-
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when (requestCode) {
             1 -> if (grantResults.size > 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.checkSelfPermission(
@@ -452,19 +389,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 }
                 if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     onGPS()
-                }
-
-                // 100 ->
-                if (grantResults[2] == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(
-                        requireContext(),
-                        "Отримано дозвіл на користування камерою",
-                        Toast.LENGTH_LONG
-                    )
-                        .show()
-                } else {
-                    Toast.makeText(requireContext(), "camera permission denied", Toast.LENGTH_LONG)
-                        .show()
                 }
             }
             else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
@@ -508,8 +432,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                requireActivity().onBackPressed()
-                return true
+                requireActivity().onBackPressedDispatcher.onBackPressed()
             }
             R.id.save_customer_data -> {
                 if (binding.lat.text != "0.0") {
@@ -579,7 +502,36 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             R.id.date, R.id.new_date -> {
                 showDatePickerDialog()
             }
+            R.id.add_photo -> {
+                pickPhoto()
+            }
         }
+    }
+
+    private fun pickPhoto() {
+        lifecycleScope.launchWhenStarted {
+            getTmpFileUri().let { uri ->
+                latestTmpUri = uri
+                takeImageResult.launch(uri)
+            }
+        }
+    }
+
+    private fun getTmpFileUri(): Uri {
+        val filename = filial + "_" + binding.personalAccount.text.toString().substringBefore(" ")
+            .replace("/", "") + "_"
+        val storageDirectory: File? =
+            requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        val tmpFile = File.createTempFile(filename, ".jpg", storageDirectory).apply {
+            createNewFile()
+            deleteOnExit()
+        }
+
+        return FileProvider.getUriForFile(
+            requireActivity(),
+            "${BuildConfig.APPLICATION_ID}.fileprovider",
+            tmpFile
+        )
     }
 
     private fun showDatePickerDialog() {
@@ -627,7 +579,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.note.setText("")
         binding.results.phone.setText("")
         viewModel.setResultSavedState(false)
-        imageAdapter.notifyDataSetChanged()
+        binding.results.addPhoto.setImageResource(R.drawable.ic_baseline_add_a_photo_24)
     }
 
     private fun getResultIfExist(savedData: SavedData) {
@@ -643,7 +595,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.checkBox.isChecked = savedData.isMainPhone ?: true
 
         if (!savedData.photo.isNullOrEmpty()) {
-            imageAdapter.addSavedPhoto(Uri.parse(savedData.photo))
+            Log.d("testim", Uri.parse(savedData.photo).toString())
+            binding.results.addPhoto.setImageURI(Uri.parse(savedData.photo))
         }
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
         spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
@@ -719,7 +672,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             lat = binding.lat.text.toString(),
             lng = binding.lng.text.toString(),
             isMainPhone = binding.results.checkBox.isChecked,
-            photo = imageUri.toString()
+            photo = latestTmpUri.toString()
         )
     }
 

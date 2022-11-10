@@ -7,10 +7,9 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.domain.model.Icons
+import ua.POE.Task_abon.presentation.model.Icons
 import ua.POE.Task_abon.utils.getEmojiByUnicode
 import ua.POE.Task_abon.utils.getIcons
-import javax.inject.Inject
 
 class IconsHelpDialogFragment : DialogFragment() {
 

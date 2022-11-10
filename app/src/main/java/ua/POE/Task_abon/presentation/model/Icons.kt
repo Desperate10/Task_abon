@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.domain.model
+package ua.POE.Task_abon.presentation.model
 
 data class Icons(
     var id : String? = null,

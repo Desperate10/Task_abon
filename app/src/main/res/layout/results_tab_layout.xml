@@ -473,19 +473,13 @@
 
                 </TableLayout>
             </LinearLayout>
-            <GridView
-                android:id="@+id/photoLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:horizontalSpacing="5dp"
-                android:numColumns="3"
-                android:stretchMode="columnWidth"
-                android:verticalSpacing="5dp" />
+            <ImageButton
+                android:id="@+id/add_photo"
+                android:layout_width="125dp"
+                android:layout_height="125dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/ic_baseline_add_a_photo_24"/>
         </LinearLayout>
 
     </ScrollView>

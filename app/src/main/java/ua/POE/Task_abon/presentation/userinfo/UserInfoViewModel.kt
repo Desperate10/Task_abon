@@ -22,7 +22,11 @@ import ua.POE.Task_abon.data.repository.DirectoryRepository
 import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
-import ua.POE.Task_abon.domain.model.*
+import ua.POE.Task_abon.domain.model.BasicInfo
+import ua.POE.Task_abon.domain.model.Catalog
+import ua.POE.Task_abon.domain.model.SavedData
+import ua.POE.Task_abon.domain.model.TechInfo
+import ua.POE.Task_abon.presentation.model.Icons
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
 import java.text.SimpleDateFormat
@@ -389,6 +393,7 @@ class UserInfoViewModel @Inject constructor(
         photo: String
     ) {
         viewModelScope.launch {
+           // Log.d("testim", _photoViewState.value.toString())
             if (phoneNumber.isNotEmpty() && (phoneNumber.take(3) !in operators.value || phoneNumber.length < 10)) {
                 Log.d("testim", "Неправильний формат номера телефону")
             } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {

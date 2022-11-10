@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.domain.model
+package ua.POE.Task_abon.presentation.model
 
 import android.net.Uri
 
