@@ -7,8 +7,6 @@ import androidx.recyclerview.widget.ListAdapter
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.RowPersonBinding
-import ua.POE.Task_abon.di.AppModule
-import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.utils.getIcons
 import ua.POE.Task_abon.utils.getNeededEmojis
 import javax.inject.Inject

@@ -85,7 +85,7 @@ dependencies {
     kapt 'androidx.hilt:hilt-compiler:1.0.0-alpha02'
 
     //Activity extension, referring with  "by viewModels"
-    implementation "androidx.activity:activity-ktx:1.2.0-beta01"
+    implementation "androidx.activity:activity-ktx:1.6.1"
 
     //new material design
     implementation 'com.google.android.material:material:1.4.0-alpha01'

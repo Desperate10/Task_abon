@@ -1,11 +1,7 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
-import android.app.AlertDialog
 import android.os.Bundle
-import android.text.method.ScrollingMovementMethod
 import android.view.*
-import android.widget.Scroller
-import android.widget.TextView
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -21,13 +17,9 @@ import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
-import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
-import ua.POE.Task_abon.presentation.taskdetail.TaskDetailViewModel.Companion.ALL
-import ua.POE.Task_abon.presentation.taskdetail.TaskDetailViewModel.Companion.NOT_FINISHED
 import ua.POE.Task_abon.utils.*
-import javax.inject.Inject
 
 
 @AndroidEntryPoint

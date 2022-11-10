@@ -12,7 +12,7 @@ import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.repository.*
-import ua.POE.Task_abon.domain.model.Icons
+import ua.POE.Task_abon.presentation.model.Icons
 import ua.POE.Task_abon.utils.XmlLoader
 import ua.POE.Task_abon.utils.getRawTextFile
 import javax.inject.Singleton
