@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.presentation.userinfo
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.DialogInterface
@@ -25,6 +26,7 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -33,6 +35,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
+import com.permissionx.guolindev.PermissionX
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -48,10 +51,10 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 @AndroidEntryPoint
 class UserInfoFragment : Fragment(), View.OnClickListener,
-    DatePickerDialog.OnDateSetListener, ItemSelectedListener {
+    DatePickerDialog.OnDateSetListener, ItemSelectedListener, MyLocationListener,
+    ActivityCompat.OnRequestPermissionsResultCallback {
 
     private var binding: FragmentUserInfoBinding by autoCleaned()
     private val viewModel: UserInfoViewModel by viewModels()
@@ -75,6 +78,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
             if (isSuccess) {
                 latestTmpUri?.let { uri ->
+                    Log.d("testim", uri.toString())
                     binding.results.addPhoto.setImageURI(uri)
                     binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
                 }
@@ -100,7 +104,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         setupSaveConfirmationDialogFragmentListener()
         setupSaveCoordinatesDialogFragmentListener()
-        checkPermissions()
         registerItemListeners()
         registerClickListeners()
         observeViewModel()
@@ -157,7 +160,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.result.collect { savedData ->
+                viewModel.result.collectLatest { savedData ->
                     resetFields()
                     savedData.status?.let { getResultIfExist(savedData) }
                     registerWatchers()
@@ -199,11 +202,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             binding.results.previousMeters2.text = lastCount[1]
             binding.results.previousMeters3.text = lastCount[2]
         }
-
-        binding.results.differenceText.text = "Расход\nСредн ${it.averageUsage}"
+        binding.results.differenceText.text =
+            String.format(getString(R.string.diff_template), it.averageUsage)
         binding.results.contrDate.text = it.checkDate
         binding.results.contrText.text =
-            resources.getString(R.string.contr_pokaz) + it.inspector
+            String.format(getString(R.string.contr_template), it.inspector)
     }
 
     private fun registerWatchers() {
@@ -270,10 +273,10 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         oldMeters: TextView
     ): TextWatcher? {
         return try {
-            newMeters.doAfterTextChanged {
-                if (!it.isNullOrEmpty()) {
+            newMeters.doAfterTextChanged { newMeter ->
+                if (!newMeter.isNullOrEmpty()) {
                     difference.text = (
-                            it.toString().toInt() - oldMeters.text.toString()
+                            newMeter.toString().toInt() - oldMeters.text.toString()
                                 .toInt()).toString()
                 }
             }
@@ -284,115 +287,62 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     override fun onStop() {
         super.onStop()
+        locationManager.removeUpdates(this)
         removeTextWatchers()
     }
 
+    override fun onLocationChanged(location: Location) {
+        binding.lat.text = location.latitude.toString()
+        binding.lng.text = location.longitude.toString()
+    }
+
+    @SuppressLint("MissingPermission")
     private fun checkPermissions() {
-        locationManager =
-            requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
+        PermissionX.init(this)
+            .permissions(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED ||
-            ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissions(
-                arrayOf(
-                    Manifest.permission.READ_EXTERNAL_STORAGE,
-                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ), 1
             )
-        } else {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, 1000,
-                1f, locationListener
-            )
-            if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                onGPS()
-            }
-        }
-    }
-
-    private val locationListener: LocationListener = object : LocationListener {
-        override fun onLocationChanged(location: Location) {
-            binding.lat.text = location.latitude.toString()
-            binding.lng.text = location.longitude.toString()
-        }
-
-        override fun onProviderEnabled(provider: String) {}
-        override fun onProviderDisabled(provider: String) {}
-    }
-
-    private fun onGPS() {
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Ввімкнути GPS?").setCancelable(false)
-            .setPositiveButton(getString(R.string.yes)) { _: DialogInterface?, _: Int ->
-                startActivity(
-                    Intent(
-                        Settings.ACTION_LOCATION_SOURCE_SETTINGS
-                    )
+            .onExplainRequestReason { scope, deniedList ->
+                scope.showRequestReasonDialog(
+                    deniedList,
+                    "Core fundamental are based on these permissions",
+                    "OK",
+                    "Cancel"
                 )
             }
-            .setNegativeButton(getString(R.string.no)) { dialog: DialogInterface, _: Int -> dialog.cancel() }
-        val alertDialog = builder.create()
-        alertDialog.show()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        locationManager.removeUpdates(locationListener)
+            .onForwardToSettings { scope, deniedList ->
+                scope.showForwardToSettingsDialog(
+                    deniedList,
+                    "You need to allow necessary permissions in Settings manually",
+                    "OK",
+                    "Cancel"
+                )
+            }
+            .request { allGranted, grantedList, deniedList ->
+                if (allGranted) {
+                    locationManager =
+                        requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                    locationManager.requestLocationUpdates(
+                        LocationManager.GPS_PROVIDER, 1000,
+                        1f, this
+                    )
+                    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                        LocationToggleDialogFragment.show(parentFragmentManager)
+                    }
+                } else {
+                    Toast.makeText(
+                        requireContext(),
+                        "These permissions are denied: $deniedList",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
     }
 
     override fun onResume() {
         super.onResume()
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            locationManager.requestLocationUpdates(
-                LocationManager.GPS_PROVIDER, 1000,
-                1f, locationListener
-            )
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        when (requestCode) {
-            1 -> if (grantResults.size > 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                if (ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                        requireContext(),
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                    ) != PackageManager.PERMISSION_GRANTED
-                ) {
-                    ActivityCompat.requestPermissions(
-                        requireActivity(), arrayOf(
-                            Manifest.permission.ACCESS_COARSE_LOCATION,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ), 1
-                    )
-                    return
-                }
-                if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                    onGPS()
-                }
-            }
-            else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        }
+        checkPermissions()
     }
 
     private fun loadFeatureSpinner(
@@ -440,7 +390,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 } else {
                     showSaveCoordinatesDialog()
                 }
-                return true
             }
         }
         return super.onOptionsItemSelected(item)
@@ -595,7 +544,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.checkBox.isChecked = savedData.isMainPhone ?: true
 
         if (!savedData.photo.isNullOrEmpty()) {
-            Log.d("testim", Uri.parse(savedData.photo).toString())
+            Log.d("testim", savedData.photo)
             binding.results.addPhoto.setImageURI(Uri.parse(savedData.photo))
         }
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
