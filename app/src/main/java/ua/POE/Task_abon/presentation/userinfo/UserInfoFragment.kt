@@ -83,12 +83,10 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private fun observeViewModel() {
 
         viewModel.setStartEditTime()
-        viewModel.getTechInfoDataMap()
         viewModel.getOperatorsList()
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                //combine с результатом сделать?
                 viewModel.sources.collect {
                     setupSourceSpinner(it)
                 }
@@ -140,13 +138,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 }
             }
         }
-        /*viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.featureList.collectLatest {
-                    featureList = it
-                }
-            }
-        }*/
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.customerFeatures.collect {

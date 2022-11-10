@@ -44,7 +44,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private var taskName: String? = null
 
     private var userData = listOf<UserData>()
-    //private var icons = ArrayList<Icons>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,8 +68,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun createCustomerListAdapter() {
-        //read all icons from raw
-        //icons = resources.getRawTextFile(R.raw.icons)
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
         binding.recyclerview.layoutManager = linearLayoutManager
         adapter = CustomerListAdapter(requireContext())
@@ -97,6 +94,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.users.collectLatest {
+                    userData = it
                     adapter.submitList(it)
                     with(binding.recyclerview) {
                         post { scrollToPosition(0) }
@@ -111,20 +109,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
                 }
             }
         }
-        /*viewModel.customersFilterStatus.observe(viewLifecycleOwner) { status ->
-            userData = if (status == ALL) {
-                viewModel.getUsers(taskId, searchList)
-            } else {
-                viewModel.getUsersByStatus("TD$taskId", status)
-            }
-            adapter.submitList(userData)
-            with(binding.recyclerview) {
-                post { scrollToPosition(0) }
-            }
-        }
-        viewModel.getFinishedCount(taskId).observe(viewLifecycleOwner) { count ->
-            binding.finished.text = getString(R.string.status_done, count, userData.size)
-        }*/
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -162,26 +146,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun showIconsHelpHint() {
         IconsHelpDialogFragment.show(parentFragmentManager)
     }
-
-    /*private fun showEmojiInfoDialog() {
-
-        val message =
-            icons.joinToString(separator = "") { "${it.emoji?.let { it1 -> getEmojiByUnicode(it1) }} - ${it.hint}\n" }
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("Умовні позначки")
-            .setMessage(message)
-            .setPositiveButton("Ок") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .setIcon(android.R.drawable.ic_dialog_info)
-            .show()
-
-        val textView = dialog.findViewById(android.R.id.message) as TextView
-        textView.setScroller(Scroller(requireContext()))
-        textView.isVerticalScrollBarEnabled = true
-        textView.movementMethod = ScrollingMovementMethod()
-    }*/
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         inflater.inflate(R.menu.task_detail_menu, menu)

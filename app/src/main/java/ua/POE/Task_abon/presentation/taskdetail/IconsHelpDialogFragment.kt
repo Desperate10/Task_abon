@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
 import android.app.Dialog
+import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
@@ -8,12 +9,17 @@ import androidx.fragment.app.FragmentManager
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.utils.getEmojiByUnicode
+import ua.POE.Task_abon.utils.getIcons
 import javax.inject.Inject
 
 class IconsHelpDialogFragment : DialogFragment() {
 
-    @Inject
-    lateinit var icons: List<Icons>
+    private lateinit var icons: List<Icons>
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        icons = context.getIcons()
+    }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return AlertDialog.Builder(requireContext())

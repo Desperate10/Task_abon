@@ -473,7 +473,6 @@
 
                 </TableLayout>
             </LinearLayout>
-
             <GridView
                 android:id="@+id/photoLayout"
                 android:layout_width="match_parent"

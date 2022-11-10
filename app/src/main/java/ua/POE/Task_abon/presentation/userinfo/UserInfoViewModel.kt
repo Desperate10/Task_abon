@@ -123,6 +123,7 @@ class UserInfoViewModel @Inject constructor(
     val selectedBlockData = _customerIndex
         .combine(_selectedBlock) { _, selectedBlock ->
             if (selectedBlock == "Результати") {
+                updateTechInfoMap()
                 _techInfo.value
             } else {
                 val fields = getFieldsByBlockName(selectedBlock)
@@ -196,11 +197,13 @@ class UserInfoViewModel @Inject constructor(
             selectedBlock
         }
         .mapLatest {
-            getTechInfo()
+            updateTechInfoMap()
         }
+        .mapLatest { showTechInfo() }
 
-    private fun getTechInfo(): TechInfo {
+    private fun showTechInfo(): TechInfo {
         val controlInfo = StringBuilder()
+        Log.d("testim", _techInfo.value.toString())
 
         _techInfo.value.forEach { (key, value) ->
             when (key) {
@@ -307,18 +310,16 @@ class UserInfoViewModel @Inject constructor(
         )
     }
 
-    private suspend fun getTextFieldsByBlockName(fields: List<String>) =
+    private fun getTextFieldsByBlockName(fields: List<String>) =
         testEntityRepository.getFieldsByBlock(taskId, fields, _customerIndex.value)
 
     private suspend fun getFieldsByBlockName(name: String): List<String> =
         directoryRepository.getFieldsByBlockName(name, taskId)
 
-    fun getTechInfoDataMap() {
-        viewModelScope.launch {
-            val fields = getFieldsByBlockName("Тех.информация")
-            _techInfo.value =
-                testEntityRepository.getTextByFields("TD$taskId", fields, _customerIndex.value)
-        }
+    private suspend fun updateTechInfoMap() {
+        val fields = getFieldsByBlockName("Тех.информация")
+        _techInfo.value =
+            testEntityRepository.getTextByFields("TD$taskId", fields, _customerIndex.value)
     }
 
     //save date when pressing saveResult

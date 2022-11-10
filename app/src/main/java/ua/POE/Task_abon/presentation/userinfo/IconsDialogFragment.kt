@@ -1,19 +1,26 @@
 package ua.POE.Task_abon.presentation.userinfo
 
 import android.app.Dialog
+import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import ua.POE.Task_abon.R
+import ua.POE.Task_abon.domain.model.Icons
 import ua.POE.Task_abon.utils.getEmojiByUnicode
 import ua.POE.Task_abon.utils.getIcons
 import ua.POE.Task_abon.utils.getRawTextFile
 
 class IconsDialogFragment : DialogFragment() {
 
-    private val icons = requireContext().getIcons()
+    private lateinit var icons: List<Icons>
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        icons = context.getIcons()
+    }
 
     private val neededIcons: String?
         get() = requireArguments().getString(ICONS)
@@ -33,9 +40,13 @@ class IconsDialogFragment : DialogFragment() {
     private fun getMessage(): String {
         val currentIcons = neededIcons?.substringAfter(" ") ?: ""
 
-        return icons
-            .filter { currentIcons.contains(getEmojiByUnicode(it.emoji!!)) }
-            .joinToString("\n") { "${getEmojiByUnicode(it.emoji)} ${it.hint}" }
+        return if(currentIcons.isNotEmpty()) {
+            icons
+                .filter { currentIcons.contains(getEmojiByUnicode(it.emoji!!)) }
+                .joinToString("\n") { "${getEmojiByUnicode(it.emoji)} ${it.hint}" }
+        } else {
+            getString(R.string.no_needed_icons)
+        }
     }
 
     companion object {
