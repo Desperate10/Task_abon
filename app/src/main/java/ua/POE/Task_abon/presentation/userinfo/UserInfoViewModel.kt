@@ -207,7 +207,6 @@ class UserInfoViewModel @Inject constructor(
 
     private fun showTechInfo(): TechInfo {
         val controlInfo = StringBuilder()
-        Log.d("testim", _techInfo.value.toString())
 
         _techInfo.value.forEach { (key, value) ->
             when (key) {
