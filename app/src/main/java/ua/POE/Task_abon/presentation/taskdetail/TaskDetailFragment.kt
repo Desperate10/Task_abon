@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -30,10 +31,10 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private var adapter: CustomerListAdapter by autoCleaned()
 
     private var taskId = 0
-    private var searchList: Map<String, String>? = null
     private var fileName: String? = null
     private var info: String? = null
     private var taskName: String? = null
+    private var count = 0
 
     private var userData = listOf<UserData>()
 
@@ -75,7 +76,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun readArguments() {
         arguments?.let {
             taskId = it.getInt("taskId")
-            searchList = it.get("searchList") as Map<String, String>?
             taskName = it.getString("taskName")
             fileName = it.getString("fileName")
             info = it.getString("info")
@@ -83,21 +83,24 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun observeViewModel() {
+        viewModel.setCustomerStatus(false)
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.users.collectLatest {
+                viewModel.getCustomersData.collect {
                     userData = it
                     adapter.submitList(it)
                     with(binding.recyclerview) {
                         post { scrollToPosition(0) }
                     }
+                    binding.finished.text = getString(R.string.status_done, count, userData.size)
                 }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.finishedCustomersCount.collectLatest { count ->
-                    binding.finished.text = getString(R.string.status_done, count, userData.size)
+                viewModel.finishedCustomersCount.collectLatest {
+                    count = it
                 }
             }
         }
@@ -110,6 +113,10 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
             }
             R.id.find_user -> {
                 navigateToFindUserFragment()
+            }
+            R.id.reset_filter -> {
+                binding.isDoneCheckBox.isChecked = false
+                viewModel.resetFilter()
             }
             R.id.marks -> {
                 showIconsHelpHint()

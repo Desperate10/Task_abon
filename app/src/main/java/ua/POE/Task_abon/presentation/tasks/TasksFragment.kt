@@ -49,7 +49,7 @@ import java.io.*
 
 
 @AndroidEntryPoint
-class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
+class TasksFragment() : Fragment(), TaskListAdapter.OnTaskClickListener,
     UploadRequestBody.UploadCallback {
 
     private var binding: FragmentTasksBinding by autoCleaned()
@@ -62,16 +62,16 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
         setHasOptionsMenu(true)
 
         requestPermission()
+        registerOnBackPressed()
+    }
 
-        // This callback will only be called when MyFragment is at least Started.
-        val callback: OnBackPressedCallback =
-            object : OnBackPressedCallback(true /* enabled by default */) {
-                override fun handleOnBackPressed() {
-                    requireActivity().finishAffinity()
-                    requireActivity().finish()
-                }
+    private fun registerOnBackPressed() {
+        requireActivity().onBackPressedDispatcher.addCallback(object : OnBackPressedCallback(true){
+            override fun handleOnBackPressed() {
+                requireActivity().finishAffinity()
+                requireActivity().finish()
             }
-        requireActivity().onBackPressedDispatcher.addCallback(this, callback)
+        })
     }
 
 

@@ -5,17 +5,13 @@ import android.annotation.SuppressLint
 import android.app.DatePickerDialog
 import android.content.Context
 import android.content.DialogInterface
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
-import android.provider.Settings
 import android.text.TextWatcher
 import android.text.util.Linkify
 import android.util.Log
@@ -24,9 +20,7 @@ import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -78,7 +72,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
             if (isSuccess) {
                 latestTmpUri?.let { uri ->
-                    Log.d("testim", uri.toString())
                     binding.results.addPhoto.setImageURI(uri)
                     binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
                 }
@@ -155,6 +148,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.preloadResultTab.collectLatest {
                     preloadResultTab(it)
+                    registerWatchers()
                 }
             }
         }
@@ -163,7 +157,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 viewModel.result.collectLatest { savedData ->
                     resetFields()
                     savedData.status?.let { getResultIfExist(savedData) }
-                    registerWatchers()
                 }
             }
         }
@@ -274,10 +267,21 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     ): TextWatcher? {
         return try {
             newMeters.doAfterTextChanged { newMeter ->
-                if (!newMeter.isNullOrEmpty()) {
+                if (!newMeter.isNullOrEmpty() && oldMeters.text.toString().isNotEmpty()) {
                     difference.text = (
                             newMeter.toString().toInt() - oldMeters.text.toString()
                                 .toInt()).toString()
+                } else {
+                    difference.text = ""
+                }
+            }
+            oldMeters.doAfterTextChanged { oldMeters ->
+                if (!oldMeters.isNullOrEmpty() && newMeters.text.toString().isNotEmpty()) {
+                    difference.text = (
+                            newMeters.text.toString().toInt() - oldMeters.toString()
+                                .toInt()).toString()
+                } else {
+                    difference.text = ""
                 }
             }
         } catch (e: NumberFormatException) {
@@ -493,6 +497,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun selectCustomer(isNext: Boolean) {
+        latestTmpUri = null
         viewModel.selectCustomer(isNext)
     }
 
@@ -525,9 +530,12 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         zone3 = ""
         binding.results.checkBox.isChecked = false
         binding.results.difference1.text = ""
+        binding.results.difference2.text = ""
+        binding.results.difference3.text = ""
         binding.results.note.setText("")
         binding.results.phone.setText("")
         viewModel.setResultSavedState(false)
+        if (latestTmpUri == null)
         binding.results.addPhoto.setImageResource(R.drawable.ic_baseline_add_a_photo_24)
     }
 
@@ -537,19 +545,20 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.date.text = savedData.date
         binding.results.newDate.text = savedData.date
         binding.results.newMeters1.setText(savedData.zone1)
-        binding.results.newMeters2.setText(savedData.zone2)
-        binding.results.newMeters3.setText(savedData.zone3)
+        if (!savedData.zone2.isNullOrEmpty())
+            binding.results.newMeters2.setText(savedData.zone2)
+        if (!savedData.zone3.isNullOrEmpty())
+            binding.results.newMeters3.setText(savedData.zone3)
+        Log.d("testim", "result ${savedData.zone1}")
         binding.results.note.setText(savedData.note)
         binding.results.phone.setText(savedData.phoneNumber)
         binding.results.checkBox.isChecked = savedData.isMainPhone ?: true
 
-        if (!savedData.photo.isNullOrEmpty()) {
-            Log.d("testim", savedData.photo)
+        if (!savedData.photo.isNullOrEmpty() && latestTmpUri == null) {
             binding.results.addPhoto.setImageURI(Uri.parse(savedData.photo))
         }
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
         spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
-
         viewModel.setResultSavedState(true)
     }
 
@@ -616,7 +625,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             zone1 = binding.results.newMeters1.text.toString(),
             zone2 = binding.results.newMeters2.text.toString(),
             zone3 = binding.results.newMeters3.text.toString(),
-            note = binding.results.note.text.toString(),
+            note = binding.results.note.text.toString().replace("[\\t\\n\\r]+"," "),
             phoneNumber = binding.results.phone.text.toString(),
             lat = binding.lat.text.toString(),
             lng = binding.lng.text.toString(),

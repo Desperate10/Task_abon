@@ -1,5 +1,6 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
+import android.util.Log
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -15,66 +16,49 @@ class TaskDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val taskId = savedStateHandle.get<Int>("taskId") ?: throw NullPointerException("TaskId is null")
-    private val searchParams = savedStateHandle.get("searchList") as Map<String, String>?
+    private val searchParams = savedStateHandle.get("searchList") as MutableMap<String, String>?
 
-    //заменить LiveData на Flow
-    var customersFilterStatus = MutableLiveData(ALL)
+    private val _customerFilterStatus = MutableSharedFlow<String>(2)
+    private val customers = MutableStateFlow<List<UserData>>(emptyList())
 
-    private val _customerFilterStatus = MutableStateFlow<String>(ALL)
-    //private val finishedCustomersCount = MutableStateFlow(0)
-
-    //private val _users = MutableStateFlow<List<UserData>>(emptyList())
-
-    /*fun getUsersByStatus(table: String, query: String): List<UserData> {
-        return repository.getUserByStatus(table, query)
-    }*/
-
-    val users = _customerFilterStatus
+    val getCustomersData = _customerFilterStatus
         .flatMapLatest {
-            getUsers(status = it)
+            getCustomers(status = it)
+            customers
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList<UserData>())
 
     val finishedCustomersCount = repository.getResultsCount(taskId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 0)
-    /*fun getFinishedCount() {
-        viewModelScope.launch {
-            finishedCustomersCount.value = repository.getResultsCount(taskId)
-        }
-    }*/
 
-    private fun getUsers(status: String?) = flow {
-        val keys = ArrayList<String>()
-        val values = ArrayList<String>()
-
-        if (searchParams != null) {
-            for ((key, value) in searchParams) {
-                val keyName: String = repository.getSearchedFieldName(taskId, key)
-                keys.add(keyName)
-                values.add(value)
-            }
-        }
-        emit(repository.getUsers(taskId, keys, values, status))
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
-
-    /*fun getUsers(taskId: Int, params: Map<String, String>?) {
+    private fun getCustomers(status: String?) {
         viewModelScope.launch {
             val keys = ArrayList<String>()
             val values = ArrayList<String>()
 
-            if (params != null) {
-                for ((key, value) in params) {
+            searchParams?.let {
+                for ((key, value) in searchParams) {
                     val keyName: String = repository.getSearchedFieldName(taskId, key)
                     keys.add(keyName)
                     values.add(value)
                 }
             }
-            _users.value = repository.getUsers(taskId, keys, values)
+            customers.value = repository.getUsers(taskId, keys, values, status)
         }
-    }*/
+    }
+
+    fun resetFilter() {
+        viewModelScope.launch {
+            searchParams?.clear()
+            _customerFilterStatus.emit(ALL)
+        }
+    }
+
     fun setCustomerStatus(isChecked: Boolean) {
-        if (isChecked) _customerFilterStatus.value = NOT_FINISHED
-                else _customerFilterStatus.value = ALL
+        viewModelScope.launch {
+            if (isChecked) _customerFilterStatus.emit(NOT_FINISHED)
+            else _customerFilterStatus.emit(ALL)
+        }
     }
 
     companion object {

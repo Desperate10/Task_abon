@@ -45,7 +45,6 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
 
     private var list = mutableListOf<Map<String, String>>()
     private var searchListHash = mutableMapOf<String, String>()
-    //private val searchFieldNames: MutableList<String>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

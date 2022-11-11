@@ -35,11 +35,15 @@ class TaskDetailRepository @Inject constructor(private val testEntityDao: TestEn
             }
         }
         if (status.equals("Не виконано")) {
-            whereClause.append(" AND IsDone = $status")
+            if (whereSize>0) {
+                whereClause.append(" AND IsDone = \"${status}\"")
+            } else {
+                whereClause.append(" WHERE IsDone = \"${status}\"")
+            }
         }
-        var st = query + whereClause.toString()
+        val st = query + whereClause.toString()
 
-        return testEntityDao.getSearchedUsersList(SimpleSQLiteQuery("$st"))
+        return testEntityDao.getSearchedUsersList(SimpleSQLiteQuery(st))
     }
 
     /*suspend fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>) : List<UserData> {

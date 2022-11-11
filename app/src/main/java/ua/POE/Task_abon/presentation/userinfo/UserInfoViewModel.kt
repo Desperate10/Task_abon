@@ -122,7 +122,8 @@ class UserInfoViewModel @Inject constructor(
         emit(blockNameList)
         blockNameList.addAll(directoryRepository.getBlockNames())
         emit(blockNameList)
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("Результати"))
+    }.flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("Результати"))
 
     val selectedBlockData = _customerIndex
         .combine(_selectedBlock) { _, selectedBlock ->
@@ -133,12 +134,14 @@ class UserInfoViewModel @Inject constructor(
                 val fields = getFieldsByBlockName(selectedBlock)
                 getTextFieldsByBlockName(fields)
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+        }.flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val result = _customerIndex
         .mapLatest {
             getSavedData(it)
-        }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
+        }.flowOn(Dispatchers.Main)
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     private suspend fun getSavedData(index: Int): SavedData {
         val savedData = mapResultToSavedData(resultDao.getResultUser(taskId, index))
@@ -158,7 +161,8 @@ class UserInfoViewModel @Inject constructor(
     val sources = statusSpinnerPosition
         .mapLatest {
             getSourceList(it)
-        }.shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
+        }.flowOn(Dispatchers.IO)
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     private suspend fun getSourceList(position: Int): List<String> {
         sourceList = if (position == 0) {
@@ -174,10 +178,13 @@ class UserInfoViewModel @Inject constructor(
             featureList.combine(result) { list, result ->
                 setupFeatureSpinner(result.pointCondition, list)
             }
-        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+        }
+        .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     private val featureList =
         catalogDao.getFeatureList().mapLatestIterable { mapCatalogEntityToCatalog(it) }
+            .flowOn(Dispatchers.IO)
             .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private fun setupFeatureSpinner(
@@ -204,6 +211,7 @@ class UserInfoViewModel @Inject constructor(
             updateTechInfoMap()
         }
         .mapLatest { showTechInfo() }
+        .flowOn(Dispatchers.IO)
 
     private fun showTechInfo(): TechInfo {
         val controlInfo = StringBuilder()
@@ -259,6 +267,7 @@ class UserInfoViewModel @Inject constructor(
         .mapLatest {
             getCustomerBasicInfo(icons)
         }.filter { it.name.isNotEmpty() }
+        .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
 
     private suspend fun getCustomerBasicInfo(icons: List<Icons>): BasicInfo {
@@ -373,9 +382,11 @@ class UserInfoViewModel @Inject constructor(
 
     private fun saveEditTime(taskId: Int, num: Int, time: Int) {
         viewModelScope.launch {
-            val seconds: Int = timingRepository.getEditTime(taskId, num)
-            val newEditTime = seconds + time
-            timingRepository.updateEditSeconds(taskId, num, newEditTime)
+            withContext(Dispatchers.IO) {
+                val seconds: Int = timingRepository.getEditTime(taskId, num)
+                val newEditTime = seconds + time
+                timingRepository.updateEditSeconds(taskId, num, newEditTime)
+            }
         }
     }
 

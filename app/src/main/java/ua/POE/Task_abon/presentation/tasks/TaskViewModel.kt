@@ -36,6 +36,7 @@ class TaskViewModel @Inject constructor(
             }
         }.flowOn(Dispatchers.IO)
 
+    //на возврат функции можно прикрутить sealed class и stateflow
     fun insert(uri: Uri) = viewModelScope.launch {
         repository.readFile(uri)
     }
