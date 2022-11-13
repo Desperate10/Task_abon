@@ -92,6 +92,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         arguments?.let {
             filial = arguments?.getString("filial")
+            //можно полностью убрать?
             isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
 
@@ -152,6 +153,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 }
             }
         }
+        //Не переключается статус с выконано на не выконано
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.result.collectLatest { savedData ->
@@ -261,24 +263,24 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun registerWatcher(
-        newMeters: EditText,
+        newMeter: EditText,
         difference: TextView,
-        oldMeters: TextView
+        oldMeter: TextView
     ): TextWatcher? {
         return try {
-            newMeters.doAfterTextChanged { newMeter ->
-                if (!newMeter.isNullOrEmpty() && oldMeters.text.toString().isNotEmpty()) {
+            newMeter.doAfterTextChanged {
+                if (!it.isNullOrEmpty() && oldMeter.text.toString().isNotEmpty()) {
                     difference.text = (
-                            newMeter.toString().toInt() - oldMeters.text.toString()
+                            it.toString().toInt() - oldMeter.text.toString()
                                 .toInt()).toString()
                 } else {
                     difference.text = ""
                 }
             }
-            oldMeters.doAfterTextChanged { oldMeters ->
-                if (!oldMeters.isNullOrEmpty() && newMeters.text.toString().isNotEmpty()) {
+            oldMeter.doAfterTextChanged {
+                if (!it.isNullOrEmpty() && newMeter.text.toString().isNotEmpty()) {
                     difference.text = (
-                            newMeters.text.toString().toInt() - oldMeters.toString()
+                            newMeter.text.toString().toInt() - it.toString()
                                 .toInt()).toString()
                 } else {
                     difference.text = ""
@@ -549,7 +551,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             binding.results.newMeters2.setText(savedData.zone2)
         if (!savedData.zone3.isNullOrEmpty())
             binding.results.newMeters3.setText(savedData.zone3)
-        Log.d("testim", "result ${savedData.zone1}")
         binding.results.note.setText(savedData.note)
         binding.results.phone.setText(savedData.phoneNumber)
         binding.results.checkBox.isChecked = savedData.isMainPhone ?: true

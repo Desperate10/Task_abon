@@ -5,9 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.ResultDao
@@ -17,6 +15,7 @@ import ua.POE.Task_abon.data.repository.TaskRepository
 import ua.POE.Task_abon.data.repository.TestEntityRepository
 import ua.POE.Task_abon.data.repository.TimingRepository
 import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.utils.mapLatestIterable
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,11 +29,11 @@ class TaskViewModel @Inject constructor(
 ) : ViewModel() {
 
     val tasks: Flow<List<TaskInfo>> =
-        repository.getTasks().map { listOfTasks ->
-            listOfTasks.map { taskEntity ->
-                taskEntity.toTaskInfo()
-            }
-        }.flowOn(Dispatchers.IO)
+        repository.getTasks().mapLatestIterable {
+            it.toTaskInfo()
+        }
+            .flowOn(Dispatchers.IO)
+            .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     //на возврат функции можно прикрутить sealed class и stateflow
     fun insert(uri: Uri) = viewModelScope.launch {
@@ -65,6 +64,7 @@ class TaskViewModel @Inject constructor(
         val timing = getTiming(taskId)
         return repository.createXml(result, timing)
     }
+
     private suspend fun getTiming(taskId: Int) = timingRepository.getTiming(taskId)
 
 
