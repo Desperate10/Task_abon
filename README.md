@@ -51,11 +51,15 @@ After all the data for all consumers are filled in, you need to return to the st
 
 #### Is this the finished version of the application?
 
-No, the application is being refactored (see the "refactoring" thread)
+No, the application is being refactored (see the "refactoring" thread).
 
 #### Why is the data not taken directly from a remote server, but do you have to upload the file to the device manually?
 
-Company policy. There are things that could be done more conveniently, but there is how it is
+Company policy. There are things that could be done more conveniently, but there is how it is.
+
+#### What is non-standard in the application?
+
+Each time a different set of data is loaded, so for each bypass sheet you have to dynamically create a table in the database and work with it.
 
 ## 🚀 About Me
 Hi, my name is Yevhenii. I'm 28 years old developer from Poltava, Ukraine. Currently working in PoltavaOblEnergo. For the last couple of years, I've been mainly developing apps for Android. And I'm currently looking for a job in this field. If you need a good developer, with a desire to improve and learn - write to any communication channel. Don't forget to check out the resume at the link below. Thank you for your attention
