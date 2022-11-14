@@ -36,7 +36,7 @@ Kotlin, Room, Coroutines, Flow, Hilt, Retrofit
 
 
 ## 🚀 About Me
-Hi, my name is Yevhenii. I'm 28. I'm an developer from Poltava, Ukraine. Currently working in PoltavaOblEnergo. For the last couple of years, I've been mainly developing apps for Android. And I'm currently looking for a job in this field. If you need a good developer, with a desire to improve and learn - write to any communication channel. Don't forget to check out the resume at the link below. Thank you for your attention
+Hi, my name is Yevhenii. I'm 28 years old developer from Poltava, Ukraine. Currently working in PoltavaOblEnergo. For the last couple of years, I've been mainly developing apps for Android. And I'm currently looking for a job in this field. If you need a good developer, with a desire to improve and learn - write to any communication channel. Don't forget to check out the resume at the link below. Thank you for your attention
 
 ![image](https://user-images.githubusercontent.com/25912592/201657532-5fd6c065-f700-476b-a5df-708fcbae86c5.png) [Desperate10](https://t.me/Desperate10)
 
