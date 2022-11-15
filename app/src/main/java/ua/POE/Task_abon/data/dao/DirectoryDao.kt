@@ -35,10 +35,10 @@ interface DirectoryDao {
     suspend fun getBasicFields(taskId: Int): List<String>
 
     @Query("SELECT DISTINCT fieldBlockName FROM directory WHERE fieldBlockName != \"\"")
-    suspend fun getFieldNames(): List<String>
+    suspend fun getBlockNames(): List<String>
 
     @Query("DELETE FROM directory WHERE taskId = :taskId")
-    suspend fun deleteByTaskId(taskId: Int)
+    suspend fun deleteDirectoryByTaskId(taskId: Int)
 
     @Query("SELECT fieldSearch FROM directory WHERE taskId=:taskId AND fieldSearch != \"\"")
     fun getSearchFields(taskId: Int): Flow<List<String>>

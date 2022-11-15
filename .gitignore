@@ -8,6 +8,8 @@
 .externalNativeBuild
 .cxx
 local.properties
+task_abon.jks
+/app/release
 
 # Project exclude paths
 /library/build/

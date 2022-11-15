@@ -19,14 +19,18 @@ android {
     }
 
     buildTypes {
-        release {
-            minifyEnabled false
+        getByName("release") {
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->
                 variant.outputs.all {
                     outputFileName = new File("Task_abon-${variant.versionName}.apk")
                 }
             }
+        }
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            minifyEnabled false
         }
     }
 
@@ -62,8 +66,6 @@ dependencies {
 
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0"
-    // LiveData
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.4.0"
     // LifeCycle
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.0'
 

@@ -1,7 +1,6 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -20,6 +19,7 @@ import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
+import ua.POE.Task_abon.presentation.taskdetail.dialog.IconsHelpDialogFragment
 import ua.POE.Task_abon.utils.*
 
 

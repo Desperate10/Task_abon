@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.finduser
+package ua.POE.Task_abon.presentation.userfilter
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -10,14 +10,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
-import ua.POE.Task_abon.data.repository.TestEntityRepository
+import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import javax.inject.Inject
 
 @HiltViewModel
 class FindUserViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val directoryDao: DirectoryDao,
-    private val testEntityRepository: TestEntityRepository
+    private val dynamicTaskData: TaskCustomerDaoImpl
 ) : ViewModel() {
 
     private val taskId =
@@ -33,9 +33,8 @@ class FindUserViewModel @Inject constructor(
         viewModelScope.launch {
             val fieldName = getSearchFieldNameByTxt(taskId, value)
             _searchFieldsValues.value =
-                testEntityRepository.getSearchedItemsByField("TD$taskId", fieldName)
+                dynamicTaskData.getSearchedItemsByField("TD$taskId", fieldName)
         }
-
     }
 
     private suspend fun getSearchFieldNameByTxt(taskId: Int, field: String) =

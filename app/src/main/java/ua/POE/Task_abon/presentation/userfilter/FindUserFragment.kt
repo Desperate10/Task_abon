@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.finduser
+package ua.POE.Task_abon.presentation.userfilter
 
 import android.content.DialogInterface
 import android.os.Bundle
@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SimpleAdapter
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -23,9 +22,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentFindUserBinding
-import ua.POE.Task_abon.databinding.FragmentTasksBinding
 import ua.POE.Task_abon.presentation.MainActivity
-import ua.POE.Task_abon.presentation.userinfo.ItemSelectedListener
+import ua.POE.Task_abon.presentation.userinfo.listener.ItemSelectedListener
 import ua.POE.Task_abon.utils.autoCleaned
 
 

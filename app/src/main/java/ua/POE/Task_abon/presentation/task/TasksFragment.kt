@@ -1,20 +1,15 @@
-package ua.POE.Task_abon.presentation.tasks
+package ua.POE.Task_abon.presentation.task
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
@@ -70,7 +65,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-
         requestPermission()
         registerOnBackPressed()
     }
@@ -83,7 +77,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
             }
         })
     }
-
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         (activity as MainActivity).supportActionBar?.title = "Список завдань"
@@ -168,9 +161,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == PICK_XML_FILE && resultCode == Activity.RESULT_OK) {
-          //  CoroutineScope(Dispatchers.IO).launch {
-                data?.data?.also { uri -> viewModel.insert(uri) }
-           // }
+            data?.data?.also { uri -> viewModel.insert(uri) }
         } else if (requestCode == CREATE_XML_FILE) {
             CoroutineScope(Dispatchers.IO).launch {
                 val uri1 = data?.data
@@ -345,43 +336,17 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
         startActivityForResult(export, CREATE_XML_FILE)
     }
 
-    /*@Suppress("DEPRECATION")
-    private fun getAppVersion(context: Context): String {
-        var version = ""
-        try {
-            val pInfo = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.packageManager.getPackageInfo(
-                    context.packageName, PackageManager.PackageInfoFlags.of(0)
-                )
-            } else {
-                context.packageManager.getPackageInfo(context.packageName, 0)
-            }
-            BuildConfig.VERSION_NAME
-            version = pInfo.versionName
-        } catch (e: PackageManager.NameNotFoundException) {
-            Toast.makeText(context, e.message, Toast.LENGTH_SHORT).show()
-        }
-
-        return version
-    }*/
-
     private fun showInfo() {
-
         AlertDialog.Builder(requireContext())
-            //set icon
             .setIcon(android.R.drawable.ic_dialog_alert)
-            //set title
             .setTitle(getString(R.string.app_info))
-            //set message
             .setMessage(
                 "Додаток створено для контролерів АТ ПОЛТАВАОБЛЕНЕРГО\n" +
                         "Розробник: Громов Євгеній, тел.510-557\n" +
                         "Версія: ${BuildConfig.VERSION_NAME}"
             )
-            //set negative button
-            .setNegativeButton("Oк") { _, _ ->
-                //set what should happen when negative button is clicked
-                //Toast.makeText(requireContext(), "Nothing Happened", Toast.LENGTH_LONG).show()
+            .setNegativeButton("Oк") { dialog, _ ->
+                dialog.dismiss()
             }.show()
     }
 
