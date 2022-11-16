@@ -1,40 +1,73 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
-import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import ua.POE.Task_abon.data.dao.DirectoryDao
+import ua.POE.Task_abon.data.dao.ResultDao
+import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.UserData
-import ua.POE.Task_abon.data.repository.TaskDetailRepository
+import javax.inject.Inject
 
-class TaskDetailViewModel @ViewModelInject constructor( val repository: TaskDetailRepository) : ViewModel() {
+@HiltViewModel
+class TaskDetailViewModel @Inject constructor(
+    private val savedStateHandle: SavedStateHandle,
+    private val directoryDao: DirectoryDao,
+    private val taskCustomerData: TaskCustomerDaoImpl,
+    private val resultDao : ResultDao
+) : ViewModel() {
 
-    var customersFilterStatus = MutableLiveData(ALL)
+    private val taskId = savedStateHandle.get<Int>("taskId") ?: throw NullPointerException("TaskId is null")
+    private val searchParams = savedStateHandle.get("searchList") as MutableMap<String, String>?
 
-    fun getUsersByStatus(table: String, query: String) : List<UserData> {
-        return repository.getUserByStatus(table, query)
-    }
+    private val _customerFilterStatus = MutableSharedFlow<String>(2)
+    private val customers = MutableStateFlow<List<UserData>>(emptyList())
 
-    fun getFinishedCount(taskId: Int) : LiveData<Int> {
-        return repository.getResultsCount(taskId)
-    }
-
-    fun getUsers(taskId: Int, params : Map<String, String>?) : List<UserData> {
-        val keys = ArrayList<String>()
-        val values = ArrayList<String>()
-
-        if (params != null) {
-            for ((key, value) in params) {
-                val keyName : String = repository.getSearchedFieldName(taskId, key)
-                keys.add(keyName)
-                values.add(value)
-            }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val getCustomersData = _customerFilterStatus
+        .flatMapLatest {
+            getCustomers(status = it)
+            customers
         }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList<UserData>())
 
-        return repository.getUsers(taskId, keys, values)
+    val finishedCustomersCount = resultDao.getResultCount(taskId)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 0)
+
+    private fun getCustomers(status: String?) {
+        viewModelScope.launch {
+            val keys = ArrayList<String>()
+            val values = ArrayList<String>()
+
+            searchParams?.let {
+                for ((key, value) in searchParams) {
+                    val keyName: String = directoryDao.getSearchFieldName(taskId, key)
+                    keys.add(keyName)
+                    values.add(value)
+                }
+            }
+            customers.value = taskCustomerData.getUsers(taskId, keys, values, status)
+        }
+    }
+
+    fun resetFilter() {
+        viewModelScope.launch {
+            searchParams?.clear()
+            _customerFilterStatus.emit(ALL)
+        }
+    }
+
+    fun setCustomerStatus(isChecked: Boolean) {
+        viewModelScope.launch {
+            if (isChecked) _customerFilterStatus.emit(NOT_FINISHED)
+            else _customerFilterStatus.emit(ALL)
+        }
     }
 
     companion object {
+        const val NOT_FINISHED = "Не виконано"
         const val ALL = "Всі"
     }
 

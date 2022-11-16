@@ -10,10 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
-import ua.POE.Task_abon.data.entities.UserData
 
 @Database(
-    entities = [TestEntity::class, TaskEntity::class, Directory::class, Catalog::class, UserData::class, Result::class, Timing::class],
+    entities = [TaskEntity::class, Directory::class, CatalogEntity::class, UserData::class, Result::class, Timing::class],
     version = 9,
     exportSchema = false
 )
@@ -25,9 +24,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun directoryDao(): DirectoryDao
 
-    abstract fun testEntityDao(): TestEntityDao
-
     abstract fun resultDao(): ResultDao
+
+    abstract fun taskCustomerDao(): TaskCustomerDao
 
     abstract fun timingDao(): TimingDao
 
@@ -40,21 +39,13 @@ abstract class AppDatabase : RoomDatabase() {
                 scope.launch {
                     val catalogDao = database.catalogDao()
                     catalogDao.deleteTypeOne()
-                    catalogDao.insert(Catalog(0, "0", "0", "Виконано"))
-                    catalogDao.insert(Catalog(0, "0", "1", "Не виконано"))
-                    catalogDao.insert(Catalog(0, "1", "1", "Містить"))
-                    catalogDao.insert(Catalog(0, "1", "2", "Рівно"))
-                    catalogDao.insert(Catalog(0, "1", "3", "Починається з"))
-                    catalogDao.insert(Catalog(0, "1", "4", "Не пусте"))
-                    catalogDao.insert(Catalog(0, "1", "5", "Пусте"))
-                    /*val passwordDao = database.passwordDao()
-                    //чистим пароли
-                    passwordDao.deleteAll()
-                    //добавляем
-                    var password = Password("123")
-                    passwordDao.insert(password)
-                    password = Password("321")
-                    passwordDao.insert(password)*/
+                    catalogDao.insert(CatalogEntity(0, "0", "0", "Виконано"))
+                    catalogDao.insert(CatalogEntity(0, "0", "1", "Не виконано"))
+                    catalogDao.insert(CatalogEntity(0, "1", "1", "Містить"))
+                    catalogDao.insert(CatalogEntity(0, "1", "2", "Рівно"))
+                    catalogDao.insert(CatalogEntity(0, "1", "3", "Починається з"))
+                    catalogDao.insert(CatalogEntity(0, "1", "4", "Не пусте"))
+                    catalogDao.insert(CatalogEntity(0, "1", "5", "Пусте"))
                 }
             }
         }
@@ -113,17 +104,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
         private fun buildDatabase(appContext: Context, scope: CoroutineScope) =
-            Room.databaseBuilder(appContext, AppDatabase::class.java, "app_database")
-                .addMigrations(
-                    MIGRATION_2_3,
-                    MIGRATION_3_4,
-                    MIGRATION_4_5,
-                    MIGRATION_5_6,
-                    MIGRATION_6_7,
-                    MIGRATION_7_8
-                )
-                .addCallback(AppDatabaseCallback(scope))
-                .allowMainThreadQueries()
-                .build()
+            Room.databaseBuilder(appContext, AppDatabase::class.java, "app_database").addMigrations(
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+                MIGRATION_6_7,
+                MIGRATION_7_8
+            ).addCallback(AppDatabaseCallback(scope)).allowMainThreadQueries().build()
     }
 }

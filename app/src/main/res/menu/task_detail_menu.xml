@@ -7,6 +7,9 @@
         app:showAsAction="always"
         />
     <item
+        android:id="@+id/reset_filter"
+        android:title="@string/reset_filter" />
+    <item
         android:id="@+id/marks"
         android:title="@string/marks" />
 </menu>
