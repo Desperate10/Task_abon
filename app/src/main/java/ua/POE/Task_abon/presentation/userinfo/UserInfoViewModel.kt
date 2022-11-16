@@ -133,7 +133,7 @@ class UserInfoViewModel @Inject constructor(
         }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    val resultData = _customerIndex
+    val result = _customerIndex
         .combine(_statusSpinnerPosition) { index, status ->
             getSavedData(index, status)
         }
@@ -149,6 +149,7 @@ class UserInfoViewModel @Inject constructor(
         } else {
             "3"
         }
+
         val sourceName = if (!savedData.source.isNullOrEmpty()) {
             getSourceName(savedData.source, type)
         } else {
@@ -164,12 +165,6 @@ class UserInfoViewModel @Inject constructor(
 
     private val _sources = MutableStateFlow<List<String>>(emptyList())
     val sources: StateFlow<List<String>> = _sources
-
-    /*val sources = statusSpinnerPosition
-        .mapLatest {
-            getSourceList(it)
-        }.flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())*/
 
     private suspend fun getSourceList(position: Int): List<String> {
         sourceList = if (position == 0) {
@@ -316,36 +311,23 @@ class UserInfoViewModel @Inject constructor(
                         firstEditDate
                     )
                     timing.updateEditCount(taskId, _customerIndex.value, 1)
-                    saveEndEditDate(taskId, _customerIndex.value, date)
+                    timing.updateLastEditDate(taskId, _customerIndex.value, date)
                     saveEditTime(taskId, _customerIndex.value, time)
                 } else {
                     //adding +1 to edit count
                     saveEditTime(taskId, _customerIndex.value, time)
-                    saveEndEditDate(taskId, _customerIndex.value, date)
+                    timing.updateLastEditDate(taskId, _customerIndex.value, date)
                     timing.upEditCount(taskId, _customerIndex.value)
-
                 }
+                resetTimer()
             }
         }
     }
 
-    //save date when finish editing task when onStop() userInfoFragment
-    private fun saveEndEditDate(taskId: Int, num: Int, date: String) {
-        viewModelScope.launch {
-            if (timing.getFirstEditDate(taskId, num).isNotEmpty()) {
-                timing.updateLastEditDate(taskId, num, date)
-            }
-        }
-    }
-
-    private fun saveEditTime(taskId: Int, num: Int, time: Int) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val seconds: Int = timing.getEditTime(taskId, num)
-                val newEditTime = seconds + time
-                timing.updateEditSeconds(taskId, num, newEditTime)
-            }
-        }
+    private suspend fun saveEditTime(taskId: Int, num: Int, time: Int) {
+        val seconds: Int = timing.getEditTime(taskId, num)
+        val newEditTime = seconds + time
+        timingRepository.updateEditSeconds(taskId, num, newEditTime)
     }
 
     fun saveResults(
@@ -366,7 +348,6 @@ class UserInfoViewModel @Inject constructor(
             } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
                 _saveAnswer.value = "Ви забули вказати джерело"
             } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
-                resetTimer()
                 val task: TaskEntity = getTask(taskId)
                 val fields =
                     listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
@@ -441,6 +422,11 @@ class UserInfoViewModel @Inject constructor(
         customer.getCheckedConditions(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
+        if (position != _statusSpinnerPosition.value) {
+            viewModelScope.launch {
+                updateSourceList(position)
+            }
+        }
         _statusSpinnerPosition.value = position
     }
 

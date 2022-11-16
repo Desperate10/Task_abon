@@ -156,7 +156,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 }
             }
         }
-        //Не переключается статус с выконано на не выконано
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.resultData.collectLatest { savedData ->
@@ -366,10 +365,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             }
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
-
     private fun loadFeatureSpinner(
         customerFeatures: List<KeyPairBoolData>
     ) {
@@ -538,10 +533,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun resetFields() {
-        viewModel.setStatusSpinnerPosition(0)
         binding.results.date.text = dateFormat.format(calendar.time)
         binding.results.newDate.text = dateFormat.format(calendar.time)
-        binding.results.statusSpinner.setSelection(0)
         binding.results.sourceSpinner.setSelection(0)
         binding.results.newMeters1.setText(zone1, TextView.BufferType.EDITABLE)
         binding.results.newMeters2.setText(zone2, TextView.BufferType.EDITABLE)
@@ -556,8 +549,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.note.setText("")
         binding.results.phone.setText("")
         viewModel.setResultSavedState(false)
-        if (latestTmpUri == null)
-        binding.results.addPhoto.setImageResource(R.drawable.ic_baseline_add_a_photo_24)
+        if (latestTmpUri == null) {
+            binding.results.addPhoto.setImageResource(R.drawable.ic_baseline_add_a_photo_24)
+        }
     }
 
     private fun getResultIfExist(savedData: SavedData) {
