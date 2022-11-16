@@ -59,7 +59,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private var zone1 = ""
     private var zone2 = ""
     private var zone3 = ""
-    private var isFirstLoad = false
     private var sourceAdapter: ArrayAdapter<String>? = null
     lateinit var locationManager: LocationManager
 
@@ -92,10 +91,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         arguments?.let {
             filial = arguments?.getString("filial")
-            //можно полностью убрать?
-            isFirstLoad = requireArguments().getBoolean("isFirstLoad")
         }
 
+        checkPermissions()
         setupSaveConfirmationDialogFragmentListener()
         setupSaveCoordinatesDialogFragmentListener()
         registerItemListeners()
@@ -346,11 +344,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             }
     }
 
-    override fun onResume() {
-        super.onResume()
-        checkPermissions()
-    }
-
     private fun loadFeatureSpinner(
         customerFeatures: List<KeyPairBoolData>
     ) {
@@ -519,10 +512,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun resetFields() {
-        viewModel.setStatusSpinnerPosition(0)
         binding.results.date.text = dateFormat.format(calendar.time)
         binding.results.newDate.text = dateFormat.format(calendar.time)
-        binding.results.statusSpinner.setSelection(0)
         binding.results.sourceSpinner.setSelection(0)
         binding.results.newMeters1.setText(zone1, TextView.BufferType.EDITABLE)
         binding.results.newMeters2.setText(zone2, TextView.BufferType.EDITABLE)
@@ -537,8 +528,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.note.setText("")
         binding.results.phone.setText("")
         viewModel.setResultSavedState(false)
-        if (latestTmpUri == null)
-        binding.results.addPhoto.setImageResource(R.drawable.ic_baseline_add_a_photo_24)
+        if (latestTmpUri == null) {
+            binding.results.addPhoto.setImageResource(R.drawable.ic_baseline_add_a_photo_24)
+        }
     }
 
     private fun getResultIfExist(savedData: SavedData) {
@@ -578,7 +570,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.name.text = basicInfo.name
         binding.counter.text = basicInfo.counter
         binding.otherInfo.text = basicInfo.other
-        isFirstLoad = false
     }
 
     private fun updateView(tdHash: Map<String, String>) {

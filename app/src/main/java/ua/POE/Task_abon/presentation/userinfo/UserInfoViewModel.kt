@@ -27,6 +27,7 @@ import ua.POE.Task_abon.domain.model.Catalog
 import ua.POE.Task_abon.domain.model.SavedData
 import ua.POE.Task_abon.domain.model.TechInfo
 import ua.POE.Task_abon.presentation.model.Icons
+import ua.POE.Task_abon.utils.Resource
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
 import java.text.SimpleDateFormat
@@ -92,6 +93,9 @@ class UserInfoViewModel @Inject constructor(
     private val _selectedBlock = MutableStateFlow("Результати")
     val selectedBlock: StateFlow<String> = _selectedBlock
 
+    private val _saveAnswer = MutableStateFlow("")
+    val saveAnswer: StateFlow<String> = _saveAnswer
+
     private val timer = Timer()
     private var time = 0
 
@@ -138,31 +142,45 @@ class UserInfoViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val result = _customerIndex
-        .mapLatest {
-            getSavedData(it)
-        }.flowOn(Dispatchers.Main)
+        .combine(_statusSpinnerPosition) { index, status ->
+       // .mapLatest {
+            getSavedData(index,status)
+        }
+       // }
+        .flowOn(Dispatchers.Main)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
-    private suspend fun getSavedData(index: Int): SavedData {
+    private suspend fun getSavedData(index: Int, status: Int): SavedData {
         val savedData = mapResultToSavedData(resultDao.getResultUser(taskId, index))
-        val type = if (statusSpinnerPosition.value == 0) {
+            updateSourceList(status)
+
+        val type = if (_statusSpinnerPosition.value == 0) {
             "2"
         } else {
             "3"
         }
+
         val sourceName = if (!savedData.source.isNullOrEmpty()) {
             getSourceName(savedData.source, type)
         } else {
             ""
         }
+
         return savedData.copy(source = sourceName)
     }
 
-    val sources = statusSpinnerPosition
+    private suspend fun updateSourceList(status: Int) {
+        _sources.value = getSourceList(status)
+    }
+
+    private val _sources = MutableStateFlow<List<String>>(emptyList())
+    val sources: StateFlow<List<String>> = _sources
+
+    /*val sources = statusSpinnerPosition
         .mapLatest {
             getSourceList(it)
         }.flowOn(Dispatchers.IO)
-        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())*/
 
     private suspend fun getSourceList(position: Int): List<String> {
         sourceList = if (position == 0) {
@@ -176,7 +194,7 @@ class UserInfoViewModel @Inject constructor(
     val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
         .flatMapLatest {
             featureList.combine(result) { list, result ->
-                setupFeatureSpinner(result.pointCondition, list)
+                setupFeatureSpinner(result?.pointCondition, list)
             }
         }
         .flowOn(Dispatchers.IO)
@@ -403,11 +421,10 @@ class UserInfoViewModel @Inject constructor(
         photo: String
     ) {
         viewModelScope.launch {
-           // Log.d("testim", _photoViewState.value.toString())
             if (phoneNumber.isNotEmpty() && (phoneNumber.take(3) !in operators.value || phoneNumber.length < 10)) {
-                Log.d("testim", "Неправильний формат номера телефону")
+                _saveAnswer.value = "Неправильний формат номера телефону"
             } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
-                Log.d("testim", "Ви забули вказати джерело")
+                _saveAnswer.value = "Ви забули вказати джерело"
             } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
                 resetTimer()
                 val task: TaskEntity = getTask(taskId)
@@ -457,15 +474,14 @@ class UserInfoViewModel @Inject constructor(
                 )
 
                 val currentDateAndTime =
-                    dateAndTime.format(Date())
+                    dateAndTimeFormat.format(Date())
                 saveEditTiming(startEditTime, currentDateAndTime)
                 resultDao.insertNewData(result)
                 testEntityRepository.setDone(taskId, user["num"]!!)
                 setResultSavedState(true)
-                Log.d("testim", "Результати збережено")
+                _saveAnswer.value = "Результати збережено"
             } else {
-                Log.d("testim", "Ви не ввели нові показники")
-
+                _saveAnswer.value = "Ви не ввели нові показники"
             }
         }
     }
@@ -485,6 +501,11 @@ class UserInfoViewModel @Inject constructor(
         testEntityRepository.getCheckedConditions(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
+        if (position != _statusSpinnerPosition.value) {
+        viewModelScope.launch {
+                updateSourceList(position)
+            }
+        }
         _statusSpinnerPosition.value = position
     }
 
