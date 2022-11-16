@@ -17,10 +17,10 @@ interface TimingDao {
     suspend fun getTiming(taskId: Int): List<Timing>
 
     @Query("SELECT startTaskTime FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
-    suspend fun getStartTaskDate(taskId: Int, num: Int): String
+    suspend fun getStartTaskDate(taskId: Int, num: Int): String?
 
     @Query("SELECT firstEditDate FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
-    suspend fun getFirstEditDate(taskId: Int, num: Int): String
+    suspend fun getFirstEditDate(taskId: Int, num: Int): String?
 
     @Query("SELECT editSeconds FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
     suspend fun getEditTime(taskId: Int, num: Int): Int
