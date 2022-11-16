@@ -1,30 +1,30 @@
 package ua.POE.Task_abon.di
 
 import android.content.Context
-import android.os.TestLooperManager
-import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.viewModelScope
-import androidx.room.PrimaryKey
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ApplicationComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
+import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
-import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.data.repository.*
-import ua.POE.Task_abon.ui.tasks.TaskViewModel
-import ua.POE.Task_abon.ui.tasks.TasksFragment
+import ua.POE.Task_abon.presentation.model.Icons
 import ua.POE.Task_abon.utils.XmlLoader
+import ua.POE.Task_abon.utils.getRawTextFile
 import javax.inject.Singleton
 
 @Module
-@InstallIn(ApplicationComponent::class)
+@InstallIn(SingletonComponent::class)
 object AppModule {
+
+    @Provides
+    fun getIcons(@ApplicationContext appContext : Context) : List<Icons> {
+        return appContext.resources.getRawTextFile(R.raw.icons)
+    }
 
     @Provides
     fun provideCoroutineScope(): CoroutineScope {
@@ -90,6 +90,14 @@ object AppModule {
     @Provides
     fun provideResultRepository(resultDao: ResultDao) = ResultRepository(resultDao)
 
+    @Singleton
+    @Provides
+    fun provideTimingDao(db: AppDatabase) : TimingDao {
+        return db.timingDao()
+    }
 
+    @Singleton
+    @Provides
+    fun provideTimingRepository(timingDao: TimingDao) = TimingRepository(timingDao)
 
 }

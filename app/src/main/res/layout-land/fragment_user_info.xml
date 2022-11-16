@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".ui.userinfo.UserInfoFragment">
+    tools:context=".presentation.userinfo.UserInfoFragment">
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -40,7 +40,172 @@
                 android:id="@+id/basic_table"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:stretchColumns="*"/>
+                android:stretchColumns="*">
+                <TableRow
+                    android:id="@+id/account_row"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="20dp"
+                        android:paddingStart="8dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@color/colorPrimary"
+                        android:textSize="17sp"
+                        android:gravity="start|center"
+                        android:layout_weight="0.4"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:text="О/р" />
+
+                    <TextView
+                        android:id="@+id/personal_account"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:textSize="17sp"
+                        android:paddingStart="8dp"
+                        android:maxLines="4"
+                        android:layout_weight="0.6"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:gravity="start|center"
+                        android:text="" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="20dp"
+                        android:paddingStart="8dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@color/colorPrimary"
+                        android:textSize="17sp"
+                        android:gravity="start|center"
+                        android:layout_weight="0.4"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:text="Адреса" />
+
+                    <TextView
+                        android:id="@+id/address"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:textSize="17sp"
+                        android:paddingStart="8dp"
+                        android:maxLines="4"
+                        android:layout_weight="0.6"
+                        android:layout_marginEnd="2dp"
+                        android:gravity="start|center"
+                        android:text="" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="20dp"
+                        android:paddingStart="8dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@color/colorPrimary"
+                        android:textSize="17sp"
+                        android:gravity="start|center"
+                        android:layout_weight="0.4"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:text="ПІБ" />
+
+                    <TextView
+                        android:id="@+id/name"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:textSize="17sp"
+                        android:paddingStart="8dp"
+                        android:maxLines="4"
+                        android:layout_weight="0.6"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:gravity="start|center"
+                        android:text="" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:paddingStart="8dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@color/colorPrimary"
+                        android:textSize="17sp"
+                        android:gravity="start|center"
+                        android:layout_weight="0.4"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:text="Лічильник" />
+
+                    <TextView
+                        android:id="@+id/counter"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:textSize="17sp"
+                        android:paddingStart="8dp"
+                        android:maxLines="4"
+                        android:layout_weight="0.6"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:gravity="start|center"
+                        android:text="" />
+                </TableRow>
+
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="20dp"
+                        android:paddingStart="8dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
+                        android:background="@color/colorPrimary"
+                        android:textSize="17sp"
+                        android:gravity="start|center"
+                        android:layout_weight="0.4"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:text="Інше/Фідер" />
+
+                    <TextView
+                        android:id="@+id/other_info"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:textSize="17sp"
+                        android:paddingStart="8dp"
+                        android:maxLines="4"
+                        android:layout_weight="0.6"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:gravity="start|center"
+                        android:text="" />
+                </TableRow>
+            </TableLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"

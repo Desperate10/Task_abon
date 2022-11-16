@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "directory")
 data class Directory(@PrimaryKey(autoGenerate = true) var id: Int,
-                     var taskId: String,
+                     var taskId: Int,
                      var fieldName: String?,
                      var fieldNameTxt : String?,
                      var fieldBlockInf : String? = "0",

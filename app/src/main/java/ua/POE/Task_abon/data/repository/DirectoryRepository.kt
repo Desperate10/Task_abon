@@ -5,10 +5,12 @@ import javax.inject.Inject
 
 class DirectoryRepository @Inject constructor(private val directoryDao: DirectoryDao) {
 
-    fun getBlockNames() = directoryDao.getFieldNames()
+    suspend fun getBlockNames() = directoryDao.getFieldNames()
 
-    fun getFieldsByBlockName(name:String, taskId : String) = directoryDao.getFieldsByBlockName(name, taskId)
+    suspend fun getFieldsByBlockName(name:String, taskId : Int) = directoryDao.getFieldsByBlockName(name, taskId)
 
-    suspend fun deleteDirectoryByTaskId(taskId: String) = directoryDao.deleteByTaskId(taskId)
+    suspend fun getBasicFields(taskId : Int) = directoryDao.getBasicFields(taskId)
+
+    suspend fun deleteDirectoryByTaskId(taskId: Int) = directoryDao.deleteByTaskId(taskId)
 
 }

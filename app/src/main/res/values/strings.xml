@@ -28,7 +28,7 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="enter_password_hint">Введіть пароль</string>
-    <string name="noTask">Схоже, завдань немає...</string>
+    <string name="noTask">Схоже, завдань немає…</string>
     <string name="login_hint">Введіть пароль</string>
     <string name="contr_pokaz">Показ. контр:</string>
     <string name="enter_data_hint">Введіть дані</string>
@@ -63,4 +63,16 @@
     <string name="no">Ні</string>
     <string name="app_info">Інформація про додаток</string>
     <string name="add_task">Додати завдання</string>
+    <string name="marks">Позначки</string>
+    <string name="pillar_template">%1$s Опора: %2$s</string>
+    <string name="counter_template">"%1$s   "</string>
+    <string name="account_template">"%1$s   "</string>
+    <string name="account_counter_template">%1$s%2$s</string>
+    <string name="status_done">Виконано: %1$d/%2$d</string>
+    <string name="info_template">Id завдання: %1$s , Записи: %2$s, Дата створення: %3$s, Юр.особи: %4$s</string>
+    <string name="diff_template">Расход/nСредн: %1$s</string>
+    <string name="ok">Ок</string>
+    <string name="no_needed_icons">Без позначок</string>
+    <string name="contr_template">Показ. контр: %1$s</string>
+    <string name="reset_filter">Скинути фільтр</string>
 </resources>

@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 data class Result(
     @ColumnInfo(name = "Task_name") var taskName: String?,
     @ColumnInfo(name = "Dt_Crt") var createDate: String?,
-    @ColumnInfo(name = "TSzdn_id") var taskId: String,
+    @ColumnInfo(name = "TSzdn_id") var taskId: Int,
     @ColumnInfo(name = "Filial") var filial: String?,
     @ColumnInfo(name = "Id") var index: Int?,
     @ColumnInfo(name = "Numb") var num: String,
@@ -35,12 +35,6 @@ data class Result(
     @ColumnInfo(name = "numbpers") var numbpers: String?,
     @ColumnInfo(name = "family") var family: String?,
     @ColumnInfo(name = "adress") var adress: String?,
-    @ColumnInfo(name = "photo") var photo: String?/*,
-    @ColumnInfo(name = "startTaskTime") var startTaskTime: String?,
-    @ColumnInfo(name = "firstEditDate") var firstEditDate: String?,
-    @ColumnInfo(name = "editCount", defaultValue = 0.toString()) var editCount: Int?,
-    @ColumnInfo(name = "editSeconds", defaultValue = 0.toString()) var editSeconds: Int?,
-    @ColumnInfo(name = "lastEditDate") var lastEditDate: String?*/
-) {
-
-}
+    @ColumnInfo(name = "photo") var photo: String?,
+    @ColumnInfo(name = "counpleas") var counterPlace: String?
+)

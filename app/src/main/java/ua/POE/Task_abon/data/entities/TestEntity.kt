@@ -1,33 +1,32 @@
 package ua.POE.Task_abon.data.entities
 
+import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.database.Cursor
-import android.util.Log
-import androidx.room.*
+import androidx.room.Entity
+import androidx.room.Ignore
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 
 @Entity(tableName = "base")
-data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
+data class TestEntity(@PrimaryKey var name: String) {
 
     companion object {
 
-    const val BASETABLE_NAME = "base"
-    const val BASETABLE_COL_NAME = "name"
-    const val BASETABLE_COL_VALUE = "value"
-
-    const val BASETABLE_NAME_PLACEHOLDER = ":tablename:"
-
-    const val BASETABLE_CREATE_SQL = "CREATE TABLE IF NOT EXISTS $BASETABLE_NAME_PLACEHOLDER" +
-            "(" +
-              "$BASETABLE_COL_NAME TEXT PRIMARY KEY," +
-              "$BASETABLE_COL_VALUE TEXT)"
-
+        @SuppressLint("Range")
         @Ignore
-        fun getFieldsByBlock(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
-            var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
-            var data : HashMap<String, String> = HashMap()
-            var data2 : HashMap<String, String> = HashMap()
+        fun getFieldsByBlock(
+            sdb: SupportSQLiteDatabase,
+            taskId: Int,
+            fields: List<String>,
+            index: Int
+        ): HashMap<String, String> {
+            var csr: Cursor =
+                sdb.query("SELECT ${fields.joinToString()} FROM TD$taskId WHERE _id = $index")
+            var data: HashMap<String, String> = HashMap()
+            var data2: HashMap<String, String> = HashMap()
             csr.moveToFirst()
             do {
                 for (i in fields.indices) {
@@ -36,25 +35,25 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
                 }
             } while (csr.moveToNext())
             csr.close()
-
             val sl = ArrayList<String>()
             for (i in fields.indices) {
                 sl.add("\"${fields[i]}\"")
             }
             var sl1 = sl.toString().replace("[", "(")
             sl1 = sl1.replace("]", ")")
-            csr = sdb.query("SELECT fieldName ,fieldNameTxt FROM directory WHERE fieldName in $sl1 AND taskId = ${tableName.substring(2)}")
+            csr =
+                sdb.query("SELECT fieldName ,fieldNameTxt FROM directory WHERE fieldName in $sl1 AND taskId = $taskId")
             csr.moveToFirst()
             while (csr.moveToNext()) {
-                data2[csr.getString(csr.getColumnIndex("fieldName"))] = csr.getString(csr.getColumnIndex("fieldNameTxt"))
+                data2[csr.getString(csr.getColumnIndex("fieldName"))] =
+                    csr.getString(csr.getColumnIndex("fieldNameTxt"))
             }
-            var common: HashMap<String, String> = HashMap()
-            for (key in data.keys) {
-                for (key1 in data2.keys) {
-                    if (key == key1) {
-                        common[data2[key1]!!] = data[key]!!
-                    }
-                }
+            val common: HashMap<String, String> = HashMap()
+
+            data.flatMap { dataEntry ->
+                data2
+                    .filterKeys { dataEntry.key == it }
+                    .map { common[it.value] = dataEntry.value }
             }
 
             csr.close()
@@ -62,10 +61,17 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             return common
         }
 
+        @SuppressLint("Range")
         @Ignore
-        fun getTextByFields(sdb: SupportSQLiteDatabase, tableName: String, fields: List<String>, index: Int) : HashMap<String, String> {
-            var csr : Cursor = sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
-            var data : HashMap<String, String> = HashMap()
+        fun getTextByFields(
+            sdb: SupportSQLiteDatabase,
+            tableName: String,
+            fields: List<String>,
+            index: Int
+        ): HashMap<String, String> {
+            var csr: Cursor =
+                sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
+            var data: HashMap<String, String> = HashMap()
             csr.moveToFirst()
             do {
                 for (i in fields.indices) {
@@ -78,10 +84,11 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             return data
         }
 
+        @SuppressLint("Range")
         @Ignore
-        fun getCheckedConditions(sdb: SupportSQLiteDatabase, tableName: String, index: Int) :String{
+        fun getCheckedConditions(sdb: SupportSQLiteDatabase, taskId: Int, index: Int): String {
             var isExist = false
-            val cursor1 = sdb.query("PRAGMA table_info('TD$tableName')", null)
+            val cursor1 = sdb.query("PRAGMA table_info('TD$taskId')", emptyArray())
             cursor1.moveToFirst()
             do {
                 val currentColumn = cursor1.getString(1)
@@ -91,7 +98,7 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             } while (cursor1.moveToNext())
             return if (isExist) {
                 val csr: Cursor =
-                    sdb.query("SELECT point_condition FROM TD$tableName WHERE _id = $index")
+                    sdb.query("SELECT point_condition FROM TD$taskId WHERE _id = $index")
                 csr.moveToFirst()
                 val data = csr.getString(csr.getColumnIndex("point_condition"))
                 csr.close()
@@ -99,24 +106,17 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
             } else {
                 ""
             }
-
-            /*val cursor1 = sdb.query("SELECT COUNT(*) FROM pragma_table_info('TD$tableName') WHERE name='point_condition'")
-            cursor1.moveToFirst()
-            val count = cursor1.getString(0)
-            return if (count.equals("0")) "" else {
-                val csr: Cursor =
-                    sdb.query("SELECT point_condition FROM TD$tableName WHERE _id = $index")
-                csr.moveToFirst()
-                val data = csr.getString(csr.getColumnIndex("point_condition"))
-                csr.close()
-                data
-            }*/
         }
 
+        @SuppressLint("Range")
         @Ignore
-        fun getItemsByField(sdb: SupportSQLiteDatabase, tableName: String, field: String) : ArrayList<String> {
-            var csr : Cursor = sdb.query("SELECT DISTINCT $field FROM $tableName")
-            var data : ArrayList<String> =  ArrayList()
+        fun getItemsByField(
+            sdb: SupportSQLiteDatabase,
+            tableName: String,
+            field: String
+        ): ArrayList<String> {
+            var csr: Cursor = sdb.query("SELECT DISTINCT $field FROM $tableName")
+            var data: ArrayList<String> = ArrayList()
 
             csr.moveToFirst()
             do {
@@ -129,19 +129,15 @@ data class TestEntity(@PrimaryKey var name: String, var value: String? = "") {
 
         @Ignore
         fun insertRows(sdb: SupportSQLiteDatabase, tableName: String?, cv: ContentValues): Long? {
-
-            return sdb.insert(tableName, OnConflictStrategy.IGNORE, cv)
+            return tableName?.let { sdb.insert(it, OnConflictStrategy.IGNORE, cv) }
         }
 
         @Ignore
-        fun dropTable(sdb: SupportSQLiteDatabase, taskId : String) {
+        fun dropTable(sdb: SupportSQLiteDatabase, taskId: Int) {
             sdb.execSQL("DROP TABLE IF EXISTS TD$taskId")
         }
 
     }
-
-
-
 
 
 }

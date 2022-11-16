@@ -1,167 +1,165 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical">
+
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight=".4"
-            android:orientation="vertical"
-            >
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="45dp"
-                android:layout_marginBottom="2dp"
-                android:paddingStart="8dp"
-                android:textSize="17sp"
-                android:background="@color/colorPrimary"
-                android:gravity="start|center_vertical"
-                android:text="@string/date" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="45dp"
-                android:textSize="17sp"
-                android:paddingStart="8dp"
-                android:layout_marginBottom="2dp"
-                android:background="@color/colorPrimary"
-                android:gravity="start|center_vertical"
-                android:text="@string/status" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="45dp"
-                android:paddingStart="8dp"
-                android:textSize="17sp"
-                android:layout_marginBottom="2dp"
-                android:background="@color/colorPrimary"
-                android:gravity="start|center_vertical"
-                android:text="@string/source" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="45dp"
-                android:paddingStart="8dp"
-                android:textSize="17sp"
-                android:layout_marginBottom="2dp"
-                android:background="@color/colorPrimary"
-                android:gravity="start|center_vertical"
-                android:text="@string/phone_number" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:background="@color/colorPrimary"
-                android:gravity="start|center_vertical"
-                android:minHeight="45dp"
-                android:paddingStart="8dp"
-                android:text="@string/note"
-                android:textSize="17sp" />
-
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight=".6"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/date"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="45dp"
-                android:paddingStart="8dp"
-                android:gravity="start|center_vertical"
-                android:lines="1"
-                android:text="" />
-
-            <Spinner
-                android:id="@+id/status_spinner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="45dp"
-                android:layout_gravity="top"
-                android:textColor="#000000"
-                android:entries="@array/status_fields"
-                tools:listitem="@android:layout/simple_spinner_item"/>
-
-
-            <Spinner
-                android:id="@+id/source_spinner"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:minHeight="45dp"
-                android:textColor="#000000"
-                />
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:orientation="horizontal"
-                >
-
-                <EditText
-                    android:id="@+id/phone"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.8"
-                    android:background="@null"
-                    android:gravity="start|center_vertical"
-                    android:hint="@string/new_phone_number"
-                    android:inputType="phone"
-                    android:digits="0123456789"
-                    android:maxLength="10"
-                    android:minHeight="45dp"
-                    android:paddingStart="8dp"
-                    android:text="" />
-
-                <CheckBox
-                    android:id="@+id/checkBox"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="0.2"
-                    />
-            </LinearLayout>
-
-            <EditText
-                android:id="@+id/note"
-                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@null"
-                android:gravity="start|center_vertical"
-                android:hint="@string/note"
-                android:lines="2"
-                android:digits="0123456789,ЦУКЕНГШЩЗХФІВАПРОЛДЖЄЯЧСМИТЬБЮійцукенгшщзхфвапролдячсмитьбю "
-                android:paddingStart="8dp"
-                android:text="" />
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-        </LinearLayout>
-    </LinearLayout>
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight=".4"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="2dp"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center_vertical"
+                        android:minHeight="45dp"
+                        android:paddingStart="8dp"
+                        android:text="@string/date"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="2dp"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center_vertical"
+                        android:minHeight="45dp"
+                        android:paddingStart="8dp"
+                        android:text="@string/status"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="2dp"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center_vertical"
+                        android:minHeight="45dp"
+                        android:paddingStart="8dp"
+                        android:text="@string/source"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="2dp"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center_vertical"
+                        android:minHeight="45dp"
+                        android:paddingStart="8dp"
+                        android:text="@string/phone_number"
+                        android:textSize="17sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="2dp"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center_vertical"
+                        android:minHeight="45dp"
+                        android:paddingStart="8dp"
+                        android:text="@string/note"
+                        android:textSize="17sp" />
+
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight=".6"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/date"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="start|center_vertical"
+                        android:lines="1"
+                        android:minHeight="45dp"
+                        android:paddingStart="8dp"
+                        android:text="" />
+
+                    <Spinner
+                        android:id="@+id/status_spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="top"
+                        android:entries="@array/status_fields"
+                        android:minHeight="45dp"
+                        android:textColor="#000000"
+                        tools:listitem="@android:layout/simple_spinner_item" />
+
+
+                    <Spinner
+                        android:id="@+id/source_spinner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="45dp"
+                        android:textColor="#000000" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal">
+
+                        <EditText
+                            android:id="@+id/phone"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.8"
+                            android:background="@null"
+                            android:digits="0123456789"
+                            android:gravity="start|center_vertical"
+                            android:hint="@string/new_phone_number"
+                            android:inputType="phone"
+                            android:maxLength="10"
+                            android:minHeight="45dp"
+                            android:paddingStart="8dp"
+                            android:text="" />
+
+                        <CheckBox
+                            android:id="@+id/checkBox"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="0.2" />
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/note"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@null"
+                        android:digits="0123456789,ЦУКЕНГШЩЗХФІВАПРОЛДЖЄЯЧСМИТЬБЮійцукенгшщзхфвапролдячсмитьбю "
+                        android:gravity="start|center_vertical"
+                        android:hint="@string/note"
+                        android:lines="2"
+                        android:paddingStart="8dp"
+                        android:text="" />
+
+                </LinearLayout>
+            </LinearLayout>
 
             <TextView
                 android:layout_width="match_parent"
@@ -175,315 +173,329 @@
                 android:textSize="17sp" />
 
             <com.androidbuts.multispinnerfilter.MultiSpinnerSearch
-                android:id="@+id/source_spinner2"
+                android:id="@+id/feature_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:minHeight="45dp"
                 app:hintText="Можливий вибір декількох пунктів:" />
 
             <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/contr_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="2dp"
-                android:background="@color/colorPrimary"
-                android:textSize="17sp"
-                android:maxLines="2"
-                android:gravity="center"
-                android:text="@string/contr_pokaz" />
+                android:orientation="vertical">
 
-            <TableLayout
-                android:id="@+id/meters_table"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                <TextView
+                    android:id="@+id/contr_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="50dp"
+                    android:paddingLeft="2dp"
+                    android:paddingRight="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@color/colorPrimary"
+                    android:gravity="center"
+                    android:textColor="@color/yellow"
+                    android:maxLines="2"
+                    android:textStyle="bold"
+                    android:text="@string/contr_pokaz"
+                    android:textSize="17sp" />
 
-                <TableRow
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_marginBottom="2dp">
+                <TableLayout
+                    android:id="@+id/meters_table"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
 
-                    <TextView
-                        android:id="@+id/zoneNumberText"
+                    <TableRow
                         android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:background="@color/colorPrimary"
-                        android:gravity="center"
+                        android:layout_height="60dp"
+                        android:layout_marginBottom="2dp">
+
+                        <TextView
+                            android:id="@+id/zoneNumberText"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="0.7"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/zone"
+                            android:textSize="17sp" />
+
+                        <TextView
+                            android:id="@+id/previousMetersText"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/old"
+                            android:textSize="16sp" />
+
+                        <TextView
+                            android:id="@+id/newMetersText"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_vertical"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/new_index"
+                            android:textSize="17sp" />
+
+                        <TextView
+                            android:id="@+id/differenceText"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center_vertical"
+                            android:layout_weight="1"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:maxLines="2"
+                            android:paddingTop="5dp"
+                            android:paddingBottom="5dp"
+                            android:text="@string/use"
+                            android:textSize="17sp" />
+                    </TableRow>
+
+                    <TableRow
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:minHeight="60dp"
                         android:layout_marginEnd="2dp"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="0.7"
-                        android:paddingTop="5dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/zone"
-                        android:textSize="17sp" />
+                        android:layout_marginBottom="2dp">
 
-                    <TextView
-                        android:id="@+id/previousMetersText"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:background="@color/colorPrimary"
-                        android:layout_marginRight="2dp"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:paddingTop="5dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/old"
-                        android:textSize="16sp" />
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="0.7"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:text="@string/date"
+                            android:textSize="17sp" />
 
-                    <TextView
-                        android:id="@+id/newMetersText"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:background="@color/colorPrimary"
-                        android:layout_marginRight="2dp"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:paddingTop="5dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/new_index"
-                        android:textSize="17sp" />
+                        <TextView
+                            android:id="@+id/last_date"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="" />
 
-                    <TextView
-                        android:id="@+id/differenceText"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:background="@color/colorPrimary"
-                        android:layout_gravity="center_vertical"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:maxLines="2"
-                        android:paddingTop="5dp"
-                        android:paddingBottom="5dp"
-                        android:text="@string/use"
-                        android:textSize="17sp" />
-                </TableRow>
+                        <TextView
+                            android:id="@+id/new_date"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="" />
 
-                <TableRow
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_marginEnd="2dp"
-                    android:layout_marginBottom="2dp">
+                        <TextView
+                            android:id="@+id/contr_date"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="" />
+                    </TableRow>
 
-                    <TextView
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:background="@color/colorPrimary"
-                        android:layout_weight="0.7"
-                        android:gravity="center"
-                        android:text="@string/date"
-                        android:textSize="17sp"/>
-
-                    <TextView
-                        android:id="@+id/last_date"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
-
-                    <TextView
-                        android:id="@+id/new_date"
-                        android:layout_width="0dp"
-                        android:layout_height="60dp"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
-
-                    <TextView
-                        android:id="@+id/contr_date"
-                        android:layout_width="0dp"
-                        android:layout_height="60dp"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/firstZoneRow"
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_marginEnd="2dp"
-                    android:layout_marginBottom="2dp">
-
-                    <TextView
-                        android:id="@+id/zone1Number"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:background="@color/colorPrimary"
-                        android:layout_weight="0.7"
-                        android:gravity="center"
-                        android:textSize="17sp"
-                        android:text="1" />
-
-                    <TextView
-                        android:id="@+id/previousMeters1"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:inputType="number"
-                        android:text="" />
-
-                    <EditText
-                        android:id="@+id/newMeters1"
+                    <TableRow
+                        android:id="@+id/firstZoneRow"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:ems="6"
-                        android:gravity="center"
-                        android:hint="@string/enter"
-                        android:imeOptions="flagNoFullscreen"
-                        android:inputType="number"
-                        android:maxLength="6"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:text="" />
+                        android:minHeight="60dp"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp">
 
-                    <TextView
-                        android:id="@+id/difference1"
-                        android:layout_width="0dp"
-                        android:layout_height="60dp"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
-                </TableRow>
+                        <TextView
+                            android:id="@+id/zone1Number"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="0.7"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:text="1"
+                            android:textSize="17sp" />
 
-                <TableRow
-                    android:id="@+id/secondZoneRow"
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:textSize="17sp"
-                    android:layout_marginEnd="2dp"
-                    android:layout_marginBottom="2dp">
+                        <TextView
+                            android:id="@+id/previousMeters1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:maxLines="1"
+                            android:inputType="number"
+                            android:text="" />
 
-                    <TextView
-                        android:id="@+id/zone2Number"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:background="@color/colorPrimary"
-                        android:layout_weight="0.7"
-                        android:gravity="center"
-                        android:text="2" />
+                        <EditText
+                            android:id="@+id/newMeters1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="6"
+                            android:gravity="center"
+                            android:layout_gravity="center"
+                            android:hint="@string/enter"
+                            android:imeOptions="flagNoFullscreen"
+                            android:inputType="number"
+                            android:maxLength="6"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:text=""/>
 
-                    <TextView
-                        android:id="@+id/previousMeters2"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
+                        <TextView
+                            android:id="@+id/difference1"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:text="" />
+                    </TableRow>
 
-                    <EditText
-                        android:id="@+id/newMeters2"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:ems="6"
-                        android:gravity="center"
-                        android:hint="@string/enter"
-                        android:imeOptions="flagNoFullscreen"
-                        android:inputType="number"
-                        android:maxLength="6"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:text="" />
-
-                    <TextView
-                        android:id="@+id/difference2"
-                        android:layout_width="0dp"
-                        android:layout_height="60dp"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
-                </TableRow>
-
-                <TableRow
-                    android:id="@+id/thirdZoneRow"
-                    android:layout_width="0dp"
-                    android:layout_height="60dp"
-                    android:layout_marginEnd="2dp"
-                    android:layout_marginBottom="2dp">
-
-                    <TextView
-                        android:id="@+id/zone3Number"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:background="@color/colorPrimary"
-                        android:layout_weight="0.7"
-                        android:textSize="17sp"
-                        android:gravity="center"
-                        android:text="3" />
-
-                    <TextView
-                        android:id="@+id/previousMeters3"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
-
-                    <EditText
-                        android:id="@+id/newMeters3"
+                    <TableRow
+                        android:id="@+id/secondZoneRow"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="@null"
-                        android:ems="6"
-                        android:gravity="center"
-                        android:hint="@string/enter"
-                        android:imeOptions="flagNoFullscreen"
-                        android:inputType="number"
-                        android:maxLength="6"
-                        android:maxLines="1"
-                        android:singleLine="true"
-                        android:text="" />
+                        android:minHeight="60dp"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:textSize="17sp">
 
-                    <TextView
-                        android:id="@+id/difference3"
+                        <TextView
+                            android:id="@+id/zone2Number"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="0.7"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:text="2" />
+
+                        <TextView
+                            android:id="@+id/previousMeters2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="" />
+
+                        <EditText
+                            android:id="@+id/newMeters2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="6"
+                            android:gravity="center"
+                            android:hint="@string/enter"
+                            android:imeOptions="flagNoFullscreen"
+                            android:inputType="number"
+                            android:maxLength="6"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:text="" />
+
+                        <TextView
+                            android:id="@+id/difference2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="" />
+                    </TableRow>
+
+                    <TableRow
+                        android:id="@+id/thirdZoneRow"
                         android:layout_width="0dp"
-                        android:layout_height="60dp"
-                        android:layout_marginRight="2dp"
-                        android:layout_weight="1"
-                        android:gravity="center"
-                        android:text="" />
-                </TableRow>
+                        android:layout_height="wrap_content"
+                        android:minHeight="60dp"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:textSize="17sp">
 
-            </TableLayout>
-        </LinearLayout>
-            <GridView
-                android:id="@+id/photoLayout"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:layout_marginStart="16dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="16dp"
-                android:layout_marginBottom="16dp"
-                android:horizontalSpacing="5dp"
-                android:numColumns="3"
-                android:stretchMode="columnWidth"
-                android:verticalSpacing="5dp"
-                />
+                        <TextView
+                            android:id="@+id/zone3Number"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="0.7"
+                            android:background="@color/colorPrimary"
+                            android:gravity="center"
+                            android:text="3" />
+
+                        <TextView
+                            android:id="@+id/previousMeters3"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="" />
+
+                        <EditText
+                            android:id="@+id/newMeters3"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:background="@null"
+                            android:ems="6"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:hint="@string/enter"
+                            android:imeOptions="flagNoFullscreen"
+                            android:inputType="number"
+                            android:maxLength="6"
+                            android:maxLines="1"
+                            android:singleLine="true"
+                            android:text="" />
+
+                        <TextView
+                            android:id="@+id/difference3"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="2dp"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="" />
+                    </TableRow>
+
+                </TableLayout>
+            </LinearLayout>
+            <ImageButton
+                android:id="@+id/add_photo"
+                android:layout_width="125dp"
+                android:layout_height="125dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/ic_baseline_add_a_photo_24"/>
         </LinearLayout>
 
     </ScrollView>

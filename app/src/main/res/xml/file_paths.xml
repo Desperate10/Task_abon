@@ -3,4 +3,10 @@
     <external-path
         name="photos"
         path="/"/>
+    <cache-path
+        name="cached_files"
+        path="." />
+    <files-path
+        name="images"
+        path="." />
 </paths>
