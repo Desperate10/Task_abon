@@ -158,7 +158,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.resultData.collectLatest { savedData ->
+                viewModel.savedData.collectLatest { savedData ->
                     resetFields()
                     savedData.status?.let { getResultIfExist(savedData) }
                 }
@@ -204,7 +204,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         val lastCount: List<String> = it.lastCount.split("/")
 
         binding.results.previousMeters1.text = lastCount[0]
-        binding.results.previousMeters1.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY)
+        binding.results.previousMeters1.textAlignment = View.TEXT_ALIGNMENT_GRAVITY
         binding.results.previousMeters1.gravity = Gravity.CENTER
         if (lastCount.size == 2) {
             binding.results.previousMeters2.text = lastCount[1]

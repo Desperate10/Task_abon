@@ -133,7 +133,7 @@ class UserInfoViewModel @Inject constructor(
         }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
-    val result = _customerIndex
+    val savedData = _customerIndex
         .combine(_statusSpinnerPosition) { index, status ->
             getSavedData(index, status)
         }
@@ -178,7 +178,7 @@ class UserInfoViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
         .flatMapLatest {
-            featureList.combine(resultData) { list, result ->
+            featureList.combine(savedData) { list, result ->
                 setupFeatureSpinner(result.pointCondition, list)
             }
         }
@@ -291,7 +291,7 @@ class UserInfoViewModel @Inject constructor(
     private fun saveEditTiming(firstEditDate: String, date: String) {
         viewModelScope.launch {
             coroutineScope {
-                if (timing.getStartTaskDate(taskId, _customerIndex.value).isEmpty()) {
+                if (timing.getStartTaskDate(taskId, _customerIndex.value).isNullOrEmpty()) {
                     timing.insertTiming(
                         Timing(
                             taskId = taskId,
@@ -304,7 +304,7 @@ class UserInfoViewModel @Inject constructor(
                             ""
                         )
                     )
-                } else if (timing.getFirstEditDate(taskId, _customerIndex.value).isEmpty()) {
+                } else if (timing.getFirstEditDate(taskId, _customerIndex.value).isNullOrEmpty()) {
                     timing.updateFirstEditDate(
                         taskId,
                         _customerIndex.value,
@@ -327,7 +327,7 @@ class UserInfoViewModel @Inject constructor(
     private suspend fun saveEditTime(taskId: Int, num: Int, time: Int) {
         val seconds: Int = timing.getEditTime(taskId, num)
         val newEditTime = seconds + time
-        timingRepository.updateEditSeconds(taskId, num, newEditTime)
+        timing.updateEditSeconds(taskId, num, newEditTime)
     }
 
     fun saveResults(
