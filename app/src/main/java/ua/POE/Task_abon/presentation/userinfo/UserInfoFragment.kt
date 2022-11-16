@@ -151,7 +151,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 }
             }
         }
-        //Не переключается статус с выконано на не выконано
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.result.collectLatest { savedData ->
@@ -164,6 +163,15 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.customerFeatures.collect {
                     loadFeatureSpinner(it)
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.saveAnswer.collectLatest {
+                    if (it.isNotEmpty()) {
+                        Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

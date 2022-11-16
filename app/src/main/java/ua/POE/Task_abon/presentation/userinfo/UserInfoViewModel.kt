@@ -1,6 +1,5 @@
 package ua.POE.Task_abon.presentation.userinfo
 
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -27,7 +26,6 @@ import ua.POE.Task_abon.domain.model.Catalog
 import ua.POE.Task_abon.domain.model.SavedData
 import ua.POE.Task_abon.domain.model.TechInfo
 import ua.POE.Task_abon.presentation.model.Icons
-import ua.POE.Task_abon.utils.Resource
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
 import java.text.SimpleDateFormat
@@ -143,16 +141,16 @@ class UserInfoViewModel @Inject constructor(
 
     val result = _customerIndex
         .combine(_statusSpinnerPosition) { index, status ->
-       // .mapLatest {
-            getSavedData(index,status)
+            // .mapLatest {
+            getSavedData(index, status)
         }
-       // }
+        // }
         .flowOn(Dispatchers.Main)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     private suspend fun getSavedData(index: Int, status: Int): SavedData {
         val savedData = mapResultToSavedData(resultDao.getResultUser(taskId, index))
-            updateSourceList(status)
+        updateSourceList(status)
 
         val type = if (_statusSpinnerPosition.value == 0) {
             "2"
@@ -175,12 +173,6 @@ class UserInfoViewModel @Inject constructor(
 
     private val _sources = MutableStateFlow<List<String>>(emptyList())
     val sources: StateFlow<List<String>> = _sources
-
-    /*val sources = statusSpinnerPosition
-        .mapLatest {
-            getSourceList(it)
-        }.flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())*/
 
     private suspend fun getSourceList(position: Int): List<String> {
         sourceList = if (position == 0) {
@@ -376,36 +368,25 @@ class UserInfoViewModel @Inject constructor(
                         firstEditDate
                     )
                     timingRepository.updateEditCount(taskId, _customerIndex.value, 1)
-                    saveEndEditDate(taskId, _customerIndex.value, date)
+                    timingRepository.updateLastEditDate(taskId, _customerIndex.value, date)
                     saveEditTime(taskId, _customerIndex.value, time)
                 } else {
                     //adding +1 to edit count
                     saveEditTime(taskId, _customerIndex.value, time)
-                    saveEndEditDate(taskId, _customerIndex.value, date)
+                    timingRepository.updateLastEditDate(taskId, _customerIndex.value, date)
                     timingRepository.upEditCount(taskId, _customerIndex.value)
 
                 }
+                resetTimer()
             }
         }
     }
 
-    //save date when finish editing task when onStop() userInfoFragment
-    private fun saveEndEditDate(taskId: Int, num: Int, date: String) {
-        viewModelScope.launch {
-            if (!timingRepository.isFirstEditDateEmpty(taskId, num)) {
-                timingRepository.updateLastEditDate(taskId, num, date)
-            }
-        }
-    }
+    private suspend fun saveEditTime(taskId: Int, num: Int, time: Int) {
+        val seconds: Int = timingRepository.getEditTime(taskId, num)
+        val newEditTime = seconds + time
+        timingRepository.updateEditSeconds(taskId, num, newEditTime)
 
-    private fun saveEditTime(taskId: Int, num: Int, time: Int) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                val seconds: Int = timingRepository.getEditTime(taskId, num)
-                val newEditTime = seconds + time
-                timingRepository.updateEditSeconds(taskId, num, newEditTime)
-            }
-        }
     }
 
     fun saveResults(
@@ -426,7 +407,6 @@ class UserInfoViewModel @Inject constructor(
             } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
                 _saveAnswer.value = "Ви забули вказати джерело"
             } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
-                resetTimer()
                 val task: TaskEntity = getTask(taskId)
                 val fields =
                     listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
@@ -502,7 +482,7 @@ class UserInfoViewModel @Inject constructor(
 
     fun setStatusSpinnerPosition(position: Int) {
         if (position != _statusSpinnerPosition.value) {
-        viewModelScope.launch {
+            viewModelScope.launch {
                 updateSourceList(position)
             }
         }
