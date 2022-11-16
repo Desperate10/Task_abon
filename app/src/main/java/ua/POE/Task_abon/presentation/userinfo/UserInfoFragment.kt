@@ -14,7 +14,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
-import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -40,6 +39,12 @@ import ua.POE.Task_abon.domain.model.BasicInfo
 import ua.POE.Task_abon.domain.model.SavedData
 import ua.POE.Task_abon.domain.model.TechInfo
 import ua.POE.Task_abon.presentation.MainActivity
+import ua.POE.Task_abon.presentation.userinfo.dialog.IconsDialogFragment
+import ua.POE.Task_abon.presentation.userinfo.dialog.LocationToggleDialogFragment
+import ua.POE.Task_abon.presentation.userinfo.dialog.SaveConfirmationDialogFragment
+import ua.POE.Task_abon.presentation.userinfo.dialog.SaveCoordinatesDialogFragment
+import ua.POE.Task_abon.presentation.userinfo.listener.ItemSelectedListener
+import ua.POE.Task_abon.presentation.userinfo.listener.MyLocationListener
 import ua.POE.Task_abon.utils.autoCleaned
 import java.io.File
 import java.text.SimpleDateFormat
@@ -60,7 +65,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private var zone2 = ""
     private var zone3 = ""
     private var sourceAdapter: ArrayAdapter<String>? = null
-    lateinit var locationManager: LocationManager
+    private var locationManager: LocationManager? = null
 
     private var zone1watcher: TextWatcher? = null
     private var zone2watcher: TextWatcher? = null
@@ -108,7 +113,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.sources.collect {
+                viewModel.sources.collectLatest {
                     setupSourceSpinner(it)
                 }
             }
@@ -153,7 +158,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.result.collectLatest { savedData ->
+                viewModel.resultData.collectLatest { savedData ->
                     resetFields()
                     savedData.status?.let { getResultIfExist(savedData) }
                 }
@@ -194,9 +199,13 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
 
         binding.results.lastDate.text = it.lastDate
+        binding.results.lastDate.gravity = Gravity.CENTER
+
         val lastCount: List<String> = it.lastCount.split("/")
 
         binding.results.previousMeters1.text = lastCount[0]
+        binding.results.previousMeters1.setTextAlignment(View.TEXT_ALIGNMENT_GRAVITY)
+        binding.results.previousMeters1.gravity = Gravity.CENTER
         if (lastCount.size == 2) {
             binding.results.previousMeters2.text = lastCount[1]
         } else if (lastCount.size == 3) {
@@ -205,9 +214,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
         binding.results.differenceText.text =
             String.format(getString(R.string.diff_template), it.averageUsage)
+        binding.results.differenceText.gravity = Gravity.CENTER
         binding.results.contrDate.text = it.checkDate
         binding.results.contrText.text =
             String.format(getString(R.string.contr_template), it.inspector)
+
     }
 
     private fun registerWatchers() {
@@ -299,7 +310,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     override fun onStop() {
         super.onStop()
-        locationManager.removeUpdates(this)
+        if (locationManager != null) {
+            locationManager?.removeUpdates(this)
+        }
         removeTextWatchers()
     }
 
@@ -310,7 +323,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     @SuppressLint("MissingPermission")
     private fun checkPermissions() {
-        PermissionX.init(this)
+        PermissionX.init(requireActivity())
             .permissions(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -318,34 +331,34 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             .onExplainRequestReason { scope, deniedList ->
                 scope.showRequestReasonDialog(
                     deniedList,
-                    "Core fundamental are based on these permissions",
-                    "OK",
-                    "Cancel"
+                    "Базовий функціонал оснований на цих дозволах",
+                    getString(R.string.yes), getString(R.string.cancel)
                 )
             }
             .onForwardToSettings { scope, deniedList ->
                 scope.showForwardToSettingsDialog(
                     deniedList,
-                    "You need to allow necessary permissions in Settings manually",
-                    "OK",
-                    "Cancel"
+                    "Вам потрібно дати необхідні дозволи в налаштуваннях вручну",
+                    getString(R.string.yes), getString(R.string.cancel)
                 )
             }
-            .request { allGranted, grantedList, deniedList ->
+            .request { allGranted, _, deniedList ->
                 if (allGranted) {
                     locationManager =
                         requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                    locationManager.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, 1000,
-                        1f, this
-                    )
-                    if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                        LocationToggleDialogFragment.show(parentFragmentManager)
+                    locationManager?.let {
+                        it.requestLocationUpdates(
+                            LocationManager.GPS_PROVIDER, 1000,
+                            1f, this
+                        )
+                        if (!it.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                            LocationToggleDialogFragment.show(parentFragmentManager)
+                        }
                     }
                 } else {
                     Toast.makeText(
                         requireContext(),
-                        "These permissions are denied: $deniedList",
+                        "Ці дозволи відхилені: $deniedList",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -558,6 +571,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         if (!savedData.photo.isNullOrEmpty() && latestTmpUri == null) {
             binding.results.addPhoto.setImageURI(Uri.parse(savedData.photo))
         }
+
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
         spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
         viewModel.setResultSavedState(true)

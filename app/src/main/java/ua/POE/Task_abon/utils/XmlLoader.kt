@@ -13,6 +13,7 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
+import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.*
 import java.io.*
 import javax.inject.Inject
@@ -23,8 +24,7 @@ class XmlLoader @Inject constructor(
     val database: AppDatabase,
     private val taskDao: TaskDao,
     private val directoryDao: DirectoryDao,
-    private val catalogDao: CatalogDao,
-    private val resultDao: ResultDao
+    private val catalogDao: CatalogDao
 ) {
 
     suspend fun readXml(uri: Uri): String {
@@ -47,7 +47,6 @@ class XmlLoader @Inject constructor(
         var sdb: SupportSQLiteDatabase = database.openHelper.writableDatabase
         while (eventType != XmlPullParser.END_DOCUMENT) {
             val tagName = parser.name
-            //println(tagName)
             when (eventType) {
                 XmlPullParser.START_TAG -> {
                     when (tagName) {
@@ -233,7 +232,7 @@ class XmlLoader @Inject constructor(
                                 )
                             }
                             cv.put("IsDone", "Не виконано")
-                            TestEntity.insertRows(sdb, tableName, cv)
+                            TaskCustomerDaoImpl.insertRows(sdb, tableName, cv)
                         }
                     }
                 }

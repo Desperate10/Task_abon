@@ -5,5 +5,5 @@ import ua.POE.Task_abon.domain.repository.TaskRepository
 class GetTaskInfoListUseCase(
     private val repository: TaskRepository
 ) {
-    operator fun invoke() = repository.getTaskInfoList()
+    //operator fun invoke() = repository.getTaskInfoList()
 }

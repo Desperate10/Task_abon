@@ -18,7 +18,7 @@ interface ResultDao {
     suspend fun getAllPhotos(taskId: Int) : List<String>
 
     @Query("SELECT COUNT(TSzdn_id) FROM result WHERE TSzdn_id = :taskId")
-    fun getCount(taskId: Int): Flow<Int>
+    fun getResultCount(taskId: Int): Flow<Int>
 
     @Insert(onConflict = REPLACE)
     suspend fun insertNewData(result: Result)

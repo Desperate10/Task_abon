@@ -1,17 +1,59 @@
-package ua.POE.Task_abon.data.entities
+package ua.POE.Task_abon.data.dao.impl
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.database.Cursor
-import androidx.room.Entity
 import androidx.room.Ignore
 import androidx.room.OnConflictStrategy
-import androidx.room.PrimaryKey
+import androidx.room.RawQuery
+import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
+import ua.POE.Task_abon.data.AppDatabase
+import ua.POE.Task_abon.data.dao.TaskCustomerDao
+import ua.POE.Task_abon.data.entities.UserData
+import java.lang.StringBuilder
+import javax.inject.Inject
 
+class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private val testEntityDao: TaskCustomerDao) {
 
-@Entity(tableName = "base")
-data class TestEntity(@PrimaryKey var name: String) {
+    private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
+
+    fun getFieldsByBlock(taskId: Int, fields: List<String>, num: Int) =
+        getFieldsByBlock(sdb, taskId, fields, num)
+
+    fun getTextByFields(tableName: String, fields: List<String>, num: Int) =
+        getSearchedItemsByField(sdb, tableName, fields, num)
+
+    fun getSearchedItemsByField(tableName: String, field: String) =
+        getItemsByField(sdb, tableName, field)
+
+    fun getCheckedConditions(taskId: Int, index: Int) =
+        getCheckedConditions(sdb, taskId, index)
+
+    suspend fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>, status: String?) : List<UserData> {
+        val whereSize = keys.size
+        var whereClause = StringBuilder()
+        var query = "SELECT * FROM TD$taskId "
+
+        for(i in 0 until whereSize) {
+            if(i ==0) query += "WHERE "
+            whereClause = if (i != whereSize-1) {
+                whereClause.append("${keys[i]} LIKE \"%${values[i]}%\" AND ")
+            } else {
+                whereClause.append("${keys[i]} LIKE \"%${values[i]}%\"")
+            }
+        }
+        if (status.equals("Не виконано")) {
+            if (whereSize>0) {
+                whereClause.append(" AND IsDone = \"${status}\"")
+            } else {
+                whereClause.append(" WHERE IsDone = \"${status}\"")
+            }
+        }
+        val st = query + whereClause.toString()
+
+        return testEntityDao.getSearchedUsersList(SimpleSQLiteQuery(st))
+    }
 
     companion object {
 
@@ -63,7 +105,7 @@ data class TestEntity(@PrimaryKey var name: String) {
 
         @SuppressLint("Range")
         @Ignore
-        fun getTextByFields(
+        fun getSearchedItemsByField(
             sdb: SupportSQLiteDatabase,
             tableName: String,
             fields: List<String>,
@@ -140,4 +182,24 @@ data class TestEntity(@PrimaryKey var name: String) {
     }
 
 
+    private var sdbw: SupportSQLiteDatabase = appDatabase.openHelper.writableDatabase
+
+    fun setDone(taskId: Int, num: String) {
+        val values = ContentValues()
+        values.put("IsDone", "Виконано")
+
+        sdbw.update("TD$taskId", OnConflictStrategy.REPLACE, values, "num=$num", null)
+
+    }
+
+    fun setUnDone(taskId: Int) {
+        val values = ContentValues()
+        values.put("IsDone", "Не виконано")
+
+        sdbw.update("TD$taskId", OnConflictStrategy.REPLACE, values, "", null)
+    }
+
+    fun deleteTable(taskId: Int) {
+        dropTable(sdbw, taskId)
+    }
 }

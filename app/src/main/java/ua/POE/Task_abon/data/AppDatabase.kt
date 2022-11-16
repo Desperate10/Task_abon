@@ -10,10 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
-import ua.POE.Task_abon.data.entities.UserData
 
 @Database(
-    entities = [TestEntity::class, TaskEntity::class, Directory::class, CatalogEntity::class, UserData::class, Result::class, Timing::class],
+    entities = [TaskEntity::class, Directory::class, CatalogEntity::class, UserData::class, Result::class, Timing::class],
     version = 9,
     exportSchema = false
 )
@@ -25,9 +24,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun directoryDao(): DirectoryDao
 
-    abstract fun testEntityDao(): TestEntityDao
-
     abstract fun resultDao(): ResultDao
+
+    abstract fun taskCustomerDao(): TaskCustomerDao
 
     abstract fun timingDao(): TimingDao
 
@@ -105,17 +104,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
         private fun buildDatabase(appContext: Context, scope: CoroutineScope) =
-            Room.databaseBuilder(appContext, AppDatabase::class.java, "app_database")
-                .addMigrations(
-                    MIGRATION_2_3,
-                    MIGRATION_3_4,
-                    MIGRATION_4_5,
-                    MIGRATION_5_6,
-                    MIGRATION_6_7,
-                    MIGRATION_7_8
-                )
-                .addCallback(AppDatabaseCallback(scope))
-                .allowMainThreadQueries()
-                .build()
+            Room.databaseBuilder(appContext, AppDatabase::class.java, "app_database").addMigrations(
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+                MIGRATION_6_7,
+                MIGRATION_7_8
+            ).addCallback(AppDatabaseCallback(scope)).allowMainThreadQueries().build()
     }
 }
