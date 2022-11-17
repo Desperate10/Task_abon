@@ -98,6 +98,7 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDatabase(context, scope).also { INSTANCE = it }

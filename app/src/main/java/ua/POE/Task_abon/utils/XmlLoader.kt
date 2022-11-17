@@ -12,10 +12,13 @@ import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 import ua.POE.Task_abon.data.AppDatabase
-import ua.POE.Task_abon.data.dao.*
+import ua.POE.Task_abon.data.dao.CatalogDao
+import ua.POE.Task_abon.data.dao.DirectoryDao
+import ua.POE.Task_abon.data.dao.TaskDao
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.*
-import java.io.*
+import java.io.BufferedReader
+import java.io.InputStreamReader
 import javax.inject.Inject
 
 
@@ -33,14 +36,16 @@ class XmlLoader @Inject constructor(
         val factory = XmlPullParserFactory.newInstance()
         factory.isNamespaceAware = true
         val parser: XmlPullParser = factory.newPullParser()
-        parser.setInput( //StringReader(fileContent)
-            BufferedReader(
-                InputStreamReader(
-                    context.contentResolver.openInputStream(uri),
-                    "windows-1251"
+        withContext(Dispatchers.IO) {
+            parser.setInput( //StringReader(fileContent)
+                BufferedReader(
+                    InputStreamReader(
+                        context.contentResolver.openInputStream(uri),
+                        "windows-1251"
+                    )
                 )
             )
-        )
+        }
         var eventType = parser.eventType
         var taskId = 0
         var tableName = ""
@@ -70,7 +75,8 @@ class XmlLoader @Inject constructor(
                             var filial = ""
                             var isJur = "0"
                             if (parser.attributeCount == 8) filial = parser.getAttributeValue(7)
-                            if (parser.attributeCount == 9) isJur = parser.getAttributeValue(8)
+                            if (parser.attributeCount == 9) isJur =
+                                (count.toInt() - parser.getAttributeValue(8).toInt()).toString()
                             taskDao.insert(
                                 TaskEntity(
                                     taskId,

@@ -9,23 +9,12 @@
         <item name="Заборгованість оплачено"/>
         <item name="Абонент відмовився від підпису"/>
     </string-array>
-    <!-- TODO: Add more sources -->
-    <string-array name="source_fields">
-        <item>-Не вибране-</item>
-        <item>Не мав доступу до лічильника</item>
-        <item>По телефону</item>
-        <item>Зі слів при відвіданні  АГ</item>
-        <item>Рейдова бригада</item>
-        <item>Тел.довідник</item>
-        <item>ВЕБ-сайт</item>
-    </string-array>
 
     <string-array name="status_fields">
         <item>Виконано</item>
         <item>Не виконано</item>
     </string-array>
 
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="enter_password_hint">Введіть пароль</string>
     <string name="noTask">Схоже, завдань немає…</string>
@@ -75,4 +64,10 @@
     <string name="no_needed_icons">Без позначок</string>
     <string name="contr_template">Показ. контр: %1$s</string>
     <string name="reset_filter">Скинути фільтр</string>
+    <string name="explain_permission_text">Базовий функціонал оснований на цих дозволах</string>
+    <string name="forward_to_settings_text">Вам потрібно дати необхідні дозволи в налаштуваннях вручну</string>
+    <string name="denied_permissions_text">"Ці дозволи відхилені: "</string>
+    <string name="feature_spinner_hint">Можливий вибір декількох пунктів:</string>
+    <string name="remove_all">Очистити все</string>
+    <string name="permission_accepted">Дозвіл дано</string>
 </resources>

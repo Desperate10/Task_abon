@@ -88,6 +88,9 @@ class UserInfoViewModel @Inject constructor(
     private val _saveAnswer = MutableStateFlow("")
     val saveAnswer: StateFlow<String> = _saveAnswer
 
+    private val _sources = MutableStateFlow<List<String>>(emptyList())
+    val sources: StateFlow<List<String>> = _sources
+
     private val timer = Timer()
     private var time = 0
 
@@ -119,7 +122,7 @@ class UserInfoViewModel @Inject constructor(
         blockNameList.addAll(directory.getBlockNames())
         emit(blockNameList)
     }.flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), listOf("Результати"))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), listOf("Результати"))
 
     val selectedBlockData = _customerIndex
         .combine(_selectedBlock) { _, selectedBlock ->
@@ -131,7 +134,7 @@ class UserInfoViewModel @Inject constructor(
                 getTextFieldsByBlockName(fields)
             }
         }.flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
 
     val savedData = _customerIndex
         .combine(_statusSpinnerPosition) { index, status ->
@@ -160,19 +163,13 @@ class UserInfoViewModel @Inject constructor(
     }
 
     private suspend fun updateSourceList(status: Int) {
-        _sources.value = getSourceList(status)
-    }
-
-    private val _sources = MutableStateFlow<List<String>>(emptyList())
-    val sources: StateFlow<List<String>> = _sources
-
-    private suspend fun getSourceList(position: Int): List<String> {
-        sourceList = if (position == 0) {
+        _sources.value = if (status == 0) {
             catalog.getSourceList("2")
         } else {
             catalog.getSourceList("3")
-        }.map { mapCatalogEntityToCatalog(it) }
-        return sourceList!!.map { it.text.toString() }
+        }
+            .map { mapCatalogEntityToCatalog(it) }
+            .map { it.text.toString() }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -433,7 +430,6 @@ class UserInfoViewModel @Inject constructor(
     fun setSourceSpinnerPosition(position: Int) {
         sourceSpinnerPosition.value = position
         getSelectedSourceCode(position)
-
     }
 
     private fun getSelectedSourceCode(position: Int) {

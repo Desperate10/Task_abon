@@ -31,6 +31,4 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowHomeEnabled(true)
     }
 
-
-
 }

@@ -6,6 +6,7 @@ import android.app.DatePickerDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.location.Location
 import android.location.LocationManager
@@ -21,7 +22,6 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
-import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -30,9 +30,10 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import com.permissionx.guolindev.PermissionX
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.domain.model.BasicInfo
@@ -76,8 +77,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
             if (isSuccess) {
                 latestTmpUri?.let { uri ->
-                    binding.results.addPhoto.setImageURI(uri)
-                    binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+                    setPic(uri)
                 }
             }
         }
@@ -197,42 +197,36 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 binding.results.thirdZoneRow.visibility = VISIBLE
             }
         }
-
         binding.results.lastDate.text = it.lastDate
         binding.results.lastDate.gravity = Gravity.CENTER
 
         val lastCount: List<String> = it.lastCount.split("/")
-
         binding.results.previousMeters1.text = lastCount[0]
-        binding.results.previousMeters1.textAlignment = View.TEXT_ALIGNMENT_GRAVITY
-        binding.results.previousMeters1.gravity = Gravity.CENTER
-        if (lastCount.size == 2) {
+        if (lastCount.size == ZONE_COUNT_2) {
             binding.results.previousMeters2.text = lastCount[1]
-        } else if (lastCount.size == 3) {
+        } else if (lastCount.size == ZONE_COUNT_3) {
             binding.results.previousMeters2.text = lastCount[1]
             binding.results.previousMeters3.text = lastCount[2]
         }
         binding.results.differenceText.text =
             String.format(getString(R.string.diff_template), it.averageUsage)
-        binding.results.differenceText.gravity = Gravity.CENTER
         binding.results.contrDate.text = it.checkDate
         binding.results.contrText.text =
             String.format(getString(R.string.contr_template), it.inspector)
-
     }
 
     private fun registerWatchers() {
-        zone1watcher = registerWatcher(
+        zone1watcher = DiffTextWatcher.registerWatcher(
             binding.results.newMeters1,
             binding.results.difference1,
             binding.results.previousMeters1
         )
-        zone2watcher = registerWatcher(
+        zone2watcher = DiffTextWatcher.registerWatcher(
             binding.results.newMeters2,
             binding.results.difference2,
             binding.results.previousMeters2
         )
-        zone3watcher = registerWatcher(
+        zone3watcher = DiffTextWatcher.registerWatcher(
             binding.results.newMeters3,
             binding.results.difference3,
             binding.results.previousMeters3
@@ -279,35 +273,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.sourceSpinner.onItemSelectedListener = this
     }
 
-    private fun registerWatcher(
-        newMeter: EditText,
-        difference: TextView,
-        oldMeter: TextView
-    ): TextWatcher? {
-        return try {
-            newMeter.doAfterTextChanged {
-                if (!it.isNullOrEmpty() && oldMeter.text.toString().isNotEmpty()) {
-                    difference.text = (
-                            it.toString().toInt() - oldMeter.text.toString()
-                                .toInt()).toString()
-                } else {
-                    difference.text = ""
-                }
-            }
-            oldMeter.doAfterTextChanged {
-                if (!it.isNullOrEmpty() && newMeter.text.toString().isNotEmpty()) {
-                    difference.text = (
-                            newMeter.text.toString().toInt() - it.toString()
-                                .toInt()).toString()
-                } else {
-                    difference.text = ""
-                }
-            }
-        } catch (e: NumberFormatException) {
-            return null
-        }
-    }
-
     override fun onStop() {
         super.onStop()
         if (locationManager != null) {
@@ -331,14 +296,14 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             .onExplainRequestReason { scope, deniedList ->
                 scope.showRequestReasonDialog(
                     deniedList,
-                    "Базовий функціонал оснований на цих дозволах",
+                    getString(R.string.explain_permission_text),
                     getString(R.string.yes), getString(R.string.cancel)
                 )
             }
             .onForwardToSettings { scope, deniedList ->
                 scope.showForwardToSettingsDialog(
                     deniedList,
-                    "Вам потрібно дати необхідні дозволи в налаштуваннях вручну",
+                    getString(R.string.forward_to_settings_text),
                     getString(R.string.yes), getString(R.string.cancel)
                 )
             }
@@ -348,8 +313,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                         requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
                     locationManager?.let {
                         it.requestLocationUpdates(
-                            LocationManager.GPS_PROVIDER, 1000,
-                            1f, this
+                            LocationManager.GPS_PROVIDER, EVERY_SECOND,
+                            EVERY_10M, this
                         )
                         if (!it.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                             LocationToggleDialogFragment.show(parentFragmentManager)
@@ -358,7 +323,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 } else {
                     Toast.makeText(
                         requireContext(),
-                        "Ці дозволи відхилені: $deniedList",
+                        "${getString(R.string.denied_permissions_text)} $deniedList",
                         Toast.LENGTH_LONG
                     ).show()
                 }
@@ -379,8 +344,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 Configuration.UI_MODE_NIGHT_NO ->
                     setBackgroundColor(Color.WHITE)
             }
-            hintText = "Можливий вибір декількох пунктів:"
-            setClearText("Очистити все")
+            hintText = getString(R.string.feature_spinner_hint)
+            setClearText(getString(R.string.remove_all))
             setItems(customerFeatures) { items ->
                 viewModel.setItems(items)
             }
@@ -486,6 +451,40 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
     }
 
+    private fun setPic(uri: Uri) {
+        // Get the dimensions of the View
+        val job = CoroutineScope(Dispatchers.Default).launch {
+            val targetW: Int = binding.results.addPhoto.width
+            val targetH: Int = binding.results.addPhoto.height
+
+            val bmOptions = BitmapFactory.Options().apply {
+                // Get the dimensions of the bitmap
+                inJustDecodeBounds = true
+
+                val photoW: Int = outWidth
+                val photoH: Int = outHeight
+
+                // Determine how much to scale down the image
+                val scaleFactor: Int =
+                    1.coerceAtLeast((photoW / targetW).coerceAtMost(photoH / targetH))
+
+                // Decode the image file into a Bitmap sized to fill the View
+                inJustDecodeBounds = false
+                inSampleSize = scaleFactor
+            }
+
+            BitmapFactory.decodeStream(
+                context?.contentResolver?.openInputStream(uri),
+                null,
+                bmOptions
+            )?.also { bitmap ->
+                binding.results.addPhoto.setImageBitmap(bitmap)
+                binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+            }
+        }
+        job.cancel()
+    }
+
     private fun getTmpFileUri(): Uri {
         val filename = filial + "_" + binding.personalAccount.text.toString().substringBefore(" ")
             .replace("/", "") + "_"
@@ -498,7 +497,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         return FileProvider.getUriForFile(
             requireActivity(),
-            "${BuildConfig.APPLICATION_ID}.fileprovider",
+            "ua.POE.Task_abon.fileprovider",
             tmpFile
         )
     }
@@ -550,7 +549,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.phone.setText("")
         viewModel.setResultSavedState(false)
         if (latestTmpUri == null) {
-            binding.results.addPhoto.setImageResource(R.drawable.ic_baseline_add_a_photo_24)
+            binding.results.addPhoto.setImageDrawable(null)
         }
     }
 
@@ -603,6 +602,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
     }
 
+    @SuppressLint("InflateParams")
     private fun createRow(name: String, data: String) {
         val inflater = LayoutInflater.from(activity)
         val row: TableRow = inflater.inflate(R.layout.user_info_row, null) as TableRow
@@ -639,7 +639,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             zone1 = binding.results.newMeters1.text.toString(),
             zone2 = binding.results.newMeters2.text.toString(),
             zone3 = binding.results.newMeters3.text.toString(),
-            note = binding.results.note.text.toString().replace("[\\t\\n\\r]+"," "),
+            note = binding.results.note.text.toString().replace("[\\t\\n\\r]+", " "),
             phoneNumber = binding.results.phone.text.toString(),
             lat = binding.lat.text.toString(),
             lng = binding.lng.text.toString(),
@@ -648,4 +648,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         )
     }
 
+    companion object {
+        const val ZONE_COUNT_1 = 1
+        const val ZONE_COUNT_2 = 2
+        const val ZONE_COUNT_3 = 3
+        const val EVERY_SECOND = 1000L
+        const val EVERY_10M = 10f
+    }
 }
