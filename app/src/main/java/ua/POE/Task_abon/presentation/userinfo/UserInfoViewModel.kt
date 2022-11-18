@@ -163,13 +163,13 @@ class UserInfoViewModel @Inject constructor(
     }
 
     private suspend fun updateSourceList(status: Int) {
-        _sources.value = if (status == 0) {
+        sourceList = if (status == 0) {
             catalog.getSourceList("2")
         } else {
             catalog.getSourceList("3")
         }
             .map { mapCatalogEntityToCatalog(it) }
-            .map { it.text.toString() }
+        _sources.value = sourceList!!.map { it.text.toString() }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

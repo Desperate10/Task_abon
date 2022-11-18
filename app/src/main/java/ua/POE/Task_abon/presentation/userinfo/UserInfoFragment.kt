@@ -34,6 +34,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.domain.model.BasicInfo
@@ -497,7 +498,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         return FileProvider.getUriForFile(
             requireActivity(),
-            "ua.POE.Task_abon.fileprovider",
+            "${BuildConfig.APPLICATION_ID}.fileprovider",
             tmpFile
         )
     }

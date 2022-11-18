@@ -3,16 +3,25 @@ package ua.POE.Task_abon.presentation.task
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.work.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
-import ua.POE.Task_abon.data.dao.*
+import kotlinx.coroutines.withContext
+import ua.POE.Task_abon.data.dao.DirectoryDao
+import ua.POE.Task_abon.data.dao.ResultDao
+import ua.POE.Task_abon.data.dao.TaskDao
+import ua.POE.Task_abon.data.dao.TimingDao
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.network.UploadWorker
 import ua.POE.Task_abon.utils.XmlLoader
 import ua.POE.Task_abon.utils.mapLatestIterable
 import ua.POE.Task_abon.utils.saveReadFile
@@ -25,7 +34,8 @@ class TaskViewModel @Inject constructor(
     private val directory: DirectoryDao,
     private val result: ResultDao,
     private val timing: TimingDao,
-    private val xmlLoader: XmlLoader
+    private val xmlLoader: XmlLoader,
+    private val workManager: WorkManager,
 ) : ViewModel() {
 
     val tasks: Flow<List<TaskInfo>> =
@@ -61,15 +71,42 @@ class TaskViewModel @Inject constructor(
         return createXml(result, timing)
     }
 
+    fun uploadImagesRequestBuilder(taskId: Int) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                val photoUris = getPhotos(taskId)
+                val constraints = Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build()
+                val request = OneTimeWorkRequestBuilder<UploadWorker>()
+                    .setInputData(
+                        uriInputDataBuilder(photoUris.toTypedArray())
+                    )
+                    .setConstraints(constraints)
+                    .build()
+                workManager.enqueue(request)
+            }
+        }
+    }
+
+    private fun uriInputDataBuilder(uri: Array<String>): Data {
+        return Data.Builder().putStringArray(KEY_IMAGE_URI, uri).build()
+    }
+
+
     suspend fun getPhotos(taskId: Int): List<String> = result.getAllPhotos(taskId)
 
     private suspend fun getTiming(taskId: Int) = timing.getTiming(taskId)
 
     private suspend fun getResult(taskId: Int) = result.getResultByTaskId(taskId)
 
-    private suspend fun readFile(uri : Uri) = saveReadFile { xmlLoader.readXml(uri) }
+    private suspend fun readFile(uri: Uri) = saveReadFile { xmlLoader.readXml(uri) }
 
-    suspend fun createXml(results : List<Result>, timings: List<Timing>) = xmlLoader.createXml(results, timings)
+    private suspend fun createXml(results: List<Result>, timings: List<Timing>) =
+        xmlLoader.createXml(results, timings)
 
+    companion object {
+        const val KEY_IMAGE_URI = "KEY_image_uri"
+    }
 
 }

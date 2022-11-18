@@ -3,7 +3,6 @@ package ua.POE.Task_abon.presentation.task
 import android.Manifest
 import android.content.DialogInterface
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
@@ -11,7 +10,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
-import androidx.core.net.toUri
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -28,36 +26,28 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.MediaType
-import okhttp3.MultipartBody
-import okhttp3.RequestBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentTasksBinding
 import ua.POE.Task_abon.domain.model.TaskInfo
-import ua.POE.Task_abon.network.MyApi
-import ua.POE.Task_abon.network.UploadRequestBody
-import ua.POE.Task_abon.network.UploadResponse
 import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
 import ua.POE.Task_abon.utils.autoCleaned
-import ua.POE.Task_abon.utils.getFileName
-import ua.POE.Task_abon.utils.snackbar
-import java.io.*
+import java.io.BufferedWriter
+import java.io.IOException
+import java.io.OutputStreamWriter
+import java.io.Writer
 
 
 /*TODO
    -диалоги перенести
-* - вынести загрузку картинки
+   - сделать пуш для загрузки фото
 * - завернуть в sealed чтение файла
+ - createFragment from static with navigation
 */
 
 @AndroidEntryPoint
-class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
-    UploadRequestBody.UploadCallback {
+class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
 
     private var binding: FragmentTasksBinding by autoCleaned()
     private val viewModel: TaskViewModel by viewModels()
@@ -148,7 +138,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
     }
 
     private fun requestPermission() {
-        PermissionX.init(requireActivity())
+        PermissionX.init(this)
             .permissions(
                 Manifest.permission.READ_EXTERNAL_STORAGE
             )
@@ -167,13 +157,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
                 )
             }
             .request { allGranted, _, deniedList ->
-                if (allGranted) {
-                    Toast.makeText(
-                        requireContext(),
-                        getString(R.string.permission_accepted),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
+                if (!allGranted) {
                     Toast.makeText(
                         requireContext(),
                         "${getString(R.string.denied_permissions_text)} $deniedList",
@@ -228,59 +212,8 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
         builder.show()
     }
 
-    private fun prepareFilePart(
-        fileUri: Uri, body: UploadRequestBody
-    ): MultipartBody.Part {
-        val file = fileUri.path?.let { File(it) }
-        return MultipartBody.Part.createFormData("files", file?.name, body)
-    }
-
-    private fun uploadImage(uriStrings: List<String>) {
-
-        val list: ArrayList<MultipartBody.Part> = ArrayList()
-        for (i in uriStrings.indices) {
-
-            val parcelFileDescriptor = requireActivity().contentResolver.openFileDescriptor(
-                uriStrings[i].toUri(), WRITE_MODE, null
-            ) ?: return
-
-            val inputStream = FileInputStream(parcelFileDescriptor.fileDescriptor)
-            parcelFileDescriptor.close()
-            val file = File(
-                requireActivity().cacheDir, requireActivity().contentResolver.getFileName(
-                    uriStrings[i].toUri()
-                )
-            )
-            val outputStream = FileOutputStream(file)
-            inputStream.copyTo(outputStream)
-            val body = UploadRequestBody(file, "image", this)
-            list.add(prepareFilePart(uriStrings[i].toUri(), body))
-
-        }
-        binding.progressBar.progress = 0
-
-        MyApi().uploadImage(
-            list, RequestBody.create(MediaType.parse("multipart/form-data"), "json")
-        ).enqueue(object : Callback<UploadResponse> {
-            override fun onFailure(call: Call<UploadResponse>, t: Throwable) {
-                binding.layoutRoot.snackbar(t.message!!)
-                binding.progressBar.progress = 0
-            }
-
-            override fun onResponse(
-                call: Call<UploadResponse>, response: Response<UploadResponse>
-            ) {
-                response.body()?.let {
-                    binding.layoutRoot.snackbar(it.message)
-                    binding.progressBar.progress = 100
-                }
-            }
-        })
-
-    }
-
-    override fun onProgressUpdate(percentage: Int) {
-        binding.progressBar.progress = percentage
+    private fun uploadImages(taskId: Int) {
+        viewModel.uploadImagesRequestBuilder(taskId)
     }
 
     private fun clearTaskData(task: TaskInfo) {
@@ -362,13 +295,12 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
                     w.write(sb)
                     w.flush()
                     w.close()
-                    val photosUris = viewModel.getPhotos(taskId)
-                    uploadImage(photosUris)
                 }
             } catch (e: IOException) {
-                Toast.makeText(requireContext(), "Файл не знайдено", Toast.LENGTH_SHORT).show()
+                e.printStackTrace()
             }
         }
+        uploadImages(taskId)
     }
 
     private fun showInfo() {
@@ -380,10 +312,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener,
             ).setNegativeButton("Oк") { dialog, _ ->
                 dialog.dismiss()
             }.show()
-    }
-
-    companion object {
-        const val WRITE_MODE = "r"
     }
 
 }

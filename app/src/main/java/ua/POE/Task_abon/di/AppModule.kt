@@ -1,12 +1,16 @@
 package ua.POE.Task_abon.di
 
+import android.app.Application
 import android.content.Context
+import androidx.work.WorkManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.AppDatabase
@@ -30,6 +34,15 @@ object AppModule {
     @Provides
     fun provideDatabase(@ApplicationContext appContext: Context, scope: CoroutineScope) =
         AppDatabase.getDatabase(appContext, scope)
+
+    @Provides
+    @Singleton
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @Singleton
+    @Provides
+    fun provideWorkManager(@ApplicationContext application: Context): WorkManager =
+        WorkManager.getInstance(application)
 
     @Singleton
     @Provides
@@ -68,7 +81,10 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideTaskCustomersDaoImpl(db: AppDatabase,  taskCustomerDao: TaskCustomerDao): TaskCustomerDaoImpl {
+    fun provideTaskCustomersDaoImpl(
+        db: AppDatabase,
+        taskCustomerDao: TaskCustomerDao
+    ): TaskCustomerDaoImpl {
         return TaskCustomerDaoImpl(db, taskCustomerDao)
     }
 
