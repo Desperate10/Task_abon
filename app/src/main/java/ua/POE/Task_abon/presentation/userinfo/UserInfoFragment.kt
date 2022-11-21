@@ -19,6 +19,7 @@ import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.*
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
@@ -53,7 +54,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @AndroidEntryPoint
-class UserInfoFragment : Fragment(), View.OnClickListener,
+class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
     DatePickerDialog.OnDateSetListener, ItemSelectedListener, MyLocationListener,
     ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -368,7 +369,13 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                requireActivity().onBackPressedDispatcher.onBackPressed()
+                requireActivity().onBackPressedDispatcher.addCallback(object :
+                    OnBackPressedCallback(true) {
+                    override fun handleOnBackPressed() {
+                        TODO("Not yet implemented")
+                    }
+
+                })
             }
             R.id.save_customer_data -> {
                 if (binding.lat.text != "0.0") {

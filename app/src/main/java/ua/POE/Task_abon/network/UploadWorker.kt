@@ -1,16 +1,17 @@
 package ua.POE.Task_abon.network
 
 import android.app.Notification
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
-import android.util.Log
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
 import androidx.hilt.work.HiltWorker
-import androidx.work.CoroutineWorker
-import androidx.work.ForegroundInfo
-import androidx.work.WorkerParameters
+import androidx.work.*
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -22,7 +23,6 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.presentation.task.TaskViewModel.Companion.KEY_IMAGE_URI
 import ua.POE.Task_abon.utils.getFileName
 import java.io.File
 import java.io.FileInputStream
@@ -36,29 +36,66 @@ class UploadWorker @AssistedInject constructor(
     private val ioDispatcher: CoroutineDispatcher
 ) : CoroutineWorker(context, workerParameters), UploadRequestBody.UploadCallback {
 
-    private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private val notificationManager =
+        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private var uploadProgress = 0
+    private var photoName = ""
 
-    override suspend fun getForegroundInfo(): ForegroundInfo {
+    /*override suspend fun getForegroundInfo(): ForegroundInfo {
         return ForegroundInfo(
             NOTIFICATION_ID, createNotification()
         )
+    }*/
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createChannel() {
+        val channel =
+            NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
+        notificationManager.createNotificationChannel(channel)
     }
 
-    private fun createNotification() : Notification {
+    private suspend fun startForegroundService() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createChannel()
+        }
+        setForeground(
+            ForegroundInfo(
+                NOTIFICATION_ID,
+                NotificationCompat.Builder(context, CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_launcher_foreground)
+                    .setContentTitle(photoName)
+                    .setContentText("Вигрузка фото...")
+                    .setProgress(100, uploadProgress, false)
+                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                    .setOngoing(true)
+                    .setAutoCancel(true)
+                    .build()
+            )
+        )
+    }
+
+    private fun createNotification(): Notification {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createChannel()
+        }
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle("Загрузка фото")
-            .setContentText("Загрузка продовжується")
-            .setProgress(100, 5, false)
+            .setContentTitle(photoName)
+            .setContentText("Вигрузка фото...")
+            .setProgress(100, uploadProgress, false)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setOngoing(true)
+            .setAutoCancel(true)
             .build()
         return notification
     }
 
-    override suspend fun doWork(): Result =
-        withContext(ioDispatcher) {
-            val inputPhotoUri = inputData.getStringArray(KEY_IMAGE_URI)
-            return@withContext try{
+
+    override suspend fun doWork(): Result  {
+        startForegroundService()
+        return withContext(ioDispatcher) {
+            val inputPhotoUri = inputData.getStringArray(URI_ARRAY)
+            try {
                 uploadImages(inputPhotoUri?.toList() ?: emptyList())
             } catch (e: IOException) {
                 Result.failure()
@@ -66,9 +103,10 @@ class UploadWorker @AssistedInject constructor(
                 Result.failure()
             }
         }
+    }
 
 
-    private fun uploadImages(uriStrings: List<String>) : Result {
+    private fun uploadImages(uriStrings: List<String>): Result {
 
         if (uriStrings.isEmpty()) {
             return Result.failure()
@@ -99,13 +137,18 @@ class UploadWorker @AssistedInject constructor(
             list, RequestBody.create(MediaType.parse("multipart/form-data"), "json")
         ).enqueue(object : Callback<UploadResponse> {
             override fun onFailure(call: Call<UploadResponse>, t: Throwable) {
-               result = Result.failure()
+                uploadProgress = 0
+                result = Result.failure()
             }
 
             override fun onResponse(
                 call: Call<UploadResponse>, response: Response<UploadResponse>
             ) {
                 response.body()?.let {
+                    if (response.code().toString().startsWith("5")) {
+                        result = Result.retry()
+                    }
+                    uploadProgress = 100
                     result = Result.success()
                 }
             }
@@ -121,12 +164,30 @@ class UploadWorker @AssistedInject constructor(
         return MultipartBody.Part.createFormData("files", file?.name, body)
     }
 
-    override fun onProgressUpdate(percentage: Int) {
-
+    override fun onProgressUpdate(percentage: Int, fileName: String) {
+        uploadProgress = percentage
+        photoName = fileName
     }
 
     companion object {
         const val NOTIFICATION_ID = 1
         const val CHANNEL_ID = "photo_channel"
+        const val CHANNEL_NAME = "upload_photo"
+        const val WORK_NAME = "upload_photo_worker"
+        const val ERROR_MSG = "error_message"
+        private const val URI_ARRAY = "URI_ARRAY"
+
+        fun makeRequest(uri: Array<String>) : OneTimeWorkRequest {
+            return OneTimeWorkRequestBuilder<UploadWorker>().apply {
+                setInputData(workDataOf(URI_ARRAY to uri))
+                setConstraints(makeConstraints())
+            }.build()
+        }
+
+        private fun makeConstraints() : Constraints {
+            return Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
+        }
     }
 }

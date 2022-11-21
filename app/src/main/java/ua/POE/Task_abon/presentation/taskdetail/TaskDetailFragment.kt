@@ -90,9 +90,10 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
                 viewModel.getCustomersData.collect {
                     userData = it
                     adapter.submitList(it)
-                    with(binding.recyclerview) {
+                    //проверить будет ли возврат
+                    /*with(binding.recyclerview) {
                         post { scrollToPosition(0) }
-                    }
+                    }*/
                     binding.finished.text = getString(R.string.status_done, count, userData.size)
                 }
             }

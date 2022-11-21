@@ -75,22 +75,13 @@ class TaskViewModel @Inject constructor(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val photoUris = getPhotos(taskId)
-                val constraints = Constraints.Builder()
-                    .setRequiredNetworkType(NetworkType.CONNECTED)
-                    .build()
-                val request = OneTimeWorkRequestBuilder<UploadWorker>()
-                    .setInputData(
-                        uriInputDataBuilder(photoUris.toTypedArray())
-                    )
-                    .setConstraints(constraints)
-                    .build()
-                workManager.enqueue(request)
+                workManager.enqueueUniqueWork(
+                    UploadWorker.WORK_NAME,
+                    ExistingWorkPolicy.APPEND_OR_REPLACE,
+                    UploadWorker.makeRequest(photoUris.toTypedArray())
+                )
             }
         }
-    }
-
-    private fun uriInputDataBuilder(uri: Array<String>): Data {
-        return Data.Builder().putStringArray(KEY_IMAGE_URI, uri).build()
     }
 
 
@@ -104,9 +95,5 @@ class TaskViewModel @Inject constructor(
 
     private suspend fun createXml(results: List<Result>, timings: List<Timing>) =
         xmlLoader.createXml(results, timings)
-
-    companion object {
-        const val KEY_IMAGE_URI = "KEY_image_uri"
-    }
 
 }

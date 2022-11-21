@@ -340,66 +340,76 @@ class UserInfoViewModel @Inject constructor(
         photo: String
     ) {
         viewModelScope.launch {
-            if (phoneNumber.isNotEmpty() && (phoneNumber.take(3) !in operators.value || phoneNumber.length < 10)) {
-                _saveAnswer.value = "Неправильний формат номера телефону"
-            } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
-                _saveAnswer.value = "Ви забули вказати джерело"
-            } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
-                val task: TaskEntity = getTask(taskId)
-                val fields =
-                    listOf("num", "accountId", "Numbpers", "family", "Adress", "tel", "counpleas")
-                val user =
-                    customer.getTextByFields("TD$taskId", fields, customerIndex.value)
-                val isMainPhoneInt = if (isMainPhone) 1 else 0
-                val photoValid = if (photo.length > 4) {
-                    photo
+            withContext(Dispatchers.IO) {
+                if (phoneNumber.isNotEmpty() && (phoneNumber.take(3) !in operators.value || phoneNumber.length < 10)) {
+                    _saveAnswer.value = "Неправильний формат номера телефону"
+                } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
+                    _saveAnswer.value = "Ви забули вказати джерело"
+                } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
+                    val task: TaskEntity = getTask(taskId)
+                    val fields =
+                        listOf(
+                            "num",
+                            "accountId",
+                            "Numbpers",
+                            "family",
+                            "Adress",
+                            "tel",
+                            "counpleas"
+                        )
+                    val user =
+                        customer.getTextByFields("TD$taskId", fields, customerIndex.value)
+                    val isMainPhoneInt = if (isMainPhone) 1 else 0
+                    val photoValid = if (photo.length > 4) {
+                        photo
+                    } else {
+                        null
+                    }
+
+                    val saveData = Result(
+                        task.name,
+                        task.date,
+                        taskId,
+                        task.filial,
+                        _customerIndex.value,
+                        user["num"]!!,
+                        user["accountId"]!!,
+                        date,
+                        statusSpinnerPosition.value.toString(),
+                        selectedSourceCode,
+                        multiSpinnerSelectedFeatures.joinToString(),
+                        zone1,
+                        zone2,
+                        zone3,
+                        note,
+                        user["tel"]!!,
+                        phoneNumber,
+                        isMainPhoneInt,
+                        "",
+                        type,
+                        counter,
+                        zoneCount,
+                        capacity,
+                        avgUsage,
+                        lat,
+                        lng,
+                        personalAccount,
+                        user["family"],
+                        user["Adress"],
+                        photoValid,
+                        user["counpleas"]
+                    )
+
+                    val currentDateAndTime =
+                        dateAndTimeFormat.format(Date())
+                    saveEditTiming(startEditTime, currentDateAndTime)
+                    result.insertNewData(saveData)
+                    customer.setDone(taskId, user["num"]!!)
+                    setResultSavedState(true)
+                    _saveAnswer.value = "Результати збережено"
                 } else {
-                    null
+                    _saveAnswer.value = "Ви не ввели нові показники"
                 }
-
-                val saveData = Result(
-                    task.name,
-                    task.date,
-                    taskId,
-                    task.filial,
-                    _customerIndex.value,
-                    user["num"]!!,
-                    user["accountId"]!!,
-                    date,
-                    statusSpinnerPosition.value.toString(),
-                    selectedSourceCode,
-                    multiSpinnerSelectedFeatures.joinToString(),
-                    zone1,
-                    zone2,
-                    zone3,
-                    note,
-                    user["tel"]!!,
-                    phoneNumber,
-                    isMainPhoneInt,
-                    "",
-                    type,
-                    counter,
-                    zoneCount,
-                    capacity,
-                    avgUsage,
-                    lat,
-                    lng,
-                    personalAccount,
-                    user["family"],
-                    user["Adress"],
-                    photoValid,
-                    user["counpleas"]
-                )
-
-                val currentDateAndTime =
-                    dateAndTimeFormat.format(Date())
-                saveEditTiming(startEditTime, currentDateAndTime)
-                result.insertNewData(saveData)
-                customer.setDone(taskId, user["num"]!!)
-                setResultSavedState(true)
-                _saveAnswer.value = "Результати збережено"
-            } else {
-                _saveAnswer.value = "Ви не ввели нові показники"
             }
         }
     }
