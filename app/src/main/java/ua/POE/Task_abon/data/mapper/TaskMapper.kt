@@ -9,6 +9,7 @@ fun TaskEntity.toTaskInfo(): TaskInfo {
         name = name,
         date = date,
         count = count,
+        filial = filial,
         fileName = fileName,
         isJur = isJur
     )
@@ -20,7 +21,7 @@ fun TaskInfo.toTask(): TaskEntity {
         name = name,
         date = date,
         count = count,
-        filial = "",
+        filial = filial,
         fileName = fileName,
         tableName = "TD$id",
         isJur = isJur

@@ -16,6 +16,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -177,7 +178,10 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
                     "Дата створення: ${task.date}, " +
                     "Юр.особи: ${task.isJur}"
         )
-        findNavController().navigate(R.id.action_tasksFragment_to_taskDetailFragment, bundle)
+        with(findNavController()) {
+            currentDestination?.getAction(R.id.action_tasksFragment_to_taskDetailFragment)
+                ?.let { navigate(R.id.action_tasksFragment_to_taskDetailFragment, bundle) }
+        }
     }
 
     override fun onLongClick(task: TaskInfo) {

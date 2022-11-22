@@ -22,7 +22,7 @@ import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.domain.model.TaskInfo
 import ua.POE.Task_abon.network.UploadWorker
-import ua.POE.Task_abon.utils.XmlLoader
+import ua.POE.Task_abon.data.xml.XmlLoader
 import ua.POE.Task_abon.utils.mapLatestIterable
 import ua.POE.Task_abon.utils.saveReadFile
 import javax.inject.Inject

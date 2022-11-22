@@ -23,7 +23,7 @@ interface TimingDao {
     suspend fun getFirstEditDate(taskId: Int, num: Int): String?
 
     @Query("SELECT editSeconds FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
-    suspend fun getEditTime(taskId: Int, num: Int): Int
+    suspend fun getEditTime(taskId: Int, num: Int): Int?
 
     @Query("UPDATE timing SET firstEditDate = :firstEditDate WHERE task_id = :taskId AND Numb = :num")
     suspend fun updateFirstEditDate(taskId: Int, num: Int, firstEditDate: String)

@@ -9,6 +9,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
+import ua.POE.Task_abon.BuildConfig
 
 interface MyApi {
     @Multipart
@@ -22,7 +23,7 @@ interface MyApi {
         operator fun invoke() :MyApi{
 
             return Retrofit.Builder()
-                .baseUrl("http://task.poe.pl.ua:8880/app/")
+                .baseUrl(BuildConfig.MY_CLOUD_API)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
                 .create(MyApi::class.java)

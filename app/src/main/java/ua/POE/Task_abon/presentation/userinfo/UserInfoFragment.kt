@@ -15,11 +15,11 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
 import android.widget.*
-import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.FileProvider
@@ -35,6 +35,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
@@ -54,7 +55,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 @AndroidEntryPoint
-class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
+class UserInfoFragment : Fragment(), View.OnClickListener,
     DatePickerDialog.OnDateSetListener, ItemSelectedListener, MyLocationListener,
     ActivityCompat.OnRequestPermissionsResultCallback {
 
@@ -110,6 +111,7 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
 
     private fun observeViewModel() {
 
+        viewModel.getTask()
         viewModel.setStartEditTime()
         viewModel.getOperatorsList()
 
@@ -279,6 +281,7 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
         super.onStop()
         if (locationManager != null) {
             locationManager?.removeUpdates(this)
+            locationManager = null
         }
         removeTextWatchers()
     }
@@ -369,13 +372,7 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                requireActivity().onBackPressedDispatcher.addCallback(object :
-                    OnBackPressedCallback(true) {
-                    override fun handleOnBackPressed() {
-                        TODO("Not yet implemented")
-                    }
-
-                })
+                requireActivity().onBackPressedDispatcher.onBackPressed()
             }
             R.id.save_customer_data -> {
                 if (binding.lat.text != "0.0") {
@@ -398,9 +395,9 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
             this
         ) { isNext, buttonPressed ->
             if (buttonPressed == DialogInterface.BUTTON_POSITIVE) {
-                saveResult()
+                saveResult(true, isNext)
             }
-            selectCustomer(isNext)
+            //selectCustomer(isNext)
         }
     }
 
@@ -461,7 +458,6 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
 
     private fun setPic(uri: Uri) {
         // Get the dimensions of the View
-        val job = CoroutineScope(Dispatchers.Default).launch {
             val targetW: Int = binding.results.addPhoto.width
             val targetH: Int = binding.results.addPhoto.height
 
@@ -486,11 +482,10 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
                 null,
                 bmOptions
             )?.also { bitmap ->
-                binding.results.addPhoto.setImageBitmap(bitmap)
-                binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+                    binding.results.addPhoto.setImageBitmap(bitmap)
+                    binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+
             }
-        }
-        job.cancel()
     }
 
     private fun getTmpFileUri(): Uri {
@@ -641,7 +636,7 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
         binding.results.newDate.text = dateFormat.format(calendar.time)
     }
 
-    private fun saveResult() {
+    private fun saveResult(selectCustomer: Boolean = false, isNext: Boolean = true) {
         viewModel.saveResults(
             date = binding.results.newDate.text.toString(),
             zone1 = binding.results.newMeters1.text.toString(),
@@ -652,7 +647,9 @@ class UserInfoFragment(enabled: Boolean) : Fragment(), View.OnClickListener,
             lat = binding.lat.text.toString(),
             lng = binding.lng.text.toString(),
             isMainPhone = binding.results.checkBox.isChecked,
-            photo = latestTmpUri.toString()
+            photo = latestTmpUri.toString(),
+            selectCustomer = selectCustomer,
+            isNext = isNext
         )
     }
 

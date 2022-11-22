@@ -5,8 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.Result
@@ -14,10 +17,8 @@ import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
 import ua.POE.Task_abon.data.mapper.mapResultToSavedData
-import ua.POE.Task_abon.domain.model.BasicInfo
-import ua.POE.Task_abon.domain.model.Catalog
-import ua.POE.Task_abon.domain.model.SavedData
-import ua.POE.Task_abon.domain.model.TechInfo
+import ua.POE.Task_abon.data.mapper.toTaskInfo
+import ua.POE.Task_abon.domain.model.*
 import ua.POE.Task_abon.presentation.model.Icons
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
@@ -41,14 +42,7 @@ class UserInfoViewModel @Inject constructor(
     private var startEditTime: String = ""
     private var selectedSourceCode = ""
     private var multiSpinnerSelectedFeatures = listOf<String>()
-    private var checkDate = ""
-    private var type = ""
-    private var lastCount = ""
     private var counter = ""
-    private var zoneCount = ""
-    private var capacity = ""
-    private var avgUsage = ""
-    private var lastDate = ""
     private var personalAccount = ""
     private var personalAccountKey = ""
     private var personalAccountEmoji = ""
@@ -77,6 +71,7 @@ class UserInfoViewModel @Inject constructor(
 
     private val sourceSpinnerPosition = MutableStateFlow(0)
 
+    private val _taskInfo = MutableStateFlow<TaskInfo>(TaskInfo())
     private val _techInfo = MutableStateFlow<Map<String, String>>(emptyMap())
 
     private val _customerIndex = MutableStateFlow(index)
@@ -124,22 +119,20 @@ class UserInfoViewModel @Inject constructor(
     }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), listOf("Результати"))
 
-    val selectedBlockData = _customerIndex
-        .combine(_selectedBlock) { _, selectedBlock ->
-            if (selectedBlock == "Результати") {
-                updateTechInfoMap()
-                _techInfo.value
-            } else {
-                val fields = getFieldsByBlockName(selectedBlock)
-                getTextFieldsByBlockName(fields)
-            }
-        }.flowOn(Dispatchers.IO)
+    val selectedBlockData = combine(_customerIndex, _selectedBlock) { _, selectedBlock ->
+        if (selectedBlock == "Результати") {
+            updateTechInfoMap()
+            _techInfo.value
+        } else {
+            val fields = directory.getFieldsByBlockName(selectedBlock, taskId)
+            getTextFieldsByBlockName(fields)
+        }
+    }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
 
-    val savedData = _customerIndex
-        .combine(_statusSpinnerPosition) { index, status ->
-            getSavedData(index, status)
-        }
+    val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, status ->
+        getSavedData(index, status)
+    }
         .flowOn(Dispatchers.Main)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
@@ -154,7 +147,7 @@ class UserInfoViewModel @Inject constructor(
         }
 
         val sourceName = if (!savedData.source.isNullOrEmpty()) {
-            getSourceName(savedData.source, type)
+            catalog.getSelectedSourceName(savedData.source, type)
         } else {
             ""
         }
@@ -204,7 +197,7 @@ class UserInfoViewModel @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val preloadResultTab = _customerIndex
+    val preloadResultTab: StateFlow<TechInfo> = _customerIndex
         .flatMapLatest {
             selectedBlock
         }
@@ -213,35 +206,36 @@ class UserInfoViewModel @Inject constructor(
         }
         .mapLatest { showTechInfo() }
         .flowOn(Dispatchers.IO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TechInfo())
 
     private fun showTechInfo(): TechInfo {
         val controlInfo = StringBuilder()
-
+        val techInfo = TechInfo()
         _techInfo.value.forEach { (key, value) ->
             when (key) {
                 "TimeZonalId" -> {
-                    zoneCount = value
+                    techInfo.zoneCount = value
                 }
                 "Lastdate" -> {
-                    lastDate = value
+                    techInfo.lastDate = value
                 }
                 "Lastlcount" -> {
-                    lastCount = value
+                    techInfo.lastCount = value
                 }
                 "srnach" -> {
-                    avgUsage = value
+                    techInfo.averageUsage = value
                 }
                 "type" -> {
-                    type = value
+                    techInfo.type = value
                 }
                 "Counter_numb" -> {
                     counter = value
                 }
                 "Rozr" -> {
-                    capacity = value
+                    techInfo.capacity = value
                 }
                 "contr_date" -> {
-                    checkDate = value
+                    techInfo.checkDate = value
                     controlInfo.append(" $value")
                 }
                 "contr_pok" -> {
@@ -252,16 +246,8 @@ class UserInfoViewModel @Inject constructor(
                 }
             }
         }
-        return TechInfo(
-            zoneCount = zoneCount,
-            lastDate = lastDate,
-            lastCount = lastCount,
-            averageUsage = avgUsage,
-            type = type,
-            capacity = capacity,
-            checkDate = checkDate,
-            inspector = controlInfo.toString()
-        )
+        techInfo.inspector = controlInfo.toString()
+        return techInfo
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -275,54 +261,45 @@ class UserInfoViewModel @Inject constructor(
     private fun getTextFieldsByBlockName(fields: List<String>) =
         customer.getFieldsByBlock(taskId, fields, _customerIndex.value)
 
-    private suspend fun getFieldsByBlockName(name: String): List<String> =
-        directory.getFieldsByBlockName(name, taskId)
-
     private suspend fun updateTechInfoMap() {
-        val fields = getFieldsByBlockName("Тех.информация")
+        val fields = directory.getFieldsByBlockName("Тех.информация", taskId)
         _techInfo.value =
             customer.getTextByFields("TD$taskId", fields, _customerIndex.value)
     }
 
     //save date when pressing saveResult
-    private fun saveEditTiming(firstEditDate: String, date: String) {
-        viewModelScope.launch {
-            coroutineScope {
-                if (timing.getStartTaskDate(taskId, _customerIndex.value).isNullOrEmpty()) {
-                    timing.insertTiming(
-                        Timing(
-                            taskId = taskId,
-                            num = _customerIndex.value,
-                            startTaskTime = firstEditDate,
-                            endTaskTime = date,
-                            "",
-                            0,
-                            0,
-                            ""
-                        )
-                    )
-                } else if (timing.getFirstEditDate(taskId, _customerIndex.value).isNullOrEmpty()) {
-                    timing.updateFirstEditDate(
-                        taskId,
-                        _customerIndex.value,
-                        firstEditDate
-                    )
-                    timing.updateEditCount(taskId, _customerIndex.value, 1)
-                    timing.updateLastEditDate(taskId, _customerIndex.value, date)
-                    saveEditTime(taskId, _customerIndex.value, time)
-                } else {
-                    //adding +1 to edit count
-                    saveEditTime(taskId, _customerIndex.value, time)
-                    timing.updateLastEditDate(taskId, _customerIndex.value, date)
-                    timing.upEditCount(taskId, _customerIndex.value)
-                }
-                resetTimer()
-            }
+    private suspend fun saveEditTiming(firstEditDate: String, date: String) {
+        if (timing.getStartTaskDate(taskId, _customerIndex.value).isNullOrEmpty()) {
+            timing.insertTiming(
+                Timing(
+                    taskId = taskId,
+                    num = _customerIndex.value,
+                    startTaskTime = firstEditDate,
+                    endTaskTime = date
+                )
+            )
+        } else if (timing.getFirstEditDate(taskId, _customerIndex.value).isNullOrEmpty()) {
+            timing.updateFirstEditDate(
+                taskId,
+                _customerIndex.value,
+                firstEditDate
+            )
+            updateEditTime(taskId, date)
+        } else {
+            updateEditTime(taskId, date)
         }
+        resetTimer()
+    }
+
+    //adding +1 to edit count
+    private suspend fun updateEditTime(taskId: Int, date: String) {
+        saveEditTime(taskId, _customerIndex.value, time)
+        timing.upEditCount(taskId, _customerIndex.value)
+        timing.updateLastEditDate(taskId, _customerIndex.value, date)
     }
 
     private suspend fun saveEditTime(taskId: Int, num: Int, time: Int) {
-        val seconds: Int = timing.getEditTime(taskId, num)
+        val seconds: Int = timing.getEditTime(taskId, num) ?: 0
         val newEditTime = seconds + time
         timing.updateEditSeconds(taskId, num, newEditTime)
     }
@@ -337,7 +314,9 @@ class UserInfoViewModel @Inject constructor(
         isMainPhone: Boolean,
         lat: String,
         lng: String,
-        photo: String
+        photo: String,
+        selectCustomer: Boolean,
+        isNext: Boolean
     ) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -346,7 +325,9 @@ class UserInfoViewModel @Inject constructor(
                 } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
                     _saveAnswer.value = "Ви забули вказати джерело"
                 } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
-                    val task: TaskEntity = getTask(taskId)
+                    val currentDateAndTime =
+                        dateAndTimeFormat.format(Date())
+                    saveEditTiming(startEditTime, currentDateAndTime)
                     val fields =
                         listOf(
                             "num",
@@ -367,10 +348,10 @@ class UserInfoViewModel @Inject constructor(
                     }
 
                     val saveData = Result(
-                        task.name,
-                        task.date,
+                        _taskInfo.value.name,
+                        _taskInfo.value.date,
                         taskId,
-                        task.filial,
+                        _taskInfo.value.filial,
                         _customerIndex.value,
                         user["num"]!!,
                         user["accountId"]!!,
@@ -386,11 +367,11 @@ class UserInfoViewModel @Inject constructor(
                         phoneNumber,
                         isMainPhoneInt,
                         "",
-                        type,
+                        preloadResultTab.value.type,
                         counter,
-                        zoneCount,
-                        capacity,
-                        avgUsage,
+                        preloadResultTab.value.zoneCount,
+                        preloadResultTab.value.capacity,
+                        preloadResultTab.value.averageUsage,
                         lat,
                         lng,
                         personalAccount,
@@ -400,12 +381,12 @@ class UserInfoViewModel @Inject constructor(
                         user["counpleas"]
                     )
 
-                    val currentDateAndTime =
-                        dateAndTimeFormat.format(Date())
-                    saveEditTiming(startEditTime, currentDateAndTime)
                     result.insertNewData(saveData)
                     customer.setDone(taskId, user["num"]!!)
                     setResultSavedState(true)
+                    if (selectCustomer) {
+                        selectCustomer(isNext)
+                    }
                     _saveAnswer.value = "Результати збережено"
                 } else {
                     _saveAnswer.value = "Ви не ввели нові показники"
@@ -414,10 +395,11 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    private suspend fun getTask(taskId: Int) = task.getTask(taskId)
-
-    private suspend fun getSourceName(code: String, type: String) =
-        catalog.getSourceByCode(code, type)
+    fun getTask() {
+        viewModelScope.launch {
+            _taskInfo.value = task.getTask(taskId).toTaskInfo()
+        }
+    }
 
     fun getOperatorsList() {
         viewModelScope.launch {
@@ -521,7 +503,7 @@ class UserInfoViewModel @Inject constructor(
                             userInfoViewModel.personalAccountKey = key
                             userInfoViewModel.personalAccount = value
                         }
-                        "icons_account" -> {
+                        "icons_account", "Иконки л/с" -> {
                             val text = getNeededEmojis(icons, value)
                             userInfoViewModel.personalAccountEmoji =
                                 "${userInfoViewModel.personalAccount} $text"
@@ -540,7 +522,7 @@ class UserInfoViewModel @Inject constructor(
                             userInfoViewModel.counterEmoji =
                                 "${userInfoViewModel.counterValue} ${userInfoViewModel.counterKey}"
                         }
-                        "icons_counter" -> {
+                        "icons_counter", "Иконки с" -> {
                             userInfoViewModel.counterKey = getNeededEmojis(icons, value)
                         }
                         else -> {

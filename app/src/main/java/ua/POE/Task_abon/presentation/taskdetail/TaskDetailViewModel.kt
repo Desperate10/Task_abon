@@ -1,6 +1,8 @@
 package ua.POE.Task_abon.presentation.taskdetail
 
-import androidx.lifecycle.*
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -16,11 +18,12 @@ class TaskDetailViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val directoryDao: DirectoryDao,
     private val taskCustomerData: TaskCustomerDaoImpl,
-    private val resultDao : ResultDao
+    private val resultDao: ResultDao
 ) : ViewModel() {
 
-    private val taskId = savedStateHandle.get<Int>("taskId") ?: throw NullPointerException("TaskId is null")
-    private val searchParams = savedStateHandle.get("searchList") as MutableMap<String, String>?
+    private val taskId =
+        savedStateHandle.get<Int>("taskId") ?: throw NullPointerException("TaskId is null")
+    private val searchParams = savedStateHandle.get<HashMap<String,String>>("searchList")
 
     private val _customerFilterStatus = MutableSharedFlow<String>(2)
     private val customers = MutableStateFlow<List<UserData>>(emptyList())
@@ -36,20 +39,18 @@ class TaskDetailViewModel @Inject constructor(
     val finishedCustomersCount = resultDao.getResultCount(taskId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 0)
 
-    private fun getCustomers(status: String?) {
-        viewModelScope.launch {
-            val keys = ArrayList<String>()
-            val values = ArrayList<String>()
+    private suspend fun getCustomers(status: String?) {
+        val keys = ArrayList<String>()
+        val values = ArrayList<String>()
 
-            searchParams?.let {
-                for ((key, value) in searchParams) {
-                    val keyName: String = directoryDao.getSearchFieldName(taskId, key)
-                    keys.add(keyName)
-                    values.add(value)
-                }
+        searchParams?.let {
+            for ((key, value) in searchParams) {
+                val keyName: String = directoryDao.getSearchFieldName(taskId, key)
+                keys.add(keyName)
+                values.add(value)
             }
-            customers.value = taskCustomerData.getUsers(taskId, keys, values, status)
         }
+        customers.value = taskCustomerData.getUsers(taskId, keys, values, status)
     }
 
     fun resetFilter() {

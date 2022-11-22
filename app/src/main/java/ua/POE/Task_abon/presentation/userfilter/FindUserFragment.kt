@@ -42,7 +42,7 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
     private var info: String? = null
 
     private var list = mutableListOf<Map<String, String>>()
-    private var searchListHash = mutableMapOf<String, String>()
+    private var searchListHash = HashMap<String, String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

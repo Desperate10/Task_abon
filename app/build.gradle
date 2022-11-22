@@ -15,6 +15,7 @@ android {
         versionCode 32
         versionName '6.3.2'
 
+        buildConfigField "String", "MY_CLOUD_API", '"http://task.poe.pl.ua:8880/app/"'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -28,9 +29,9 @@ android {
                 }
             }
         }
-        getByName("debug") {
+        /*getByName("debug") {
             minifyEnabled false
-        }
+        }*/
     }
 
     compileOptions {

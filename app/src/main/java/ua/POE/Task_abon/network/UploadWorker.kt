@@ -1,12 +1,10 @@
 package ua.POE.Task_abon.network
 
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
@@ -36,63 +34,26 @@ class UploadWorker @AssistedInject constructor(
     private val ioDispatcher: CoroutineDispatcher
 ) : CoroutineWorker(context, workerParameters), UploadRequestBody.UploadCallback {
 
-    private val notificationManager =
-        context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    private var uploadProgress = 0
-    private var photoName = ""
+    private val builder = NotificationCompat.Builder(context, CHANNEL_ID)
 
-    /*override suspend fun getForegroundInfo(): ForegroundInfo {
-        return ForegroundInfo(
-            NOTIFICATION_ID, createNotification()
-        )
-    }*/
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createChannel() {
-        val channel =
-            NotificationChannel(CHANNEL_ID, CHANNEL_NAME, NotificationManager.IMPORTANCE_DEFAULT)
-        notificationManager.createNotificationChannel(channel)
-    }
-
-    private suspend fun startForegroundService() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createChannel()
-        }
-        setForeground(
-            ForegroundInfo(
-                NOTIFICATION_ID,
-                NotificationCompat.Builder(context, CHANNEL_ID)
-                    .setSmallIcon(R.drawable.ic_launcher_foreground)
-                    .setContentTitle(photoName)
-                    .setContentText("Вигрузка фото...")
-                    .setProgress(100, uploadProgress, false)
-                    .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                    .setOngoing(true)
-                    .setAutoCancel(true)
-                    .build()
-            )
-        )
-    }
-
-    private fun createNotification(): Notification {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createChannel()
-        }
-        val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+    private fun createNotification(percentage: Int, fileName: String) {
+        builder
             .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentTitle(photoName)
+            .setContentTitle(fileName)
             .setContentText("Вигрузка фото...")
-            .setProgress(100, uploadProgress, false)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setProgress(100, percentage, false)
             .setOngoing(true)
             .setAutoCancel(true)
-            .build()
-        return notification
+        NotificationManagerCompat.from(context).notify(NOTIFICATION_ID,builder.build())
     }
 
-
     override suspend fun doWork(): Result  {
-        startForegroundService()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager?
+            val channel = NotificationChannel(CHANNEL_ID, CHANNEL_NAME,NotificationManager.IMPORTANCE_LOW)
+            notificationManager?.createNotificationChannel(channel)
+        }
+
         return withContext(ioDispatcher) {
             val inputPhotoUri = inputData.getStringArray(URI_ARRAY)
             try {
@@ -137,7 +98,8 @@ class UploadWorker @AssistedInject constructor(
             list, RequestBody.create(MediaType.parse("multipart/form-data"), "json")
         ).enqueue(object : Callback<UploadResponse> {
             override fun onFailure(call: Call<UploadResponse>, t: Throwable) {
-                uploadProgress = 0
+                builder.setContentText("Помилка")
+                NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
                 result = Result.failure()
             }
 
@@ -148,11 +110,13 @@ class UploadWorker @AssistedInject constructor(
                     if (response.code().toString().startsWith("5")) {
                         result = Result.retry()
                     }
-                    uploadProgress = 100
+                    builder.setContentText("Вигрузка завершилась")
+                    NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
                     result = Result.success()
                 }
             }
         })
+
         return result
     }
 
@@ -165,8 +129,7 @@ class UploadWorker @AssistedInject constructor(
     }
 
     override fun onProgressUpdate(percentage: Int, fileName: String) {
-        uploadProgress = percentage
-        photoName = fileName
+        createNotification(percentage, fileName)
     }
 
     companion object {
@@ -174,7 +137,6 @@ class UploadWorker @AssistedInject constructor(
         const val CHANNEL_ID = "photo_channel"
         const val CHANNEL_NAME = "upload_photo"
         const val WORK_NAME = "upload_photo_worker"
-        const val ERROR_MSG = "error_message"
         private const val URI_ARRAY = "URI_ARRAY"
 
         fun makeRequest(uri: Array<String>) : OneTimeWorkRequest {

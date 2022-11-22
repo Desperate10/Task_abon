@@ -27,7 +27,7 @@ interface CatalogDao {
     fun getFeatureList() : Flow<List<CatalogEntity>>
 
     @Query("SELECT text FROM catalog WHERE code = :code AND type = :type")
-    suspend fun getSourceByCode(code: String, type: String) : String
+    suspend fun getSelectedSourceName(code: String, type: String) : String
 
     @Query("SELECT text FROM catalog WHERE type = 5")
     suspend fun getOperatorsList() : List<String>

@@ -1,6 +1,5 @@
 package ua.POE.Task_abon.di
 
-import android.app.Application
 import android.content.Context
 import androidx.work.WorkManager
 import dagger.Module
@@ -17,7 +16,7 @@ import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.presentation.model.Icons
-import ua.POE.Task_abon.utils.XmlLoader
+import ua.POE.Task_abon.data.xml.XmlLoader
 import ua.POE.Task_abon.utils.getRawTextFile
 import javax.inject.Singleton
 

@@ -21,7 +21,7 @@ interface ResultDao {
     fun getResultCount(taskId: Int): Flow<Int>
 
     @Insert(onConflict = REPLACE)
-    suspend fun insertNewData(result: Result)
+    suspend fun insertNewData(result: Result): Long
 
     @Query("UPDATE result SET DT_vpl = :date, No_vpln = :isDone, Istochnik = :source, Pok_1 = :zone1, Pok_2 = :zone2, pok_3 = :zone3, Note = :note WHERE TSzdn_id = :taskId AND Numb = :num ")
     suspend fun updateNewData(taskId: Int, num: String, date: String, isDone: String, source: String, zone1: String, zone2: String, zone3: String, note: String)
