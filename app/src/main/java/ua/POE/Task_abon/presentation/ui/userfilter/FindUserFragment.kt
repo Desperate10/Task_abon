@@ -1,6 +1,5 @@
-package ua.POE.Task_abon.presentation.userfilter
+package ua.POE.Task_abon.presentation.ui.userfilter
 
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -9,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.SimpleAdapter
-import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -22,8 +20,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentFindUserBinding
-import ua.POE.Task_abon.presentation.MainActivity
-import ua.POE.Task_abon.presentation.userinfo.listener.ItemSelectedListener
+import ua.POE.Task_abon.presentation.ui.userfilter.dialog.DeleteSearchFilterDialogFragment
+import ua.POE.Task_abon.presentation.ui.userinfo.listener.ItemSelectedListener
 import ua.POE.Task_abon.utils.autoCleaned
 
 
@@ -60,11 +58,11 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        (activity as MainActivity).supportActionBar?.title = "Критерії пошуку"
 
         readArguments()
+        setupFilterClickListener()
+        setupDeleteFilterListener()
         initClickListeners()
-        initAdapterForSearchCriteria()
         observeViewModel()
     }
 
@@ -80,6 +78,13 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.searchFieldsValues.collectLatest {
                     initExistAdapter(it)
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.filterHashList.collectLatest {
+                    initAdapterForSearchCriteria(it)
                 }
             }
         }
@@ -102,35 +107,31 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
         binding.clearText.setOnClickListener(this)
     }
 
-    private fun initAdapterForSearchCriteria() {
+    private fun initAdapterForSearchCriteria(filterList: List<Map<String,String>>) {
         val from = arrayOf("name", "value")
         val to = intArrayOf(R.id.name, R.id.value)
-        simpleAdapter = SimpleAdapter(requireContext(), list, R.layout.search_item_row, from, to)
+        simpleAdapter = SimpleAdapter(requireContext(), filterList, R.layout.search_item_row, from, to)
         binding.filterList.adapter = simpleAdapter
-        binding.filterList.onItemLongClickListener =
-            AdapterView.OnItemLongClickListener { _, _, i, _ ->
-                showDialog(i)
-                true
-            }
-
     }
 
-    private fun showDialog(position: Int) {
-        val options = arrayOf<CharSequence>("Видалити фильтр", "Відміна")
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Виберіть дію:")
-        builder.setItems(options) { dialog: DialogInterface, item: Int ->
-            when {
-                options[item] == "Видалити фільтр" -> {
-                    list.removeAt(position)
-                    simpleAdapter?.notifyDataSetChanged()
-                }
-                else -> {
-                    dialog.dismiss()
-                }
+    private fun setupFilterClickListener() {
+        binding.filterList.onItemLongClickListener =
+            AdapterView.OnItemLongClickListener { _, _, position, _ ->
+                DeleteSearchFilterDialogFragment.show(parentFragmentManager, position)
+                true
             }
+    }
+
+    private fun setupDeleteFilterListener() {
+        DeleteSearchFilterDialogFragment.setupListener(parentFragmentManager, viewLifecycleOwner) {
+            deleteFilter(it)
         }
-        builder.show()
+    }
+
+    private fun deleteFilter(position: Int) {
+        list.removeAt(position)
+        viewModel.updateFilter(list)
+        simpleAdapter?.notifyDataSetChanged()
     }
 
     override fun onClick(v: View) {
@@ -148,16 +149,21 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
     }
 
     private fun addFilterCriteria() {
-        val hash = mutableMapOf<String, String>()
+        val filter = mutableMapOf<String, String>()
         val name = binding.filterSpinner.selectedItem.toString()
-        hash["name"] = name
-        hash["value"] = binding.editFilterValue.text.toString()
-        list.add(hash)
-        searchListHash[name] = binding.editFilterValue.text.toString()
-        // searchFieldNames?.remove(name)
+        val value = binding.editFilterValue.text.toString()
+        filter["name"] = name
+        filter["value"] = value
+        updateFilterList(filter)
+        searchListHash[name] = value
         simpleAdapter?.notifyDataSetChanged()
         adapter?.notifyDataSetChanged()
         binding.filterSpinner.setSelection(1)
+    }
+
+    private fun updateFilterList(filter: Map<String,String>) {
+        list.add(filter)
+        viewModel.updateFilter(list)
     }
 
     private fun navigateToTaskDetailFragment() {

@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.userinfo.listener
+package ua.POE.Task_abon.presentation.ui.userinfo.listener
 
 import android.location.LocationListener
 

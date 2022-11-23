@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.userinfo.dialog
+package ua.POE.Task_abon.presentation.ui.userinfo.dialog
 
 import android.app.Dialog
 import android.content.DialogInterface

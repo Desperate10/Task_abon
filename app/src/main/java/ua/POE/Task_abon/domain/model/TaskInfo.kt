@@ -9,4 +9,4 @@ data class TaskInfo(
     val filial: String= "",
     val fileName: String= "",
     val isJur: String? = "0"
-)
+): java.io.Serializable

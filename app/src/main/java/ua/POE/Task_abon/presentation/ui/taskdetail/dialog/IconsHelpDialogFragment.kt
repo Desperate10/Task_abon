@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.taskdetail.dialog
+package ua.POE.Task_abon.presentation.ui.taskdetail.dialog
 
 import android.app.Dialog
 import android.content.Context

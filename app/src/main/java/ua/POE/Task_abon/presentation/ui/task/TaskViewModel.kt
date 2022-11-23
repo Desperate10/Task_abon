@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.task
+package ua.POE.Task_abon.presentation.ui.task
 
 import android.net.Uri
 import androidx.lifecycle.ViewModel

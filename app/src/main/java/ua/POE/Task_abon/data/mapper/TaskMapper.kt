@@ -10,7 +10,7 @@ fun TaskEntity.toTaskInfo(): TaskInfo {
         date = date,
         count = count,
         filial = filial,
-        fileName = fileName,
+        fileName = fileName ?: "",
         isJur = isJur
     )
 }

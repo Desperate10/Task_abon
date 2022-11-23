@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.taskdetail
+package ua.POE.Task_abon.presentation.ui.taskdetail
 
 import android.os.Bundle
 import android.view.*
@@ -17,10 +17,10 @@ import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.entities.UserData
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
-import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
-import ua.POE.Task_abon.presentation.taskdetail.dialog.IconsHelpDialogFragment
-import ua.POE.Task_abon.utils.*
+import ua.POE.Task_abon.presentation.ui.taskdetail.dialog.IconsHelpDialogFragment
+import ua.POE.Task_abon.utils.autoCleaned
+import ua.POE.Task_abon.utils.hideKeyboard
 
 
 @AndroidEntryPoint
@@ -44,7 +44,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        (activity as MainActivity).supportActionBar?.title = "Список абонентів"
         hideKeyboard()
         readArguments()
         bindViews()

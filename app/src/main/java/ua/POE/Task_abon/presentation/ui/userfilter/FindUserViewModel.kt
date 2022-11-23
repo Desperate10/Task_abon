@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.userfilter
+package ua.POE.Task_abon.presentation.ui.userfilter
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -26,6 +26,8 @@ class FindUserViewModel @Inject constructor(
     private val _searchFieldsValues = MutableStateFlow<List<String>>(emptyList())
     val searchFieldsValues: StateFlow<List<String>> = _searchFieldsValues
 
+    val filterHashList = MutableStateFlow<List<Map<String,String>>>(emptyList())
+
     val searchFields: StateFlow<List<String>> = directoryDao.getSearchFields(taskId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
@@ -35,6 +37,10 @@ class FindUserViewModel @Inject constructor(
             _searchFieldsValues.value =
                 dynamicTaskData.getSearchedItemsByField("TD$taskId", fieldName)
         }
+    }
+
+    fun updateFilter(filter: List<Map<String,String>>) {
+        filterHashList.value = filter
     }
 
     private suspend fun getSearchFieldNameByTxt(taskId: Int, field: String) =

@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.userinfo
+package ua.POE.Task_abon.presentation.ui.userinfo
 
 import android.Manifest
 import android.annotation.SuppressLint
@@ -15,7 +15,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
-import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -31,24 +30,21 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import com.permissionx.guolindev.PermissionX
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.domain.model.BasicInfo
 import ua.POE.Task_abon.domain.model.SavedData
 import ua.POE.Task_abon.domain.model.TechInfo
-import ua.POE.Task_abon.presentation.MainActivity
-import ua.POE.Task_abon.presentation.userinfo.dialog.IconsDialogFragment
-import ua.POE.Task_abon.presentation.userinfo.dialog.LocationToggleDialogFragment
-import ua.POE.Task_abon.presentation.userinfo.dialog.SaveConfirmationDialogFragment
-import ua.POE.Task_abon.presentation.userinfo.dialog.SaveCoordinatesDialogFragment
-import ua.POE.Task_abon.presentation.userinfo.listener.ItemSelectedListener
-import ua.POE.Task_abon.presentation.userinfo.listener.MyLocationListener
+import ua.POE.Task_abon.presentation.ui.userinfo.dialog.IconsDialogFragment
+import ua.POE.Task_abon.presentation.ui.userinfo.dialog.LocationToggleDialogFragment
+import ua.POE.Task_abon.presentation.ui.userinfo.dialog.SaveConfirmationDialogFragment
+import ua.POE.Task_abon.presentation.ui.userinfo.dialog.SaveCoordinatesDialogFragment
+import ua.POE.Task_abon.presentation.ui.userinfo.listener.ItemSelectedListener
+import ua.POE.Task_abon.presentation.ui.userinfo.listener.MyLocationListener
+import ua.POE.Task_abon.presentation.ui.userinfo.textwatcher.DiffTextWatcher
 import ua.POE.Task_abon.utils.autoCleaned
 import java.io.File
 import java.text.SimpleDateFormat
@@ -88,7 +84,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
-        (activity as MainActivity).supportActionBar?.title = "Інформація"
 
         if (savedInstanceState != null) {
             viewModel.setSelectedCustomer(savedInstanceState.getInt("index"))
@@ -397,7 +392,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             if (buttonPressed == DialogInterface.BUTTON_POSITIVE) {
                 saveResult(true, isNext)
             }
-            //selectCustomer(isNext)
         }
     }
 

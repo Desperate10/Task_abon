@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.userinfo
+package ua.POE.Task_abon.presentation.ui.userinfo
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

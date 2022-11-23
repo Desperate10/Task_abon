@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.presentation.task
+package ua.POE.Task_abon.presentation.ui.task
 
 import android.Manifest
 import android.content.DialogInterface
@@ -16,10 +16,11 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavDirections
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.permissionx.guolindev.PermissionX
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -31,8 +32,10 @@ import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentTasksBinding
 import ua.POE.Task_abon.domain.model.TaskInfo
-import ua.POE.Task_abon.presentation.MainActivity
 import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
+import ua.POE.Task_abon.presentation.ui.task.dialog.ClearTaskDataDialogFragment
+import ua.POE.Task_abon.presentation.ui.task.dialog.DeleteTaskDialogFragment
+import ua.POE.Task_abon.presentation.ui.task.dialog.TaskClickMenuFragmentDialog
 import ua.POE.Task_abon.utils.autoCleaned
 import java.io.BufferedWriter
 import java.io.IOException
@@ -41,8 +44,6 @@ import java.io.Writer
 
 
 /*TODO
-   -диалоги перенести
-   - сделать пуш для загрузки фото
 * - завернуть в sealed чтение файла
  - createFragment from static with navigation
 */
@@ -72,8 +73,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        (activity as MainActivity).supportActionBar?.title = "Список завдань"
-
         val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
         binding.recyclerview.adapter = adapter
         adapter.onTaskClickListener = this
@@ -97,6 +96,10 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
         binding.choose.setOnClickListener {
             chooseFile()
         }
+
+        setupClickMenuDialog()
+        setupClearDataDialogListener()
+        setupDeleteTaskDialogListener()
 
         /*viewModel.taskLoadingStatus.observe(viewLifecycleOwner, Observer {
             when (it.data) {
@@ -185,7 +188,37 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     }
 
     override fun onLongClick(task: TaskInfo) {
-        createMenuDialog(task)
+        TaskClickMenuFragmentDialog.show(parentFragmentManager, task)
+        //createMenuDialog(task)
+    }
+
+    private fun setupClickMenuDialog() {
+        TaskClickMenuFragmentDialog.setupListeners(parentFragmentManager, viewLifecycleOwner) { taskInfo, which ->
+            val task = Gson().fromJson<TaskInfo>(taskInfo,  object: TypeToken<TaskInfo>() {}.type)
+            when(which) {
+                getString(R.string.upload_task) -> {
+                    createDoc(task)
+                }
+                getString(R.string.clear_field_btn) -> {
+                    ClearTaskDataDialogFragment.show(parentFragmentManager, task.id)
+                }
+                getString(R.string.delete_task) -> {
+                    DeleteTaskDialogFragment.show(parentFragmentManager, task.id)
+                }
+            }
+        }
+    }
+
+    private fun setupClearDataDialogListener() {
+        ClearTaskDataDialogFragment.setupListeners(parentFragmentManager, viewLifecycleOwner) { taskId ->
+            viewModel.clearTaskData(taskId)
+        }
+    }
+
+    private fun setupDeleteTaskDialogListener() {
+        DeleteTaskDialogFragment.setupListeners(parentFragmentManager, viewLifecycleOwner) { taskId ->
+            viewModel.deleteTask(taskId)
+        }
     }
 
     private fun createMenuDialog(task: TaskInfo) {
@@ -203,7 +236,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
                     createDoc(task)
                 }
                 options[item] == getString(R.string.clear_field_btn) -> {
-                    clearTaskData(task)
+                    clearTaskData(task.id)
                 }
                 options[item] == getString(R.string.delete_task) -> {
                     deleteTask(task)
@@ -220,11 +253,11 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
         viewModel.uploadImagesRequestBuilder(taskId)
     }
 
-    private fun clearTaskData(task: TaskInfo) {
+    private fun clearTaskData(taskId: Int) {
         val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
             when (which) {
                 DialogInterface.BUTTON_POSITIVE -> {
-                    viewModel.clearTaskData(task.id)
+                    viewModel.clearTaskData(taskId)
                 }
                 DialogInterface.BUTTON_NEGATIVE -> {
                     dialog.dismiss()
@@ -276,7 +309,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "text/xml"
             putExtra(
-                Intent.EXTRA_TITLE, "${task.fileName!!.split(".")[0].replace("E", "I")}_${
+                Intent.EXTRA_TITLE, "${task.fileName.split(".")[0].replace("E", "I")}_${
                     task.name.replace(
                         " ", "_"
                     )
