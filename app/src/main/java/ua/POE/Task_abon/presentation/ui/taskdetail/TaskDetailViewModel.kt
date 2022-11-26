@@ -11,6 +11,8 @@ import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.UserData
+import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.SearchMap
 import javax.inject.Inject
 
 @HiltViewModel
@@ -21,9 +23,9 @@ class TaskDetailViewModel @Inject constructor(
     private val resultDao: ResultDao
 ) : ViewModel() {
 
-    private val taskId =
-        savedStateHandle.get<Int>("taskId") ?: throw NullPointerException("TaskId is null")
-    private val searchParams = savedStateHandle.get<HashMap<String,String>>("searchList")
+    private val taskInfo = savedStateHandle.get<TaskInfo>("taskInfo")
+    private val taskId = taskInfo?.id ?: throw NullPointerException("taskId in null")
+    private val searchParams = savedStateHandle.get<SearchMap>("searchList")
 
     private val _customerFilterStatus = MutableSharedFlow<String>(2)
     private val customers = MutableStateFlow<List<UserData>>(emptyList())
@@ -44,7 +46,7 @@ class TaskDetailViewModel @Inject constructor(
         val values = ArrayList<String>()
 
         searchParams?.let {
-            for ((key, value) in searchParams) {
+            for ((key, value) in searchParams.map) {
                 val keyName: String = directoryDao.getSearchFieldName(taskId, key)
                 keys.add(keyName)
                 values.add(value)
@@ -55,7 +57,7 @@ class TaskDetailViewModel @Inject constructor(
 
     fun resetFilter() {
         viewModelScope.launch {
-            searchParams?.clear()
+            searchParams?.map?.clear()
             _customerFilterStatus.emit(ALL)
         }
     }

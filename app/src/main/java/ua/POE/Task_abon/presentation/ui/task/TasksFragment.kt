@@ -172,30 +172,29 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     }
 
     override fun onClick(task: TaskInfo) {
-        val bundle = bundleOf(
-            "taskId" to task.id,
-            "fileName" to task.fileName,
-            "taskName" to task.name,
-            "info" to "Id завдання: ${task.id} , " +
-                    "Записи: ${task.count}, " +
-                    "Дата створення: ${task.date}, " +
-                    "Юр.особи: ${task.isJur}"
-        )
-        with(findNavController()) {
-            currentDestination?.getAction(R.id.action_tasksFragment_to_taskDetailFragment)
-                ?.let { navigate(R.id.action_tasksFragment_to_taskDetailFragment, bundle) }
-        }
+        navigateToTaskDetailFragment(task)
     }
 
     override fun onLongClick(task: TaskInfo) {
         TaskClickMenuFragmentDialog.show(parentFragmentManager, task)
-        //createMenuDialog(task)
+    }
+
+    private fun navigateToTaskDetailFragment(task: TaskInfo) {
+        findNavController().navigate(
+            TasksFragmentDirections.actionTasksFragmentToTaskDetailFragment(
+                task,
+                null
+            )
+        )
     }
 
     private fun setupClickMenuDialog() {
-        TaskClickMenuFragmentDialog.setupListeners(parentFragmentManager, viewLifecycleOwner) { taskInfo, which ->
-            val task = Gson().fromJson<TaskInfo>(taskInfo,  object: TypeToken<TaskInfo>() {}.type)
-            when(which) {
+        TaskClickMenuFragmentDialog.setupListeners(
+            parentFragmentManager,
+            viewLifecycleOwner
+        ) { taskInfo, which ->
+            val task = Gson().fromJson<TaskInfo>(taskInfo, object : TypeToken<TaskInfo>() {}.type)
+            when (which) {
                 getString(R.string.upload_task) -> {
                     createDoc(task)
                 }
@@ -210,83 +209,25 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     }
 
     private fun setupClearDataDialogListener() {
-        ClearTaskDataDialogFragment.setupListeners(parentFragmentManager, viewLifecycleOwner) { taskId ->
+        ClearTaskDataDialogFragment.setupListeners(
+            parentFragmentManager,
+            viewLifecycleOwner
+        ) { taskId ->
             viewModel.clearTaskData(taskId)
         }
     }
 
     private fun setupDeleteTaskDialogListener() {
-        DeleteTaskDialogFragment.setupListeners(parentFragmentManager, viewLifecycleOwner) { taskId ->
+        DeleteTaskDialogFragment.setupListeners(
+            parentFragmentManager,
+            viewLifecycleOwner
+        ) { taskId ->
             viewModel.deleteTask(taskId)
         }
     }
 
-    private fun createMenuDialog(task: TaskInfo) {
-        val options = arrayOf<CharSequence>(
-            getString(R.string.upload_task),
-            getString(R.string.clear_field_btn),
-            getString(R.string.delete_task),
-            getString(R.string.cancel)
-        )
-        val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("Виберіть дію:")
-        builder.setItems(options) { dialog: DialogInterface, item: Int ->
-            when {
-                options[item] == getString(R.string.upload_task) -> {
-                    createDoc(task)
-                }
-                options[item] == getString(R.string.clear_field_btn) -> {
-                    clearTaskData(task.id)
-                }
-                options[item] == getString(R.string.delete_task) -> {
-                    deleteTask(task)
-                }
-                else -> {
-                    dialog.dismiss()
-                }
-            }
-        }
-        builder.show()
-    }
-
     private fun uploadImages(taskId: Int) {
         viewModel.uploadImagesRequestBuilder(taskId)
-    }
-
-    private fun clearTaskData(taskId: Int) {
-        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-            when (which) {
-                DialogInterface.BUTTON_POSITIVE -> {
-                    viewModel.clearTaskData(taskId)
-                }
-                DialogInterface.BUTTON_NEGATIVE -> {
-                    dialog.dismiss()
-                }
-            }
-        }
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Ви впевнені, що хочете видалити збережені дані?").setPositiveButton(
-            getString(R.string.yes), dialogClickListener
-        ).setNegativeButton(getString(R.string.no), dialogClickListener).show()
-
-    }
-
-    private fun deleteTask(task: TaskInfo) {
-        val dialogClickListener = DialogInterface.OnClickListener { dialog, which ->
-            when (which) {
-                DialogInterface.BUTTON_POSITIVE -> {
-                    viewModel.deleteTask(task.id)
-                }
-                DialogInterface.BUTTON_NEGATIVE -> {
-                    dialog.dismiss()
-                }
-            }
-        }
-
-        val builder: AlertDialog.Builder = AlertDialog.Builder(requireContext())
-        builder.setMessage("Ви впевнені, що хочете видалити це завдання?").setPositiveButton(
-            getString(R.string.yes), dialogClickListener
-        ).setNegativeButton(getString(R.string.no), dialogClickListener).show()
     }
 
     private fun chooseFile() {

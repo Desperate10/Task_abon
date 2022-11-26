@@ -14,12 +14,15 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavArgs
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentFindUserBinding
+import ua.POE.Task_abon.presentation.model.SearchMap
 import ua.POE.Task_abon.presentation.ui.userfilter.dialog.DeleteSearchFilterDialogFragment
 import ua.POE.Task_abon.presentation.ui.userinfo.listener.ItemSelectedListener
 import ua.POE.Task_abon.utils.autoCleaned
@@ -28,16 +31,12 @@ import ua.POE.Task_abon.utils.autoCleaned
 @AndroidEntryPoint
 class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener {
 
-    private var binding : FragmentFindUserBinding by autoCleaned()
+    private val args by navArgs<FindUserFragmentArgs>()
+    private var binding: FragmentFindUserBinding by autoCleaned()
     private val viewModel: FindUserViewModel by viewModels()
 
     private var adapter: ArrayAdapter<String>? = null
     private var simpleAdapter: SimpleAdapter? = null
-
-    private var taskId = 0
-    private var taskName: String? = null
-    private var fileName: String? = null
-    private var info: String? = null
 
     private var list = mutableListOf<Map<String, String>>()
     private var searchListHash = HashMap<String, String>()
@@ -59,7 +58,6 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        readArguments()
         setupFilterClickListener()
         setupDeleteFilterListener()
         initClickListeners()
@@ -90,27 +88,17 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
         }
     }
 
-    private fun readArguments() {
-        taskId = arguments?.getInt("taskId")
-            ?: throw NullPointerException("taskId is null in FindUserFragment")
-        taskName = arguments?.getString("name")
-            ?: throw NullPointerException("taskName is null in FindUserFragment")
-        fileName = arguments?.getString("fileName")
-            ?: throw NullPointerException("fileName's null in FindUserFragment")
-        info = arguments?.getString("info")
-            ?: throw NullPointerException("info is null in FindUserFragment")
-    }
-
     private fun initClickListeners() {
         binding.addFilter.setOnClickListener(this)
         binding.doFilter.setOnClickListener(this)
         binding.clearText.setOnClickListener(this)
     }
 
-    private fun initAdapterForSearchCriteria(filterList: List<Map<String,String>>) {
+    private fun initAdapterForSearchCriteria(filterList: List<Map<String, String>>) {
         val from = arrayOf("name", "value")
         val to = intArrayOf(R.id.name, R.id.value)
-        simpleAdapter = SimpleAdapter(requireContext(), filterList, R.layout.search_item_row, from, to)
+        simpleAdapter =
+            SimpleAdapter(requireContext(), filterList, R.layout.search_item_row, from, to)
         binding.filterList.adapter = simpleAdapter
     }
 
@@ -140,7 +128,7 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
                 addFilterCriteria()
             }
             R.id.do_filter -> {
-                navigateToTaskDetailFragment()
+                showFilteredUsers()
             }
             R.id.clear_text -> {
                 binding.editFilterValue.text.clear()
@@ -161,31 +149,28 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
         binding.filterSpinner.setSelection(1)
     }
 
-    private fun updateFilterList(filter: Map<String,String>) {
+    private fun updateFilterList(filter: Map<String, String>) {
         list.add(filter)
         viewModel.updateFilter(list)
     }
 
-    private fun navigateToTaskDetailFragment() {
-        val bundle = bundleOf(
-            "taskId" to taskId,
-            "taskName" to taskName,
-            "searchList" to searchListHash,
-            "fileName" to fileName,
-            "name" to taskName,
-            "info" to info
-        )
+    private fun showFilteredUsers() {
         findNavController().navigate(
-            R.id.action_findUserFragment_to_taskDetailFragment,
-            bundle
+            FindUserFragmentDirections.actionFindUserFragmentToTaskDetailFragment(
+                args.taskInfo,
+                SearchMap(searchListHash)
+            )
         )
+    }
+
+    private fun navigateToTaskDetailFragment() {
+        findNavController().popBackStack()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                requireActivity().onBackPressedDispatcher.onBackPressed()
-                return true
+                navigateToTaskDetailFragment()
             }
         }
         return super.onOptionsItemSelected(item)
@@ -202,6 +187,7 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
             }
         }
     }
+
     private fun initExistAdapter(fieldValues: List<String>) {
         val existAdapter =
             ArrayAdapter(

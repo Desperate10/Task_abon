@@ -12,7 +12,9 @@
         tools:layout="@layout/fragment_tasks" >
         <action
             android:id="@+id/action_tasksFragment_to_taskDetailFragment"
-            app:destination="@id/taskDetailFragment" />
+            app:destination="@id/taskDetailFragment"
+            app:popUpTo="@id/tasksFragment"
+            app:popUpToInclusive="false" />
         <argument
             android:name="taskId"
             app:argType="integer" />
@@ -24,19 +26,40 @@
         tools:layout="@layout/fragment_task_detail" >
         <action
             android:id="@+id/action_taskDetailFragment_to_userInfoFragment"
-            app:destination="@id/userInfoFragment" />
+            app:destination="@id/userInfoFragment"
+            app:popUpTo="@id/findUserFragment"
+            app:popUpToInclusive="true" />
+        <argument
+            android:name="taskInfo"
+            app:argType="ua.POE.Task_abon.domain.model.TaskInfo" />
         <action
             android:id="@+id/action_taskDetailFragment_to_findUserFragment"
-            app:destination="@id/findUserFragment" />
-        <action
-            android:id="@+id/action_taskDetailFragment_to_tasksFragment"
-            app:destination="@id/tasksFragment" />
+            app:destination="@id/findUserFragment"
+            app:popUpTo="@id/findUserFragment"
+            app:popUpToInclusive="true" />
+        <argument
+            android:name="searchList"
+            app:argType="ua.POE.Task_abon.presentation.model.SearchMap"
+            app:nullable="true" />
     </fragment>
     <fragment
         android:id="@+id/userInfoFragment"
         android:name="ua.POE.Task_abon.presentation.ui.userinfo.UserInfoFragment"
         android:label="Інформація"
-        tools:layout="@layout/fragment_user_info" />
+        tools:layout="@layout/fragment_user_info" >
+        <argument
+            android:name="taskId"
+            app:argType="integer" />
+        <argument
+            android:name="filial"
+            app:argType="string" />
+        <argument
+            android:name="userId"
+            app:argType="integer" />
+        <argument
+            android:name="count"
+            app:argType="integer" />
+    </fragment>
     <fragment
         android:id="@+id/findUserFragment"
         android:name="ua.POE.Task_abon.presentation.ui.userfilter.FindUserFragment"
@@ -45,5 +68,8 @@
         <action
             android:id="@+id/action_findUserFragment_to_taskDetailFragment"
             app:destination="@id/taskDetailFragment" />
+        <argument
+            android:name="taskInfo"
+            app:argType="ua.POE.Task_abon.domain.model.TaskInfo" />
     </fragment>
 </navigation>

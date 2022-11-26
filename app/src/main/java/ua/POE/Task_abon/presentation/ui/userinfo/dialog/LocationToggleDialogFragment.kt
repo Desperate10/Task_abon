@@ -31,7 +31,7 @@ class LocationToggleDialogFragment : DialogFragment() {
         const val TAG = "LocationToggleDialogFragment"
 
         fun show(manager: FragmentManager) {
-            val dialogFragment = SaveCoordinatesDialogFragment()
+            val dialogFragment = LocationToggleDialogFragment()
             dialogFragment.show(manager, TAG)
         }
     }

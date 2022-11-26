@@ -22,7 +22,8 @@ import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.domain.model.TaskInfo
 import ua.POE.Task_abon.network.UploadWorker
-import ua.POE.Task_abon.data.xml.XmlLoader
+import ua.POE.Task_abon.data.xml.XmlRead
+import ua.POE.Task_abon.data.xml.XmlWrite
 import ua.POE.Task_abon.utils.mapLatestIterable
 import ua.POE.Task_abon.utils.saveReadFile
 import javax.inject.Inject
@@ -34,7 +35,8 @@ class TaskViewModel @Inject constructor(
     private val directory: DirectoryDao,
     private val result: ResultDao,
     private val timing: TimingDao,
-    private val xmlLoader: XmlLoader,
+    private val xmlRead: XmlRead,
+    private val xmlWrite: XmlWrite,
     private val workManager: WorkManager,
 ) : ViewModel() {
 
@@ -84,16 +86,15 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-
-    suspend fun getPhotos(taskId: Int): List<String> = result.getAllPhotos(taskId)
+    private suspend fun getPhotos(taskId: Int): List<String> = result.getAllPhotos(taskId)
 
     private suspend fun getTiming(taskId: Int) = timing.getTiming(taskId)
 
     private suspend fun getResult(taskId: Int) = result.getResultByTaskId(taskId)
 
-    private suspend fun readFile(uri: Uri) = saveReadFile { xmlLoader.readXml(uri) }
+    private suspend fun readFile(uri: Uri) = saveReadFile { xmlRead(uri) }
 
     private suspend fun createXml(results: List<Result>, timings: List<Timing>) =
-        xmlLoader.createXml(results, timings)
+        xmlWrite(results, timings)
 
 }

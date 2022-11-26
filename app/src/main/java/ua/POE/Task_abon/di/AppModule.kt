@@ -16,7 +16,8 @@ import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.presentation.model.Icons
-import ua.POE.Task_abon.data.xml.XmlLoader
+import ua.POE.Task_abon.data.xml.XmlRead
+import ua.POE.Task_abon.data.xml.XmlWrite
 import ua.POE.Task_abon.utils.getRawTextFile
 import javax.inject.Singleton
 
@@ -51,7 +52,11 @@ object AppModule {
         taskDao: TaskDao,
         directoryDao: DirectoryDao,
         catalogDao: CatalogDao
-    ) = XmlLoader(appContext, provideDatabase, taskDao, directoryDao, catalogDao)
+    ) = XmlRead(appContext, provideDatabase, taskDao, directoryDao, catalogDao)
+
+    @Singleton
+    @Provides
+    fun provideXmlWriter() = XmlWrite()
 
     @Singleton
     @Provides

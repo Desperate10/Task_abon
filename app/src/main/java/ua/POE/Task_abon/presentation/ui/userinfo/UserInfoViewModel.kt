@@ -59,7 +59,7 @@ class UserInfoViewModel @Inject constructor(
     private val taskId =
         savedStateHandle.get<Int>("taskId") ?: throw NullPointerException("taskId is null")
     private var index =
-        savedStateHandle.get<Int>("id") ?: throw NullPointerException("Customer index is null")
+        savedStateHandle.get<Int>("userId") ?: throw NullPointerException("Customer index is null")
     private val taskCustomerQuantity =
         savedStateHandle.get<Int>("count")
             ?: throw NullPointerException("Customer's quantity is null ")

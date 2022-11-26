@@ -9,6 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import dagger.hilt.android.AndroidEntryPoint
@@ -26,14 +27,11 @@ import ua.POE.Task_abon.utils.hideKeyboard
 @AndroidEntryPoint
 class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListener {
 
+    private val args by navArgs<TaskDetailFragmentArgs>()
+
     private var binding: FragmentTaskDetailBinding by autoCleaned()
     private val viewModel by viewModels<TaskDetailViewModel>()
     private var adapter: CustomerListAdapter by autoCleaned()
-
-    private var taskId = 0
-    private var fileName: String? = null
-    private var info: String? = null
-    private var taskName: String? = null
     private var count = 0
 
     private var userData = listOf<UserData>()
@@ -45,7 +43,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         hideKeyboard()
-        readArguments()
         bindViews()
         createCustomerListAdapter()
         observeViewModel()
@@ -67,18 +64,15 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun bindViews() {
-        binding.taskName.text = taskName
-        binding.fileName.text = fileName
-        binding.info.text = info
-    }
-
-    private fun readArguments() {
-        arguments?.let {
-            taskId = it.getInt("taskId")
-            taskName = it.getString("taskName")
-            fileName = it.getString("fileName")
-            info = it.getString("info")
-        }
+        binding.taskName.text = args.taskInfo.name
+        binding.fileName.text = args.taskInfo.fileName
+        binding.info.text = String.format(
+            getString(R.string.info_template),
+            args.taskInfo.id,
+            args.taskInfo.count,
+            args.taskInfo.date,
+            args.taskInfo.isJur
+        )
     }
 
     private fun observeViewModel() {
@@ -89,7 +83,8 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
                 viewModel.getCustomersData.collect {
                     userData = it
                     adapter.submitList(it)
-                    binding.finished.text = getString(R.string.status_done, count, userData.size)
+                    binding.finished.text =
+                        getString(R.string.status_done, args.taskInfo.count, userData.size)
                 }
             }
         }
@@ -121,23 +116,6 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         return super.onOptionsItemSelected(item)
     }
 
-    private fun navigateToTaskFragment() {
-        findNavController().navigate(R.id.action_taskDetailFragment_to_tasksFragment)
-    }
-
-    private fun navigateToFindUserFragment() {
-        val bundle = bundleOf(
-            "taskId" to taskId,
-            "fileName" to binding.fileName.text.toString(),
-            "name" to binding.taskName.text.toString(),
-            "info" to binding.info.text
-        )
-        findNavController().navigate(
-            R.id.action_taskDetailFragment_to_findUserFragment,
-            bundle
-        )
-    }
-
     private fun showIconsHelpHint() {
         IconsHelpDialogFragment.show(parentFragmentManager)
     }
@@ -158,20 +136,27 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         navigateToUserInfoFragment(position)
     }
 
-    private fun navigateToUserInfoFragment(position: Int) {
-        val bundle = bundleOf(
-            "taskId" to taskId,
-            "filial" to extractFilialFromFileName(binding.fileName.text.toString()),
-            "num" to userData[position].num,
-            "id" to userData[position]._id,
-            "count" to adapter.itemCount,
-            "isFirstLoad" to true
-        )
-        findNavController().navigate(R.id.action_taskDetailFragment_to_userInfoFragment, bundle)
+    private fun navigateToTaskFragment() {
+        findNavController().popBackStack()
     }
 
-    private fun extractFilialFromFileName(fileName: String): String {
-        return fileName.substring(FIRST_FILIAL_NUMBER, LAST_FILIAL_NUMBER)
+    private fun navigateToFindUserFragment() {
+        findNavController().navigate(
+            TaskDetailFragmentDirections.actionTaskDetailFragmentToFindUserFragment(
+                args.taskInfo
+            )
+        )
+    }
+
+    private fun navigateToUserInfoFragment(position: Int) {
+        findNavController().navigate(
+            TaskDetailFragmentDirections.actionTaskDetailFragmentToUserInfoFragment(
+                args.taskInfo.id,
+                args.taskInfo.filial,
+                userData[position]._id,
+                adapter.itemCount
+            )
+        )
     }
 
     companion object {

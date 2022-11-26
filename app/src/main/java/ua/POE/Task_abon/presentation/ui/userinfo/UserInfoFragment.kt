@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -27,6 +28,8 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import com.permissionx.guolindev.PermissionX
 import dagger.hilt.android.AndroidEntryPoint
@@ -55,9 +58,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     DatePickerDialog.OnDateSetListener, ItemSelectedListener, MyLocationListener,
     ActivityCompat.OnRequestPermissionsResultCallback {
 
+    private val args by navArgs<UserInfoFragmentArgs>()
     private var binding: FragmentUserInfoBinding by autoCleaned()
     private val viewModel: UserInfoViewModel by viewModels()
-    private var filial: String? = null
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val date = "dd.MM.yyyy"
     private val dateFormat = SimpleDateFormat(date, Locale.getDefault())
@@ -90,10 +93,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             zone1 = savedInstanceState.getString("zone1") ?: ""
             zone2 = savedInstanceState.getString("zone2") ?: ""
             zone3 = savedInstanceState.getString("zone3") ?: ""
-        }
-
-        arguments?.let {
-            filial = arguments?.getString("filial")
         }
 
         checkPermissions()
@@ -367,7 +366,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
-                requireActivity().onBackPressedDispatcher.onBackPressed()
+                navigateToTaskDetailFragment()
             }
             R.id.save_customer_data -> {
                 if (binding.lat.text != "0.0") {
@@ -378,6 +377,10 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             }
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun navigateToTaskDetailFragment() {
+        findNavController().popBackStack()
     }
 
     private fun showConfirmationDialog(isForward: Boolean) {
@@ -483,7 +486,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun getTmpFileUri(): Uri {
-        val filename = filial + "_" + binding.personalAccount.text.toString().substringBefore(" ")
+        val filename = args.filial + "_" + binding.personalAccount.text.toString().substringBefore(" ")
             .replace("/", "") + "_"
         val storageDirectory: File? =
             requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)

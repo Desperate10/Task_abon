@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
+import ua.POE.Task_abon.domain.model.TaskInfo
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,8 +21,8 @@ class FindUserViewModel @Inject constructor(
     private val dynamicTaskData: TaskCustomerDaoImpl
 ) : ViewModel() {
 
-    private val taskId =
-        savedStateHandle.get<Int>("taskId") ?: throw RuntimeException("taskId is null")
+    private val taskInfo = savedStateHandle.get<TaskInfo>("taskInfo") ?: throw RuntimeException("taskInfo is null")
+    private val taskId = taskInfo.id
 
     private val _searchFieldsValues = MutableStateFlow<List<String>>(emptyList())
     val searchFieldsValues: StateFlow<List<String>> = _searchFieldsValues
