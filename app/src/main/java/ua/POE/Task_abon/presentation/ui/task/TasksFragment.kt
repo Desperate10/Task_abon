@@ -263,33 +263,18 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     private val startCreateXMLIntent: ActivityResultLauncher<Intent> = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
-        CoroutineScope(Dispatchers.IO).launch {
-            val uri = it?.data?.data
-            try {
-                val os = uri?.let { requireActivity().contentResolver.openOutputStream(it) }
-                withContext(Dispatchers.IO) {
-                    val w: Writer = BufferedWriter(OutputStreamWriter(os, "windows-1251"))
-                    val sb = viewModel.createXml(taskId)
-                    w.write(sb)
-                    w.flush()
-                    w.close()
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-            }
-        }
-        uploadImages(taskId)
+        val uri = it?.data?.data
+        viewModel.createXml(taskId, uri)
+        //uploadImages(taskId)
     }
 
     private fun showInfo() {
         AlertDialog.Builder(requireContext()).setIcon(android.R.drawable.ic_dialog_alert)
             .setTitle(getString(R.string.app_info)).setMessage(
-                "Додаток створено для контролерів АТ ПОЛТАВАОБЛЕНЕРГО\n" +
-                        "Розробник: Громов Євгеній, тел.510-557\n" +
-                        "Версія: ${BuildConfig.VERSION_NAME}"
-            ).setNegativeButton("Oк") { dialog, _ ->
-                dialog.dismiss()
-            }.show()
+                getString(R.string.app_info_text)
+            )
+            .setNegativeButton("Oк") { dialog, _ -> dialog.dismiss() }
+            .show()
     }
 
 }

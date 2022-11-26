@@ -26,6 +26,7 @@ import ua.POE.Task_abon.data.xml.XmlRead
 import ua.POE.Task_abon.data.xml.XmlWrite
 import ua.POE.Task_abon.utils.mapLatestIterable
 import ua.POE.Task_abon.utils.saveReadFile
+import java.io.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -67,10 +68,15 @@ class TaskViewModel @Inject constructor(
         task.deleteById(taskId)
     }
 
-    suspend fun createXml(taskId: Int): String {
-        val result = getResult(taskId)
-        val timing = getTiming(taskId)
-        return createXml(result, timing)
+    fun createXml(taskId: Int, uri: Uri?) {
+        uri?.let {
+            viewModelScope.launch {
+                xmlWrite(taskId, uri)
+                if (true) {
+                    uploadImagesRequestBuilder(taskId)
+                }
+            }
+        }
     }
 
     fun uploadImagesRequestBuilder(taskId: Int) {
@@ -88,13 +94,6 @@ class TaskViewModel @Inject constructor(
 
     private suspend fun getPhotos(taskId: Int): List<String> = result.getAllPhotos(taskId)
 
-    private suspend fun getTiming(taskId: Int) = timing.getTiming(taskId)
-
-    private suspend fun getResult(taskId: Int) = result.getResultByTaskId(taskId)
-
     private suspend fun readFile(uri: Uri) = saveReadFile { xmlRead(uri) }
-
-    private suspend fun createXml(results: List<Result>, timings: List<Timing>) =
-        xmlWrite(results, timings)
 
 }

@@ -70,4 +70,5 @@
     <string name="feature_spinner_hint">Можливий вибір декількох пунктів:</string>
     <string name="remove_all">Очистити все</string>
     <string name="permission_accepted">Дозвіл дано</string>
+    <string name="app_info_text">Додаток створено для контролерів АТ ПОЛТАВАОБЛЕНЕРГО\nРозробник: Громов Євгеній, тел.510–557\nВерсія: ${BuildConfig.VERSION_NAME}</string>
 </resources>

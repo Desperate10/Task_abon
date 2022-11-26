@@ -56,7 +56,11 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun provideXmlWriter() = XmlWrite()
+    fun provideXmlWriter(
+        @ApplicationContext context: Context,
+        resultDao: ResultDao,
+        timingDao: TimingDao
+    ) = XmlWrite(context, resultDao, timingDao)
 
     @Singleton
     @Provides
