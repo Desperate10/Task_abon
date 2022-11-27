@@ -1,10 +1,13 @@
 package ua.POE.Task_abon.network
 
+import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.net.toUri
@@ -37,6 +40,13 @@ class UploadWorker @AssistedInject constructor(
     private val builder = NotificationCompat.Builder(context, CHANNEL_ID)
 
     private fun createNotification(percentage: Int, fileName: String) {
+        if (ActivityCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
         builder
             .setSmallIcon(R.drawable.ic_launcher_foreground)
             .setContentTitle(fileName)

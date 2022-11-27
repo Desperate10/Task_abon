@@ -14,7 +14,7 @@ interface DirectoryDao {
     suspend fun insert(directory: Directory)
 
     @Query("UPDATE directory SET fieldBlockInf = :attributeValue WHERE taskId = :taskId AND fieldName = :attributeName")
-    suspend fun updateBlockInf(taskId: Int, attributeName: String, attributeValue: String)
+    suspend fun updateBlockInfo(taskId: Int, attributeName: String, attributeValue: String)
 
     @Query("UPDATE directory SET fieldSearch = :attributeValue WHERE taskId = :taskId AND fieldName = :attributeName")
     suspend fun updateBlockSearch(taskId: Int, attributeName: String, attributeValue: String)
@@ -38,7 +38,7 @@ interface DirectoryDao {
     suspend fun getBlockNames(): List<String>
 
     @Query("DELETE FROM directory WHERE taskId = :taskId")
-    suspend fun deleteDirectoryByTaskId(taskId: Int)
+    suspend fun delete(taskId: Int)
 
     @Query("SELECT fieldSearch FROM directory WHERE taskId=:taskId AND fieldSearch != \"\"")
     fun getSearchFields(taskId: Int): Flow<List<String>>

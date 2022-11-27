@@ -1,9 +1,7 @@
 package ua.POE.Task_abon.data.entities
 
 import androidx.room.Entity
-import androidx.room.Ignore
 import androidx.room.PrimaryKey
-import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Entity(tableName = "task")
 data class TaskEntity(@PrimaryKey val id : Int = 0,

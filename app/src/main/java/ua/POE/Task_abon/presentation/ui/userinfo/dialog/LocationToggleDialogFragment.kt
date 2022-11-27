@@ -28,7 +28,7 @@ class LocationToggleDialogFragment : DialogFragment() {
     }
 
     companion object {
-        const val TAG = "LocationToggleDialogFragment"
+        private const val TAG = "LocationToggleDialogFragment"
 
         fun show(manager: FragmentManager) {
             val dialogFragment = LocationToggleDialogFragment()

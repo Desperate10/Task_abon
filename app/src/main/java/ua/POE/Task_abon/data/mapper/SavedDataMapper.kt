@@ -1,6 +1,6 @@
 package ua.POE.Task_abon.data.mapper
 
-import ua.POE.Task_abon.domain.model.SavedData
+import ua.POE.Task_abon.presentation.model.SavedData
 import ua.POE.Task_abon.data.entities.Result
 
 

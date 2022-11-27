@@ -1,7 +1,7 @@
 package ua.POE.Task_abon.data.mapper
 
 import ua.POE.Task_abon.data.entities.TaskEntity
-import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.TaskInfo
 
 fun TaskEntity.toTaskInfo(): TaskInfo {
     return TaskInfo(
@@ -15,15 +15,3 @@ fun TaskEntity.toTaskInfo(): TaskInfo {
     )
 }
 
-fun TaskInfo.toTask(): TaskEntity {
-    return TaskEntity(
-        id = id,
-        name = name,
-        date = date,
-        count = count.toString(),
-        filial = filial,
-        fileName = fileName,
-        tableName = "TD$id",
-        isJur = isJur
-    )
-}

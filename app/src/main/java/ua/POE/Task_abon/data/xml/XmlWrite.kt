@@ -2,37 +2,41 @@ package ua.POE.Task_abon.data.xml
 
 import android.content.Context
 import android.net.Uri
-import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.dao.TimingDao
 import ua.POE.Task_abon.data.entities.Result
 import ua.POE.Task_abon.data.entities.Timing
+import ua.POE.Task_abon.utils.XmlResult
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
 import java.io.Writer
 import javax.inject.Inject
 
 class XmlWrite @Inject constructor(
-    val context: Context,
-    val result: ResultDao,
-    val timing: TimingDao
+    private val context: Context,
+    private val result: ResultDao,
+    private val timing: TimingDao
 ) {
 
-    suspend operator fun invoke(taskId: Int, uri: Uri) {
-        val os = context.contentResolver.openOutputStream(uri)
-        withContext(Dispatchers.IO) {
-            val results = result.getResultByTaskId(taskId)
-            val timings = timing.getTiming(taskId)
-            val w: Writer = BufferedWriter(OutputStreamWriter(os,"windows-1251"))
-            val xml = composeXml(results, timings)
-            w.write(xml)
-            w.flush()
-            w.close()
+    suspend operator fun invoke(taskId: Int, uri: Uri) : XmlResult {
+        try {
+            val os = context.contentResolver.openOutputStream(uri)
+            withContext(Dispatchers.IO) {
+                val results = result.getResult(taskId)
+                val timings = timing.getTiming(taskId)
+                val w: Writer = BufferedWriter(OutputStreamWriter(os, "windows-1251"))
+                val xml = composeXml(results, timings)
+                w.write(xml)
+                w.flush()
+                w.close()
+            }
+        } catch (e: Exception) {
+            return XmlResult.Fail("Помилка у створенні файлу")
         }
+        return XmlResult.Success("Файл створено!")
     }
 
     private fun composeXml(results: List<Result>, timings: List<Timing>): String {

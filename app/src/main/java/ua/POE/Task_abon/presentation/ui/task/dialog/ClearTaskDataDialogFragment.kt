@@ -27,7 +27,7 @@ class ClearTaskDataDialogFragment : DialogFragment() {
             requireArguments().getInt(TASK_ID)
         }
 
-        val listener = DialogInterface.OnClickListener() { _, _ ->
+        val listener = DialogInterface.OnClickListener { _, _ ->
             parentFragmentManager.setFragmentResult(
                 REQUEST_KEY,
                 bundleOf(TASK_ID to taskId)

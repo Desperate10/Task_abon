@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
 import ua.POE.Task_abon.data.entities.Timing
 
 @Dao
@@ -41,6 +40,6 @@ interface TimingDao {
     suspend fun upEditCount(taskId: Int, num: Int)
 
     @Query("DELETE FROM timing WHERE task_id = :taskId")
-    suspend fun deleteByTaskId(taskId: Int)
+    suspend fun delete(taskId: Int)
 
 }

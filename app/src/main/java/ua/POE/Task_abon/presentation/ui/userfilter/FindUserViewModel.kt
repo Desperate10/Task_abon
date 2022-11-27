@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
-import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.TaskInfo
 import javax.inject.Inject
 
 @HiltViewModel

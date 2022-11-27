@@ -40,7 +40,7 @@ class SaveConfirmationDialogFragment : DialogFragment() {
     }
 
     companion object {
-        const val TAG = "SaveConfirmationDialogFragment"
+        private const val TAG = "SaveConfirmationDialogFragment"
         const val REQUEST_KEY = "$TAG:saveOrNot"
         const val KEY_BUTTON = "BUTTON"
         const val KEY_DIRECTION_RESPONSE = "RESPONSE"

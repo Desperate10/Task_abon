@@ -3,26 +3,20 @@ package ua.POE.Task_abon.utils
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
-import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.view.View
 import android.view.inputmethod.InputMethodManager
-import androidx.activity.result.ActivityResultLauncher
 import androidx.annotation.RawRes
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.presentation.model.Icons
 import java.io.BufferedReader
-import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.Charset
@@ -31,22 +25,12 @@ fun Context.getIcons() : List<Icons> {
     return resources.getRawTextFile(R.raw.icons)
 }
 
-fun Fragment.requestPermissions(request: ActivityResultLauncher<Array<String>>, permissions: Array<String>) = request.launch(permissions)
-
-fun Fragment.isAllPermissionsGranted(permissions: Array<String>) = permissions.all {
-    ContextCompat.checkSelfPermission(requireContext(), it) == PackageManager.PERMISSION_GRANTED
-}
-
 fun <T : Any> Fragment.autoCleaned(initializer: (() -> T)? = null): AutoCleanedValue<T> {
     return AutoCleanedValue(this, initializer)
 }
 
 fun Fragment.hideKeyboard() {
     view?.let { activity?.hideKeyboard(it) }
-}
-
-fun Activity.hideKeyboard() {
-    hideKeyboard(currentFocus ?: View(this))
 }
 
 fun Context.hideKeyboard(view: View) {
@@ -72,8 +56,6 @@ fun Resources.getRawTextFile(@RawRes id: Int): ArrayList<Icons> {
 
     val reader = BufferedReader(InputStreamReader(inputStream, Charset.forName("UTF-8")))
     reader.readLines().forEach {
-
-        //get a string array of all items in this line
         val items = it.split(";")
         val icon = Icons()
         icon.id = items[0]
@@ -81,7 +63,6 @@ fun Resources.getRawTextFile(@RawRes id: Int): ArrayList<Icons> {
         icon.hint = items[2]
         icon.emoji = items[3]
         iconsList.add(icon)
-        //do what you want with each item
     }
 
     return iconsList
@@ -111,22 +92,6 @@ fun ContentResolver.getFileName(fileUri: Uri): String {
         returnCursor.close()
     }
     return name
-}
-
-suspend fun <T> saveReadFile(
-    readFile: suspend () -> T
-): Resource<T> {
-    return withContext(Dispatchers.IO) {
-        try {
-            Resource.Success(readFile.invoke())
-        } catch (throwable: Throwable) {
-            when (throwable) {
-                is FileNotFoundException ->
-                    Resource.Error("Файл не найден")
-                else -> Resource.Error("Ошибка чтения файла")
-            }
-        }
-    }
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

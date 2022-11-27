@@ -2,7 +2,6 @@ package ua.POE.Task_abon.presentation.ui.taskdetail
 
 import android.os.Bundle
 import android.view.*
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -157,10 +156,5 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
                 adapter.itemCount
             )
         )
-    }
-
-    companion object {
-        private const val FIRST_FILIAL_NUMBER = 1
-        private const val LAST_FILIAL_NUMBER = 5
     }
 }

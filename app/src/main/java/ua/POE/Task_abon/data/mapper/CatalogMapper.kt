@@ -1,7 +1,7 @@
 package ua.POE.Task_abon.data.mapper
 
 import ua.POE.Task_abon.data.entities.CatalogEntity
-import ua.POE.Task_abon.domain.model.Catalog
+import ua.POE.Task_abon.presentation.model.Catalog
 
 
     fun mapCatalogEntityToCatalog(entity: CatalogEntity) = Catalog(

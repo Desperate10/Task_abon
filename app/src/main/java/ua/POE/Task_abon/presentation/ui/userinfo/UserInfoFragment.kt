@@ -15,7 +15,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
-import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -38,9 +37,10 @@ import kotlinx.coroutines.launch
 import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
-import ua.POE.Task_abon.domain.model.BasicInfo
-import ua.POE.Task_abon.domain.model.SavedData
-import ua.POE.Task_abon.domain.model.TechInfo
+import ua.POE.Task_abon.presentation.model.BasicInfo
+import ua.POE.Task_abon.presentation.model.SavedData
+import ua.POE.Task_abon.presentation.model.TechInfo
+import ua.POE.Task_abon.presentation.model.DataToSave
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.IconsDialogFragment
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.LocationToggleDialogFragment
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.SaveConfirmationDialogFragment
@@ -136,11 +136,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             launch {
                 viewModel.selectedBlockData.collectLatest {
                     if (viewModel.selectedBlock.value != "Результати") {
-                        binding.infoTables.visibility = VISIBLE
+                        binding.infoTable.visibility = VISIBLE
                         binding.results.root.visibility = GONE
                         updateView(it)
                     } else {
-                        binding.infoTables.visibility = GONE
+                        binding.infoTable.visibility = GONE
                         binding.results.root.visibility = VISIBLE
                     }
                 }
@@ -455,39 +455,40 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     private fun setPic(uri: Uri) {
         // Get the dimensions of the View
-            val targetW: Int = binding.results.addPhoto.width
-            val targetH: Int = binding.results.addPhoto.height
+        val targetW: Int = binding.results.addPhoto.width
+        val targetH: Int = binding.results.addPhoto.height
 
-            val bmOptions = BitmapFactory.Options().apply {
-                // Get the dimensions of the bitmap
-                inJustDecodeBounds = true
+        val bmOptions = BitmapFactory.Options().apply {
+            // Get the dimensions of the bitmap
+            inJustDecodeBounds = true
 
-                val photoW: Int = outWidth
-                val photoH: Int = outHeight
+            val photoW: Int = outWidth
+            val photoH: Int = outHeight
 
-                // Determine how much to scale down the image
-                val scaleFactor: Int =
-                    1.coerceAtLeast((photoW / targetW).coerceAtMost(photoH / targetH))
+            // Determine how much to scale down the image
+            val scaleFactor: Int =
+                1.coerceAtLeast((photoW / targetW).coerceAtMost(photoH / targetH))
 
-                // Decode the image file into a Bitmap sized to fill the View
-                inJustDecodeBounds = false
-                inSampleSize = scaleFactor
-            }
+            // Decode the image file into a Bitmap sized to fill the View
+            inJustDecodeBounds = false
+            inSampleSize = scaleFactor
+        }
 
-            BitmapFactory.decodeStream(
-                context?.contentResolver?.openInputStream(uri),
-                null,
-                bmOptions
-            )?.also { bitmap ->
-                    binding.results.addPhoto.setImageBitmap(bitmap)
-                    binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
+        BitmapFactory.decodeStream(
+            context?.contentResolver?.openInputStream(uri),
+            null,
+            bmOptions
+        )?.also { bitmap ->
+            binding.results.addPhoto.setImageBitmap(bitmap)
+            binding.results.addPhoto.scaleType = ImageView.ScaleType.CENTER_CROP
 
-            }
+        }
     }
 
     private fun getTmpFileUri(): Uri {
-        val filename = args.filial + "_" + binding.personalAccount.text.toString().substringBefore(" ")
-            .replace("/", "") + "_"
+        val filename =
+            args.filial + "_" + binding.personalAccount.text.toString().substringBefore(" ")
+                .replace("/", "") + "_"
         val storageDirectory: File? =
             requireActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES)
         val tmpFile = File.createTempFile(filename, ".jpg", storageDirectory).apply {
@@ -635,18 +636,20 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     private fun saveResult(selectCustomer: Boolean = false, isNext: Boolean = true) {
         viewModel.saveResults(
-            date = binding.results.newDate.text.toString(),
-            zone1 = binding.results.newMeters1.text.toString(),
-            zone2 = binding.results.newMeters2.text.toString(),
-            zone3 = binding.results.newMeters3.text.toString(),
-            note = binding.results.note.text.toString().replace("[\\t\\n\\r]+", " "),
-            phoneNumber = binding.results.phone.text.toString(),
-            lat = binding.lat.text.toString(),
-            lng = binding.lng.text.toString(),
-            isMainPhone = binding.results.checkBox.isChecked,
-            photo = latestTmpUri.toString(),
-            selectCustomer = selectCustomer,
-            isNext = isNext
+            DataToSave(
+                date = binding.results.newDate.text.toString(),
+                zone1 = binding.results.newMeters1.text.toString(),
+                zone2 = binding.results.newMeters2.text.toString(),
+                zone3 = binding.results.newMeters3.text.toString(),
+                note = binding.results.note.text.toString().replace("[\\t\\n\\r]+", " "),
+                phoneNumber = binding.results.phone.text.toString(),
+                lat = binding.lat.text.toString(),
+                lng = binding.lng.text.toString(),
+                isMainPhone = binding.results.checkBox.isChecked,
+                photo = latestTmpUri.toString(),
+                selectCustomer = selectCustomer,
+                isNext = isNext
+            )
         )
     }
 

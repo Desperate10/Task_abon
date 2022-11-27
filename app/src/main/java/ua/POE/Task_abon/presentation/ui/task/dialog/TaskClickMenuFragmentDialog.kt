@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.LifecycleOwner
 import com.google.gson.Gson
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.TaskInfo
 
 class TaskClickMenuFragmentDialog : DialogFragment() {
 

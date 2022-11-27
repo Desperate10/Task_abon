@@ -4,9 +4,6 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import ua.POE.Task_abon.data.AppDatabase
 import javax.inject.Inject
 
 @HiltAndroidApp

@@ -13,23 +13,22 @@ import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.Result
-import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.data.entities.Timing
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
 import ua.POE.Task_abon.data.mapper.mapResultToSavedData
 import ua.POE.Task_abon.data.mapper.toTaskInfo
-import ua.POE.Task_abon.domain.model.*
-import ua.POE.Task_abon.presentation.model.Icons
+import ua.POE.Task_abon.presentation.model.*
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
+import kotlin.collections.HashMap
 
 @HiltViewModel
 class UserInfoViewModel @Inject constructor(
     private val icons: List<Icons>,
-    private val savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
     private val directory: DirectoryDao,
     private val task: TaskDao,
     private val customer: TaskCustomerDaoImpl,
@@ -38,6 +37,7 @@ class UserInfoViewModel @Inject constructor(
     private val catalog: CatalogDao
 ) : ViewModel() {
 
+    private var sourceType: String = "2"
     private var isResultSaved = false
     private var startEditTime: String = ""
     private var selectedSourceCode = ""
@@ -71,13 +71,13 @@ class UserInfoViewModel @Inject constructor(
 
     private val sourceSpinnerPosition = MutableStateFlow(0)
 
-    private val _taskInfo = MutableStateFlow<TaskInfo>(TaskInfo())
+    private val _taskInfo = MutableStateFlow(TaskInfo())
     private val _techInfo = MutableStateFlow<Map<String, String>>(emptyMap())
 
     private val _customerIndex = MutableStateFlow(index)
     val customerIndex: StateFlow<Int> = _customerIndex
 
-    private val _selectedBlock = MutableStateFlow("Результати")
+    private val _selectedBlock = MutableStateFlow(RESULTS_BLOCK)
     val selectedBlock: StateFlow<String> = _selectedBlock
 
     private val _saveAnswer = MutableStateFlow("")
@@ -112,42 +112,36 @@ class UserInfoViewModel @Inject constructor(
 
     val blockNames = flow {
         val blockNameList = mutableListOf<String>()
-        blockNameList.add(0, "Результати")
+        blockNameList.add(0, RESULTS_BLOCK)
         emit(blockNameList)
         blockNameList.addAll(directory.getBlockNames())
         emit(blockNameList)
     }.flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), listOf("Результати"))
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), listOf(RESULTS_BLOCK))
 
     val selectedBlockData = combine(_customerIndex, _selectedBlock) { _, selectedBlock ->
-        if (selectedBlock == "Результати") {
+        if (selectedBlock == RESULTS_BLOCK) {
             updateTechInfoMap()
             _techInfo.value
         } else {
             val fields = directory.getFieldsByBlockName(selectedBlock, taskId)
-            getTextFieldsByBlockName(fields)
+            customer.getFieldsByBlock(taskId, fields, _customerIndex.value)
         }
     }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
 
-    val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, status ->
-        getSavedData(index, status)
+    val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, _ ->
+        getSavedData(index)
     }
         .flowOn(Dispatchers.Main)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
-    private suspend fun getSavedData(index: Int, status: Int): SavedData {
-        val savedData = mapResultToSavedData(result.getResultUser(taskId, index))
-        updateSourceList(status)
-
-        val type = if (status == 0) {
-            "2"
-        } else {
-            "3"
-        }
-
+    //разобраться с сохранением состояния
+    private suspend fun getSavedData(index: Int): SavedData {
+        val savedData = mapResultToSavedData(result.getResultByCustomer(taskId, index))
+        updateSourceList()
         val sourceName = if (!savedData.source.isNullOrEmpty()) {
-            catalog.getSelectedSourceName(savedData.source, type)
+            catalog.getSelectedSourceName(savedData.source, sourceType)
         } else {
             ""
         }
@@ -155,12 +149,8 @@ class UserInfoViewModel @Inject constructor(
         return savedData.copy(source = sourceName)
     }
 
-    private suspend fun updateSourceList(status: Int) {
-        sourceList = if (status == 0) {
-            catalog.getSourceList("2")
-        } else {
-            catalog.getSourceList("3")
-        }
+    private suspend fun updateSourceList() {
+        sourceList = catalog.getSourceList(sourceType)
             .map { mapCatalogEntityToCatalog(it) }
         _sources.value = sourceList!!.map { it.text.toString() }
     }
@@ -253,40 +243,97 @@ class UserInfoViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     val basicInfo = _customerIndex
         .mapLatest {
-            getCustomerBasicInfo(this, icons)
-        }.filter { it.name.isNotEmpty() }
+            getCustomerBasicInfo(icons)
+        }
+        .filter { it.name.isNotEmpty() }
         .flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), null)
 
-    private fun getTextFieldsByBlockName(fields: List<String>) =
-        customer.getFieldsByBlock(taskId, fields, _customerIndex.value)
+
+    private suspend fun getCustomerBasicInfo(
+        icons: List<Icons>
+    ): BasicInfo {
+        val basicInfoFieldsList = ArrayList<String>()
+        val basicFields = directory.getBasicFields(taskId)
+        basicInfoFieldsList.addAll(basicFields)
+        basicInfoFieldsList.add("Counter_numb")
+        val tdHash = customer.getFieldsByBlock(taskId, basicInfoFieldsList, _customerIndex.value)
+        var pillar = ""
+        val otherInfo = StringBuilder()
+        tdHash.forEach { (key, value) ->
+            if (key.isNotEmpty()) {
+                when (key) {
+                    "О/р" -> {
+                        personalAccountKey = key
+                        personalAccount = value
+                    }
+                    "icons_account", "Иконки л/с" -> {
+                        val text = getNeededEmojis(icons, value)
+                        personalAccountEmoji =
+                            "$personalAccount $text"
+                    }
+                    "Адреса" -> {
+                        address = value
+                    }
+                    "ПІБ" -> {
+                        name = value
+                    }
+                    "Опора" -> {
+                        pillar = "Оп.$value"
+                    }
+                    "№ ліч." -> {
+                        counterValue = value
+                        counterEmoji =
+                            "$counterValue $counterKey"
+                    }
+                    "icons_counter", "Иконки с" -> {
+                        counterKey = getNeededEmojis(icons, value)
+                    }
+                    else -> {
+                        if (value.isNotEmpty())
+                            otherInfo.append("$value ")
+                    }
+                }
+            }
+        }
+        otherInfo.append(pillar).toString()
+        return BasicInfo(
+            personalAccount = personalAccountEmoji,
+            address = address,
+            name = name,
+            counter = counterEmoji,
+            other = otherInfo.toString()
+        )
+    }
 
     private suspend fun updateTechInfoMap() {
-        val fields = directory.getFieldsByBlockName("Тех.информация", taskId)
+        val fields = directory.getFieldsByBlockName(TECHNICAL_BLOCK, taskId)
         _techInfo.value =
             customer.getTextByFields("TD$taskId", fields, _customerIndex.value)
     }
 
     //save date when pressing saveResult
-    private suspend fun saveEditTiming(firstEditDate: String, date: String) {
+    private suspend fun saveEditTiming() {
+        val currentDateAndTime =
+            dateAndTimeFormat.format(Date())
         if (timing.getStartTaskDate(taskId, _customerIndex.value).isNullOrEmpty()) {
             timing.insertTiming(
                 Timing(
                     taskId = taskId,
                     num = _customerIndex.value,
-                    startTaskTime = firstEditDate,
-                    endTaskTime = date
+                    startTaskTime = startEditTime,
+                    endTaskTime = currentDateAndTime
                 )
             )
         } else if (timing.getFirstEditDate(taskId, _customerIndex.value).isNullOrEmpty()) {
             timing.updateFirstEditDate(
                 taskId,
                 _customerIndex.value,
-                firstEditDate
+                startEditTime
             )
-            updateEditTime(taskId, date)
+            updateEditTime(taskId, currentDateAndTime)
         } else {
-            updateEditTime(taskId, date)
+            updateEditTime(taskId, currentDateAndTime)
         }
         resetTimer()
     }
@@ -305,44 +352,16 @@ class UserInfoViewModel @Inject constructor(
     }
 
     fun saveResults(
-        date: String,
-        zone1: String,
-        zone2: String,
-        zone3: String,
-        note: String,
-        phoneNumber: String,
-        isMainPhone: Boolean,
-        lat: String,
-        lng: String,
-        photo: String,
-        selectCustomer: Boolean,
-        isNext: Boolean
+        newData: DataToSave
     ) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                if (phoneNumber.isNotEmpty() && (phoneNumber.take(3) !in operators.value || phoneNumber.length < 10)) {
-                    _saveAnswer.value = "Неправильний формат номера телефону"
-                } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
-                    _saveAnswer.value = "Ви забули вказати джерело"
-                } else if (zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
-                    val currentDateAndTime =
-                        dateAndTimeFormat.format(Date())
-                    saveEditTiming(startEditTime, currentDateAndTime)
-                    val fields =
-                        listOf(
-                            "num",
-                            "accountId",
-                            "Numbpers",
-                            "family",
-                            "Adress",
-                            "tel",
-                            "counpleas"
-                        )
-                    val user =
-                        customer.getTextByFields("TD$taskId", fields, customerIndex.value)
-                    val isMainPhoneInt = if (isMainPhone) 1 else 0
-                    val photoValid = if (photo.length > 4) {
-                        photo
+        if (isNewDataValid(newData)) {
+            viewModelScope.launch {
+                withContext(Dispatchers.IO) {
+                    saveEditTiming()
+                    val currentCustomer = getCustomerMissingData()
+                    val isMainPhoneInt = if (newData.isMainPhone) 1 else 0
+                    val photoValid = if (newData.photo.length > 4) {
+                        newData.photo
                     } else {
                         null
                     }
@@ -353,18 +372,18 @@ class UserInfoViewModel @Inject constructor(
                         taskId,
                         _taskInfo.value.filial,
                         _customerIndex.value,
-                        user["num"]!!,
-                        user["accountId"]!!,
-                        date,
+                        currentCustomer["num"]!!,
+                        currentCustomer["accountId"]!!,
+                        newData.date,
                         statusSpinnerPosition.value.toString(),
                         selectedSourceCode,
                         multiSpinnerSelectedFeatures.joinToString(),
-                        zone1,
-                        zone2,
-                        zone3,
-                        note,
-                        user["tel"]!!,
-                        phoneNumber,
+                        newData.zone1,
+                        newData.zone2,
+                        newData.zone3,
+                        newData.note,
+                        currentCustomer["tel"]!!,
+                        newData.phoneNumber,
                         isMainPhoneInt,
                         "",
                         preloadResultTab.value.type,
@@ -372,27 +391,53 @@ class UserInfoViewModel @Inject constructor(
                         preloadResultTab.value.zoneCount,
                         preloadResultTab.value.capacity,
                         preloadResultTab.value.averageUsage,
-                        lat,
-                        lng,
+                        newData.lat,
+                        newData.lng,
                         personalAccount,
-                        user["family"],
-                        user["Adress"],
+                        currentCustomer["family"],
+                        currentCustomer["Adress"],
                         photoValid,
-                        user["counpleas"]
+                        currentCustomer["counpleas"]
                     )
 
                     result.insertNewData(saveData)
-                    customer.setDone(taskId, user["num"]!!)
+                    customer.setDone(taskId, currentCustomer["num"]!!)
                     setResultSavedState(true)
-                    if (selectCustomer) {
-                        selectCustomer(isNext)
+                    if (newData.selectCustomer) {
+                        selectCustomer(newData.isNext)
                     }
                     _saveAnswer.value = "Результати збережено"
-                } else {
-                    _saveAnswer.value = "Ви не ввели нові показники"
                 }
             }
         }
+    }
+
+    private fun isNewDataValid(data: DataToSave): Boolean {
+        var isValid = false
+        if (data.phoneNumber.isNotEmpty() && (data.phoneNumber.take(3) !in operators.value || data.phoneNumber.length < 10)) {
+            _saveAnswer.value = "Неправильний формат номера телефону"
+        } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
+            _saveAnswer.value = "Ви забули вказати джерело"
+        } else if (data.zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
+            isValid = true
+        } else {
+            _saveAnswer.value = "Ви не ввели нові показники"
+        }
+        return isValid
+    }
+
+    private fun getCustomerMissingData(): HashMap<String,String> {
+        val fields =
+            listOf(
+                "num",
+                "accountId",
+                "Numbpers",
+                "family",
+                "Adress",
+                "tel",
+                "counpleas"
+            )
+        return customer.getTextByFields("TD$taskId", fields, customerIndex.value)
     }
 
     fun getTask() {
@@ -411,9 +456,10 @@ class UserInfoViewModel @Inject constructor(
         customer.getCheckedConditions(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
+        sourceType = (position + 2).toString()
         if (position != _statusSpinnerPosition.value) {
             viewModelScope.launch {
-                updateSourceList(position)
+                updateSourceList()
             }
         }
         _statusSpinnerPosition.value = position
@@ -484,64 +530,8 @@ class UserInfoViewModel @Inject constructor(
     }
 
     companion object {
-
-        private suspend fun getCustomerBasicInfo(
-            userInfoViewModel: UserInfoViewModel,
-            icons: List<Icons>
-        ): BasicInfo {
-            val basicInfoFieldsList = ArrayList<String>()
-            val basicFields = userInfoViewModel.directory.getBasicFields(userInfoViewModel.taskId)
-            basicInfoFieldsList.addAll(basicFields)
-            basicInfoFieldsList.add("Counter_numb")
-            val tdHash = userInfoViewModel.getTextFieldsByBlockName(basicInfoFieldsList)
-            var pillar = ""
-            val otherInfo = StringBuilder()
-            tdHash.forEach { (key, value) ->
-                if (key.isNotEmpty()) {
-                    when (key) {
-                        "О/р" -> {
-                            userInfoViewModel.personalAccountKey = key
-                            userInfoViewModel.personalAccount = value
-                        }
-                        "icons_account", "Иконки л/с" -> {
-                            val text = getNeededEmojis(icons, value)
-                            userInfoViewModel.personalAccountEmoji =
-                                "${userInfoViewModel.personalAccount} $text"
-                        }
-                        "Адреса" -> {
-                            userInfoViewModel.address = value
-                        }
-                        "ПІБ" -> {
-                            userInfoViewModel.name = value
-                        }
-                        "Опора" -> {
-                            pillar = "Оп.$value"
-                        }
-                        "№ ліч." -> {
-                            userInfoViewModel.counterValue = value
-                            userInfoViewModel.counterEmoji =
-                                "${userInfoViewModel.counterValue} ${userInfoViewModel.counterKey}"
-                        }
-                        "icons_counter", "Иконки с" -> {
-                            userInfoViewModel.counterKey = getNeededEmojis(icons, value)
-                        }
-                        else -> {
-                            if (value.isNotEmpty())
-                                otherInfo.append("$value ")
-                        }
-                    }
-                }
-            }
-            otherInfo.append(pillar).toString()
-            return BasicInfo(
-                personalAccount = userInfoViewModel.personalAccountEmoji,
-                address = userInfoViewModel.address,
-                name = userInfoViewModel.name,
-                counter = userInfoViewModel.counterEmoji,
-                other = otherInfo.toString()
-            )
-        }
-
+        private const val RESULTS_BLOCK = "Результати"
+        private const val TECHNICAL_BLOCK = "Тех.информация"
     }
 
 }

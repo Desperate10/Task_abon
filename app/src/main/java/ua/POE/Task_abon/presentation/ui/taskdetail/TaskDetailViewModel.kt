@@ -11,16 +11,16 @@ import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
 import ua.POE.Task_abon.data.entities.UserData
-import ua.POE.Task_abon.domain.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.TaskInfo
 import ua.POE.Task_abon.presentation.model.SearchMap
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskDetailViewModel @Inject constructor(
-    private val savedStateHandle: SavedStateHandle,
+    savedStateHandle: SavedStateHandle,
     private val directoryDao: DirectoryDao,
     private val taskCustomerData: TaskCustomerDaoImpl,
-    private val resultDao: ResultDao
+    resultDao: ResultDao
 ) : ViewModel() {
 
     private val taskInfo = savedStateHandle.get<TaskInfo>("taskInfo")
@@ -36,7 +36,7 @@ class TaskDetailViewModel @Inject constructor(
             getCustomers(status = it)
             customers
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList<UserData>())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val finishedCustomersCount = resultDao.getResultCount(taskId)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 0)

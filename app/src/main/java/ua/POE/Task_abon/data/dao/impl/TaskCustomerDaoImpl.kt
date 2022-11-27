@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.database.Cursor
 import androidx.room.Ignore
 import androidx.room.OnConflictStrategy
-import androidx.room.RawQuery
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
 import ua.POE.Task_abon.data.AppDatabase
@@ -14,7 +13,7 @@ import ua.POE.Task_abon.data.entities.UserData
 import java.lang.StringBuilder
 import javax.inject.Inject
 
-class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private val testEntityDao: TaskCustomerDao) {
+class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private val taskCustomer: TaskCustomerDao) {
 
     private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
 
@@ -30,7 +29,7 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
     fun getCheckedConditions(taskId: Int, index: Int) =
         getCheckedConditions(sdb, taskId, index)
 
-    suspend fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>, status: String?) : List<UserData> {
+    fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>, status: String?) : List<UserData> {
         val whereSize = keys.size
         var whereClause = StringBuilder()
         var query = "SELECT * FROM TD$taskId "
@@ -51,8 +50,8 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
             }
         }
         val st = query + whereClause.toString()
-
-        return testEntityDao.getSearchedUsersList(SimpleSQLiteQuery(st))
+        //make flow from rawquery?
+        return taskCustomer.getSearchedCustomersList(SimpleSQLiteQuery(st))
     }
 
     companion object {
@@ -67,12 +66,12 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
         ): HashMap<String, String> {
             var csr: Cursor =
                 sdb.query("SELECT ${fields.joinToString()} FROM TD$taskId WHERE _id = $index")
-            var data: HashMap<String, String> = HashMap()
-            var data2: HashMap<String, String> = HashMap()
+            val data: HashMap<String, String> = HashMap()
+            val data2: HashMap<String, String> = HashMap()
             csr.moveToFirst()
             do {
                 for (i in fields.indices) {
-                    var field = csr.getString(csr.getColumnIndex(fields[i]))
+                    val field = csr.getString(csr.getColumnIndex(fields[i]))
                     data[fields[i]] = field
                 }
             } while (csr.moveToNext())
@@ -111,13 +110,13 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
             fields: List<String>,
             index: Int
         ): HashMap<String, String> {
-            var csr: Cursor =
+            val csr: Cursor =
                 sdb.query("SELECT ${fields.joinToString()} FROM $tableName WHERE _id = $index")
-            var data: HashMap<String, String> = HashMap()
+            val data: HashMap<String, String> = HashMap()
             csr.moveToFirst()
             do {
                 for (i in fields.indices) {
-                    var field = csr.getString(csr.getColumnIndex(fields[i]))
+                    val field = csr.getString(csr.getColumnIndex(fields[i]))
                     data[fields[i]] = field
                 }
             } while (csr.moveToNext())
@@ -157,12 +156,12 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
             tableName: String,
             field: String
         ): ArrayList<String> {
-            var csr: Cursor = sdb.query("SELECT DISTINCT $field FROM $tableName")
-            var data: ArrayList<String> = ArrayList()
+            val csr: Cursor = sdb.query("SELECT DISTINCT $field FROM $tableName")
+            val data: ArrayList<String> = ArrayList()
 
             csr.moveToFirst()
             do {
-                data.add(csr.getString(csr.getColumnIndex("$field")))
+                data.add(csr.getString(csr.getColumnIndex(field)))
             } while (csr.moveToNext())
             csr.close()
 

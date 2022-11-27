@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.domain.model
+package ua.POE.Task_abon.presentation.model
 
 data class BasicInfo(
     val personalAccount: String,
@@ -6,7 +6,4 @@ data class BasicInfo(
     val name: String,
     val counter: String,
     val other: String
-) {
-    constructor() : this("", "", "", "", "")
-
-}
+)

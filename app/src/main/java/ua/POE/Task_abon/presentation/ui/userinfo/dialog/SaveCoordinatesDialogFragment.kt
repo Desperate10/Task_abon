@@ -3,7 +3,6 @@ package ua.POE.Task_abon.presentation.ui.userinfo.dialog
 import android.app.Dialog
 import android.content.DialogInterface
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
@@ -29,7 +28,7 @@ class SaveCoordinatesDialogFragment : DialogFragment() {
     }
 
     companion object {
-        const val TAG = "SaveCoordinatesDialogFragment"
+        private const val TAG = "SaveCoordinatesDialogFragment"
         const val REQUEST_KEY = "$TAG:saveOrNot"
         const val KEY_BUTTON = "BUTTON"
 

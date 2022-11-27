@@ -38,7 +38,6 @@ class CustomerListAdapter @Inject constructor(
                 accountNumber.text = String.format(accountTemplate, numbpers)
                 if (!icons_account.isNullOrBlank()) {
                     val emojis = getNeededEmojis(iconsList, icons_account)
-
                     accountNumber.text = String.format(
                         accountAndCounterFinalTemplate,
                         accountNumber.text,
