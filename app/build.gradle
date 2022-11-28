@@ -31,10 +31,10 @@ android {
                 }
             }
         }
-        getByName("debug") {
+        /*getByName("debug") {
             applicationIdSuffix = ".debug"
             minifyEnabled false
-        }
+        }*/
     }
 
     compileOptions {

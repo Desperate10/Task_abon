@@ -34,8 +34,8 @@
             app:popUpTo="@id/findUserFragment"
             app:popUpToInclusive="true" />
         <argument
-            android:name="taskInfo"
-            app:argType="ua.POE.Task_abon.presentation.model.TaskInfo" />
+            android:name="task"
+            app:argType="ua.POE.Task_abon.presentation.model.Task" />
         <argument
             android:name="searchLIst"
             app:argType="ua.POE.Task_abon.presentation.model.SearchMap"
@@ -68,7 +68,7 @@
             android:id="@+id/action_findUserFragment_to_taskDetailFragment"
             app:destination="@id/taskDetailFragment" />
         <argument
-            android:name="taskInfo"
-            app:argType="ua.POE.Task_abon.presentation.model.TaskInfo" />
+            android:name="task"
+            app:argType="ua.POE.Task_abon.presentation.model.Task" />
     </fragment>
 </navigation>

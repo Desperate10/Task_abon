@@ -22,12 +22,12 @@ import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentFindUserBinding
 import ua.POE.Task_abon.presentation.model.SearchMap
 import ua.POE.Task_abon.presentation.ui.userfilter.dialog.DeleteSearchFilterDialogFragment
-import ua.POE.Task_abon.presentation.ui.userinfo.listener.ItemSelectedListener
 import ua.POE.Task_abon.utils.autoCleaned
+import ua.POE.Task_abon.utils.onItemSelected
 
 
 @AndroidEntryPoint
-class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener {
+class FindUserFragment : Fragment(), View.OnClickListener {
 
     private val args by navArgs<FindUserFragmentArgs>()
     private var binding: FragmentFindUserBinding by autoCleaned()
@@ -155,7 +155,7 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
     private fun showFilteredUsers() {
         findNavController().navigate(
             FindUserFragmentDirections.actionFindUserFragmentToTaskDetailFragment(
-                args.taskInfo,
+                args.task,
                 SearchMap(searchListHash)
             )
         )
@@ -174,18 +174,6 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-        val selectedItem = parent.getItemAtPosition(position).toString()
-        when (parent.id) {
-            R.id.filter_spinner -> {
-                viewModel.getSearchFieldValues(selectedItem)
-            }
-            R.id.exist_items_spinner -> {
-                binding.editFilterValue.setText(selectedItem)
-            }
-        }
-    }
-
     private fun initExistAdapter(fieldValues: List<String>) {
         val existAdapter =
             ArrayAdapter(
@@ -194,7 +182,9 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
                 fieldValues
             )
         binding.existItemsSpinner.adapter = existAdapter
-        binding.existItemsSpinner.onItemSelectedListener = this
+        binding.existItemsSpinner.onItemSelected { parent, position ->
+            binding.editFilterValue.setText(parent?.getItemAtPosition(position).toString())
+        }
     }
 
     private fun initSearchSpinner(fieldNames: List<String>) {
@@ -204,6 +194,8 @@ class FindUserFragment : Fragment(), ItemSelectedListener, View.OnClickListener 
             fieldNames
         )
         binding.filterSpinner.adapter = adapter
-        binding.filterSpinner.onItemSelectedListener = this
+        binding.filterSpinner.onItemSelected { parent, position ->
+            viewModel.getSearchFieldValues(parent?.getItemAtPosition(position).toString())
+        }
     }
 }

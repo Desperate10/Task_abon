@@ -4,16 +4,16 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
-import ua.POE.Task_abon.data.entities.Timing
+import ua.POE.Task_abon.data.entities.TimingEntity
 
 @Dao
 interface TimingDao {
 
     @Insert(onConflict = IGNORE)
-    suspend fun insertTiming(timing: Timing)
+    suspend fun insertTiming(timing: TimingEntity)
 
     @Query("SELECT * FROM timing WHERE task_id = :taskId")
-    suspend fun getTiming(taskId: Int): List<Timing>
+    suspend fun getTiming(taskId: Int): List<TimingEntity>
 
     @Query("SELECT startTaskTime FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
     suspend fun getStartTaskDate(taskId: Int, num: Int): String?

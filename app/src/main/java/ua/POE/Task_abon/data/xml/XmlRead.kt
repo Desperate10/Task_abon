@@ -14,9 +14,9 @@ import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.TaskDao
-import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
+import ua.POE.Task_abon.data.repository.TaskCustomerRepository
 import ua.POE.Task_abon.data.entities.CatalogEntity
-import ua.POE.Task_abon.data.entities.Directory
+import ua.POE.Task_abon.data.entities.DirectoryEntity
 import ua.POE.Task_abon.data.entities.TaskEntity
 import ua.POE.Task_abon.utils.XmlResult
 import java.io.BufferedReader
@@ -91,7 +91,7 @@ class XmlRead @Inject constructor(
                                 for (i in 0 until parser.attributeCount) {
                                     newtable = newtable + "," + parser.getAttributeName(i) + " TEXT"
                                     directoryDao.insert(
-                                        Directory(
+                                        DirectoryEntity(
                                             0,
                                             taskId,
                                             parser.getAttributeName(i),
@@ -99,7 +99,7 @@ class XmlRead @Inject constructor(
                                         )
                                     )
                                 }
-                                directoryDao.insert(Directory(0, taskId, "IsDone", ""))
+                                directoryDao.insert(DirectoryEntity(0, taskId, "IsDone", ""))
                                 newtable = "$newtable,IsDone TEXT)"
                                 //newtable = "$newtable)"
                                 sdb.execSQL(newtable)
@@ -233,7 +233,7 @@ class XmlRead @Inject constructor(
                                     )
                                 }
                                 cv.put("IsDone", "Не виконано")
-                                TaskCustomerDaoImpl.insertRows(sdb, tableName, cv)
+                                TaskCustomerRepository.insertRows(sdb, tableName, cv)
                             }
                         }
                     }

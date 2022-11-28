@@ -1,6 +1,6 @@
 package ua.POE.Task_abon.presentation.model
 
-data class TechInfo(
+data class Technical(
     var zoneCount: String,
     var lastDate: String,
     var lastCount: String,

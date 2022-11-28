@@ -1,4 +1,4 @@
-package ua.POE.Task_abon.data.dao.impl
+package ua.POE.Task_abon.data.repository
 
 import android.annotation.SuppressLint
 import android.content.ContentValues
@@ -7,15 +7,13 @@ import androidx.room.Ignore
 import androidx.room.OnConflictStrategy
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.TaskCustomerDao
-import ua.POE.Task_abon.data.entities.UserData
+import ua.POE.Task_abon.data.entities.UserDataEntity
 import java.lang.StringBuilder
 import javax.inject.Inject
 
-class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private val taskCustomer: TaskCustomerDao) {
+class TaskCustomerRepository @Inject constructor(appDatabase: AppDatabase, private val taskCustomer: TaskCustomerDao) {
 
     private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
 
@@ -31,7 +29,7 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
     fun getCheckedConditions(taskId: Int, index: Int) =
         getCheckedConditions(sdb, taskId, index)
 
-    suspend fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>, status: String?) : List<UserData> {
+    suspend fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>, status: String?) : List<UserDataEntity> {
         val whereSize = keys.size
         var whereClause = StringBuilder()
         var query = "SELECT * FROM TD$taskId "

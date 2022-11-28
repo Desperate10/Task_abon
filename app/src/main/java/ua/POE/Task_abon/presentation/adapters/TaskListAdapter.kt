@@ -6,11 +6,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.RowTaskBinding
-import ua.POE.Task_abon.presentation.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.Task
 import javax.inject.Inject
 
 class TaskListAdapter @Inject constructor(val context: Context) :
-    ListAdapter<TaskInfo, TaskListViewHolder>(TaskListDiffUtil) {
+    ListAdapter<Task, TaskListViewHolder>(TaskListDiffUtil) {
 
     var onTaskClickListener: OnTaskClickListener? = null
 
@@ -28,7 +28,7 @@ class TaskListAdapter @Inject constructor(val context: Context) :
             val infoTemplate = context.getString(R.string.info_template)
             taskName.text = task.name
             fileName.text = task.fileName
-            info.text = String.format(infoTemplate, task.id, task.count, task.date, task.isJur)
+            info.text = String.format(infoTemplate, task.id, task.userCount, task.date, task.isJur)
             root.setOnClickListener {
                 onTaskClickListener?.onClick(task)
             }
@@ -40,7 +40,7 @@ class TaskListAdapter @Inject constructor(val context: Context) :
     }
 
     interface OnTaskClickListener {
-        fun onClick(task: TaskInfo)
-        fun onLongClick(task: TaskInfo)
+        fun onClick(task: Task)
+        fun onLongClick(task: Task)
     }
 }

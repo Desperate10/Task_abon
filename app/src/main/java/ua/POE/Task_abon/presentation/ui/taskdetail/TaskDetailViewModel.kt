@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.ResultDao
-import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
-import ua.POE.Task_abon.data.entities.UserData
-import ua.POE.Task_abon.presentation.model.TaskInfo
+import ua.POE.Task_abon.data.repository.TaskCustomerRepository
+import ua.POE.Task_abon.data.entities.UserDataEntity
+import ua.POE.Task_abon.presentation.model.Task
 import ua.POE.Task_abon.presentation.model.SearchMap
 import javax.inject.Inject
 
@@ -19,16 +19,16 @@ import javax.inject.Inject
 class TaskDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val directoryDao: DirectoryDao,
-    private val taskCustomerData: TaskCustomerDaoImpl,
+    private val taskCustomerData: TaskCustomerRepository,
     resultDao: ResultDao
 ) : ViewModel() {
 
-    private val taskInfo = savedStateHandle.get<TaskInfo>("taskInfo")
-    private val taskId = taskInfo?.id ?: throw NullPointerException("taskId in null")
+    private val task = savedStateHandle.get<Task>("task")
+    private val taskId = task?.id ?: throw NullPointerException("taskId in null")
     private val searchParams = savedStateHandle.get<SearchMap>("searchList")
 
     private val _customerFilterStatus = MutableSharedFlow<String>(2)
-    private val customers = MutableStateFlow<List<UserData>>(emptyList())
+    private val customers = MutableStateFlow<List<UserDataEntity>>(emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val getCustomersData = _customerFilterStatus

@@ -4,7 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 
 @Entity(tableName = "result", primaryKeys = ["TSzdn_id", "Numb"])
-data class Result(
+data class ResultEntity(
     @ColumnInfo(name = "Task_name") var taskName: String?,
     @ColumnInfo(name = "Dt_Crt") var createDate: String?,
     @ColumnInfo(name = "TSzdn_id") var taskId: Int,

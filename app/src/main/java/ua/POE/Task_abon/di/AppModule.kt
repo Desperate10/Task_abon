@@ -14,7 +14,7 @@ import kotlinx.coroutines.SupervisorJob
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.*
-import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
+import ua.POE.Task_abon.data.repository.TaskCustomerRepository
 import ua.POE.Task_abon.presentation.model.Icons
 import ua.POE.Task_abon.data.xml.XmlRead
 import ua.POE.Task_abon.data.xml.XmlWrite
@@ -92,8 +92,8 @@ object AppModule {
     fun provideTaskCustomersDaoImpl(
         db: AppDatabase,
         taskCustomerDao: TaskCustomerDao
-    ): TaskCustomerDaoImpl {
-        return TaskCustomerDaoImpl(db, taskCustomerDao)
+    ): TaskCustomerRepository {
+        return TaskCustomerRepository(db, taskCustomerDao)
     }
 
     @Singleton

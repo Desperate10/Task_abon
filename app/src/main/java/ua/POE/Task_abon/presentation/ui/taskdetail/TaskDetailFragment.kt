@@ -15,7 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.UserData
+import ua.POE.Task_abon.data.entities.UserDataEntity
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
 import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
 import ua.POE.Task_abon.presentation.ui.taskdetail.dialog.IconsHelpDialogFragment
@@ -33,7 +33,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private var adapter: CustomerListAdapter by autoCleaned()
     private var count = 0
 
-    private var userData = listOf<UserData>()
+    private var userData = listOf<UserDataEntity>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,14 +63,14 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun bindViews() {
-        binding.taskName.text = args.taskInfo.name
-        binding.fileName.text = args.taskInfo.fileName
+        binding.taskName.text = args.task.name
+        binding.fileName.text = args.task.fileName
         binding.info.text = String.format(
             getString(R.string.info_template),
-            args.taskInfo.id,
-            args.taskInfo.count,
-            args.taskInfo.date,
-            args.taskInfo.isJur
+            args.task.id,
+            args.task.userCount,
+            args.task.date,
+            args.task.isJur
         )
     }
 
@@ -83,7 +83,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
                     userData = it
                     adapter.submitList(it)
                     binding.finished.text =
-                        getString(R.string.status_done, args.taskInfo.count, userData.size)
+                        getString(R.string.status_done, args.task.userCount, userData.size)
                 }
             }
         }
@@ -142,7 +142,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun navigateToFindUserFragment() {
         findNavController().navigate(
             TaskDetailFragmentDirections.actionTaskDetailFragmentToFindUserFragment(
-                args.taskInfo
+                args.task
             )
         )
     }
@@ -150,9 +150,9 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private fun navigateToUserInfoFragment(position: Int) {
         findNavController().navigate(
             TaskDetailFragmentDirections.actionTaskDetailFragmentToUserInfoFragment(
-                args.taskInfo.id,
-                args.taskInfo.filial,
-                userData[position]._id,
+                args.task.id,
+                args.task.filial,
+                userData[position].id,
                 adapter.itemCount
             )
         )

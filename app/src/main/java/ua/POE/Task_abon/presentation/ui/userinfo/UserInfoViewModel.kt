@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.dao.*
-import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
-import ua.POE.Task_abon.data.entities.Result
-import ua.POE.Task_abon.data.entities.Timing
+import ua.POE.Task_abon.data.repository.TaskCustomerRepository
+import ua.POE.Task_abon.data.entities.ResultEntity
+import ua.POE.Task_abon.data.entities.TimingEntity
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
 import ua.POE.Task_abon.data.mapper.mapResultToSavedData
 import ua.POE.Task_abon.data.mapper.toTaskInfo
@@ -31,7 +31,7 @@ class UserInfoViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val directory: DirectoryDao,
     private val task: TaskDao,
-    private val customer: TaskCustomerDaoImpl,
+    private val customer: TaskCustomerRepository,
     private val timing: TimingDao,
     private val result: ResultDao,
     private val catalog: CatalogDao
@@ -71,7 +71,7 @@ class UserInfoViewModel @Inject constructor(
 
     private val sourceSpinnerPosition = MutableStateFlow(0)
 
-    private val _taskInfo = MutableStateFlow(TaskInfo())
+    private val _taskInfo = MutableStateFlow(Task())
     private val _techInfo = MutableStateFlow<Map<String, String>>(emptyMap())
 
     private val _customerIndex = MutableStateFlow(index)
@@ -187,7 +187,7 @@ class UserInfoViewModel @Inject constructor(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val preloadResultTab: StateFlow<TechInfo> = _customerIndex
+    val preloadResultTab: StateFlow<Technical> = _customerIndex
         .flatMapLatest {
             selectedBlock
         }
@@ -196,36 +196,36 @@ class UserInfoViewModel @Inject constructor(
         }
         .mapLatest { showTechInfo() }
         .flowOn(Dispatchers.IO)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), TechInfo())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Technical())
 
-    private fun showTechInfo(): TechInfo {
+    private fun showTechInfo(): Technical {
         val controlInfo = StringBuilder()
-        val techInfo = TechInfo()
+        val technical = Technical()
         _techInfo.value.forEach { (key, value) ->
             when (key) {
                 "TimeZonalId" -> {
-                    techInfo.zoneCount = value
+                    technical.zoneCount = value
                 }
                 "Lastdate" -> {
-                    techInfo.lastDate = value
+                    technical.lastDate = value
                 }
                 "Lastlcount" -> {
-                    techInfo.lastCount = value
+                    technical.lastCount = value
                 }
                 "srnach" -> {
-                    techInfo.averageUsage = value
+                    technical.averageUsage = value
                 }
                 "type" -> {
-                    techInfo.type = value
+                    technical.type = value
                 }
                 "Counter_numb" -> {
                     counter = value
                 }
                 "Rozr" -> {
-                    techInfo.capacity = value
+                    technical.capacity = value
                 }
                 "contr_date" -> {
-                    techInfo.checkDate = value
+                    technical.checkDate = value
                     controlInfo.append(" $value")
                 }
                 "contr_pok" -> {
@@ -236,8 +236,8 @@ class UserInfoViewModel @Inject constructor(
                 }
             }
         }
-        techInfo.inspector = controlInfo.toString()
-        return techInfo
+        technical.inspector = controlInfo.toString()
+        return technical
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -318,7 +318,7 @@ class UserInfoViewModel @Inject constructor(
             dateAndTimeFormat.format(Date())
         if (timing.getStartTaskDate(taskId, _customerIndex.value).isNullOrEmpty()) {
             timing.insertTiming(
-                Timing(
+                TimingEntity(
                     taskId = taskId,
                     num = _customerIndex.value,
                     startTaskTime = startEditTime,
@@ -366,7 +366,7 @@ class UserInfoViewModel @Inject constructor(
                         null
                     }
 
-                    val saveData = Result(
+                    val saveData = ResultEntity(
                         _taskInfo.value.name,
                         _taskInfo.value.date,
                         taskId,

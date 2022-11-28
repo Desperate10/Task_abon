@@ -12,7 +12,7 @@ import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
 
 @Database(
-    entities = [TaskEntity::class, Directory::class, CatalogEntity::class, UserData::class, Result::class, Timing::class],
+    entities = [TaskEntity::class, DirectoryEntity::class, CatalogEntity::class, UserDataEntity::class, ResultEntity::class, TimingEntity::class],
     version = 9,
     exportSchema = false
 )
@@ -81,20 +81,20 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE UserData ADD COLUMN Counter_numb TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN Counter_numb TEXT")
             }
         }
 
         private val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE UserData ADD COLUMN opora TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN opora TEXT")
             }
         }
 
         private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE UserData ADD COLUMN icons_account TEXT")
-                database.execSQL("ALTER TABLE UserData ADD COLUMN icons_counter TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN icons_account TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN icons_counter TEXT")
             }
         }
 
@@ -114,7 +114,7 @@ abstract class AppDatabase : RoomDatabase() {
                 MIGRATION_7_8
             ).addCallback(AppDatabaseCallback(scope))
                 .allowMainThreadQueries()
-                .fallbackToDestructiveMigrationFrom(8)
+                .fallbackToDestructiveMigrationFrom(9)
                 .build()
     }
 }

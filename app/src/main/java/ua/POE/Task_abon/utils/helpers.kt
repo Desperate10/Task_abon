@@ -4,10 +4,16 @@ import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.content.res.Resources
+import android.location.LocationListener
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.view.View
 import android.view.inputmethod.InputMethodManager
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.Spinner
+import android.widget.SpinnerAdapter
+import android.widget.TextView
 import androidx.annotation.RawRes
 import androidx.fragment.app.Fragment
 import com.google.android.material.snackbar.Snackbar
@@ -48,6 +54,32 @@ fun View.snackbar(message: String) {
             snackbar.dismiss()
         }
     }.show()
+}
+
+fun Spinner.onItemSelected(cb: (parent:AdapterView<*>?, index: Int) -> Unit) {
+    onItemSelectedListener = object : OnItemSelectedListener {
+        override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+
+        override fun onItemSelected(
+            parent: AdapterView<*>?,
+            view: View?,
+            position: Int,
+            id: Long
+        ) = cb(parent ,position)
+    }
+}
+
+fun Spinner.onItemSelected(cb: (position: Int) -> Unit) {
+    onItemSelectedListener = object : OnItemSelectedListener {
+        override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+
+        override fun onItemSelected(
+            parent: AdapterView<*>?,
+            view: View?,
+            position: Int,
+            id: Long
+        ) = cb(position)
+    }
 }
 
 fun Resources.getRawTextFile(@RawRes id: Int): ArrayList<Icons> {

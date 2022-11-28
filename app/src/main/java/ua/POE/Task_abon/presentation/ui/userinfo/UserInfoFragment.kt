@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -39,23 +40,23 @@ import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.presentation.model.BasicInfo
 import ua.POE.Task_abon.presentation.model.SavedData
-import ua.POE.Task_abon.presentation.model.TechInfo
+import ua.POE.Task_abon.presentation.model.Technical
 import ua.POE.Task_abon.presentation.model.DataToSave
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.IconsDialogFragment
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.LocationToggleDialogFragment
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.SaveConfirmationDialogFragment
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.SaveCoordinatesDialogFragment
-import ua.POE.Task_abon.presentation.ui.userinfo.listener.ItemSelectedListener
 import ua.POE.Task_abon.presentation.ui.userinfo.listener.MyLocationListener
 import ua.POE.Task_abon.presentation.ui.userinfo.textwatcher.DiffTextWatcher
 import ua.POE.Task_abon.utils.autoCleaned
+import ua.POE.Task_abon.utils.onItemSelected
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
 @AndroidEntryPoint
 class UserInfoFragment : Fragment(), View.OnClickListener,
-    DatePickerDialog.OnDateSetListener, ItemSelectedListener, MyLocationListener,
+    DatePickerDialog.OnDateSetListener, MyLocationListener,
     ActivityCompat.OnRequestPermissionsResultCallback {
 
     private val args by navArgs<UserInfoFragmentArgs>()
@@ -180,7 +181,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
     }
 
-    private fun preloadResultTab(it: TechInfo) {
+    private fun preloadResultTab(it: Technical) {
         when (it.zoneCount) {
             "1" -> {
                 binding.results.secondZoneRow.visibility = GONE
@@ -266,9 +267,16 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun registerItemListeners() {
-        binding.blockName.onItemSelectedListener = this
-        binding.results.statusSpinner.onItemSelectedListener = this
-        binding.results.sourceSpinner.onItemSelectedListener = this
+        binding.blockName.onItemSelected { parent, position ->
+            val selectedItem = parent?.getItemAtPosition(position).toString()
+            viewModel.setSelectedBlock(selectedItem)
+        }
+        binding.results.statusSpinner.onItemSelected { position ->
+            viewModel.setStatusSpinnerPosition(position)
+        }
+        binding.results.sourceSpinner.onItemSelected { position ->
+            viewModel.setSourceSpinnerPosition(position)
+        }
     }
 
     override fun onStop() {
@@ -309,7 +317,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             .request { allGranted, _, deniedList ->
                 if (allGranted) {
                     locationManager =
-                        requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                        requireActivity().getSystemService(Context.LOCATION_SERVICE) as LocationManager
                     locationManager?.let {
                         it.requestLocationUpdates(
                             LocationManager.GPS_PROVIDER, EVERY_SECOND,
@@ -515,21 +523,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private fun selectCustomer(isNext: Boolean) {
         latestTmpUri = null
         viewModel.selectCustomer(isNext)
-    }
-
-    override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
-        when (parent.id) {
-            R.id.block_name -> {
-                val selectedItem = parent.getItemAtPosition(position).toString()
-                viewModel.setSelectedBlock(selectedItem)
-            }
-            R.id.status_spinner -> {
-                viewModel.setStatusSpinnerPosition(position)
-            }
-            R.id.source_spinner -> {
-                viewModel.setSourceSpinnerPosition(position)
-            }
-        }
     }
 
     private fun resetFields() {

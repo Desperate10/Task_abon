@@ -5,13 +5,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.REPLACE
 import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
-import ua.POE.Task_abon.data.entities.Directory
+import ua.POE.Task_abon.data.entities.DirectoryEntity
 
 @Dao
 interface DirectoryDao {
 
     @Insert(onConflict = REPLACE)
-    suspend fun insert(directory: Directory)
+    suspend fun insert(directory: DirectoryEntity)
 
     @Query("UPDATE directory SET fieldBlockInf = :attributeValue WHERE taskId = :taskId AND fieldName = :attributeName")
     suspend fun updateBlockInfo(taskId: Int, attributeName: String, attributeValue: String)

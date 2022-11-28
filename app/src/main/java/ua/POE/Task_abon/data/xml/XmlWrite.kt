@@ -2,13 +2,15 @@ package ua.POE.Task_abon.data.xml
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.apache.commons.lang3.StringUtils
 import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.dao.TimingDao
-import ua.POE.Task_abon.data.entities.Result
-import ua.POE.Task_abon.data.entities.Timing
+import ua.POE.Task_abon.data.entities.ResultEntity
+import ua.POE.Task_abon.data.entities.TimingEntity
 import ua.POE.Task_abon.utils.XmlResult
 import java.io.BufferedWriter
 import java.io.OutputStreamWriter
@@ -39,7 +41,7 @@ class XmlWrite @Inject constructor(
         return XmlResult.Success("Файл створено!")
     }
 
-    private fun composeXml(results: List<Result>, timings: List<Timing>): String {
+    private fun composeXml(results: List<ResultEntity>, timings: List<TimingEntity>): String {
         val sb = StringBuffer()
         writeLine(sb, "<?xml version='1.0' encoding='windows-1251'?>")
         writeLine(sb, "<xml xmlns:s='uuid:BDC6E3F0-6DA3-11d1-A2A3-00AA00C14882'")
@@ -350,41 +352,12 @@ class XmlWrite @Inject constructor(
                 ""
             }
 
-            val isMainTel = if (results[i].isMain.toString().isNullOrEmpty()) {
-                "0"
-            } else {
-                results[i].isMain
-            }
-
-            val oldNum = if (results[i].oldPhoneNumber.toString().isNullOrEmpty()) {
-                ""
-            } else {
-                results[i].oldPhoneNumber
-            }
-
-            val pointCondition = if (results[i].pointCondition.isNullOrEmpty()) {
-                ""
-            } else {
-                results[i].pointCondition
-            }
-
-            val counterNumb = if (results[i].counter.isNullOrEmpty()) {
-                "0"
-            } else {
-                results[i].counter
-            }
-
-            val zoneCount = if (results[i].zoneCount.isNullOrEmpty()) {
-                "0"
-            } else {
-                results[i].zoneCount
-            }
-
-            val counterCapacity = if (results[i].counterCapacity.isNullOrEmpty()) {
-                "0"
-            } else {
-                results[i].counterCapacity
-            }
+            val isMainTel = StringUtils.defaultIfBlank(results[i].isMain.toString(), "0")
+            val oldNum = StringUtils.defaultIfBlank(results[i].oldPhoneNumber.toString(), "")
+            val pointCondition = StringUtils.defaultIfBlank(results[i].pointCondition.toString(), "")
+            val counterNumb = StringUtils.defaultIfBlank(results[i].counter.toString(), "0")
+            val zoneCount = StringUtils.defaultIfBlank(results[i].zoneCount.toString(), "0")
+            val counterCapacity = StringUtils.defaultIfBlank(results[i].counterCapacity.toString(), "0")
 
             if (!results[i].accountId.isNullOrEmpty()) {
                 writeLine(

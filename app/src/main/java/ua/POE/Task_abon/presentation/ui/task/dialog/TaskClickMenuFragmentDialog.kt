@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.LifecycleOwner
 import com.google.gson.Gson
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.presentation.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.Task
 
 class TaskClickMenuFragmentDialog : DialogFragment() {
 
@@ -56,10 +56,10 @@ class TaskClickMenuFragmentDialog : DialogFragment() {
         const val REQUEST_KEY = "$TAG:clearOrNot"
         const val KEY_BUTTON = "button"
 
-        fun show(fragmentManager: FragmentManager, taskInfo: TaskInfo) {
+        fun show(fragmentManager: FragmentManager, task: Task) {
             val dialogFragment = TaskClickMenuFragmentDialog()
-            val task = Gson().toJson(taskInfo)
-            dialogFragment.arguments = bundleOf(TASK to task)
+            val taskJson = Gson().toJson(task)
+            dialogFragment.arguments = bundleOf(TASK to taskJson)
             dialogFragment.show(fragmentManager, TAG)
         }
 

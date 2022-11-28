@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.UserData
+import ua.POE.Task_abon.data.entities.UserDataEntity
 import ua.POE.Task_abon.databinding.RowPersonBinding
 import ua.POE.Task_abon.utils.getIcons
 import ua.POE.Task_abon.utils.getNeededEmojis
@@ -13,7 +13,7 @@ import javax.inject.Inject
 
 class CustomerListAdapter @Inject constructor(
     private val context: Context,
-) : ListAdapter<UserData, CustomerListViewHolder>(CustomerListDiffUtil) {
+) : ListAdapter<UserDataEntity, CustomerListViewHolder>(CustomerListDiffUtil) {
 
     private val iconsList = context.getIcons()
 
@@ -36,8 +36,8 @@ class CustomerListAdapter @Inject constructor(
                 val counterTemplate = context.resources.getString(R.string.counter_template)
                 index.text = num.toString()
                 accountNumber.text = String.format(accountTemplate, numbpers)
-                if (!icons_account.isNullOrBlank()) {
-                    val emojis = getNeededEmojis(iconsList, icons_account)
+                if (!iconsAccount.isNullOrBlank()) {
+                    val emojis = getNeededEmojis(iconsList, iconsAccount)
                     accountNumber.text = String.format(
                         accountAndCounterFinalTemplate,
                         accountNumber.text,
@@ -52,8 +52,8 @@ class CustomerListAdapter @Inject constructor(
                     person.opora
                 )
                 counter.text = String.format(counterTemplate, counterNumb)
-                if (!icons_counter.isNullOrBlank()) {
-                    val emojis = getNeededEmojis(iconsList, icons_counter)
+                if (!iconsCounter.isNullOrBlank()) {
+                    val emojis = getNeededEmojis(iconsList, iconsCounter)
 
                     counter.text =
                         String.format(accountAndCounterFinalTemplate, counter.text, emojis)

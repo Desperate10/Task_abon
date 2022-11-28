@@ -1,10 +1,10 @@
 package ua.POE.Task_abon.data.mapper
 
 import ua.POE.Task_abon.presentation.model.SavedData
-import ua.POE.Task_abon.data.entities.Result
+import ua.POE.Task_abon.data.entities.ResultEntity
 
 
-fun mapResultToSavedData(result: Result?) = SavedData(
+fun mapResultToSavedData(result: ResultEntity?) = SavedData(
     status = result?.notDone,
     source = result?.dataSource,
     date = result?.doneDate,

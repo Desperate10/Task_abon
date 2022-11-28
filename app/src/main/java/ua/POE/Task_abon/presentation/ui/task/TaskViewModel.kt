@@ -14,19 +14,19 @@ import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.dao.TaskDao
 import ua.POE.Task_abon.data.dao.TimingDao
-import ua.POE.Task_abon.data.dao.impl.TaskCustomerDaoImpl
+import ua.POE.Task_abon.data.repository.TaskCustomerRepository
 import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.data.xml.XmlRead
 import ua.POE.Task_abon.data.xml.XmlWrite
 import ua.POE.Task_abon.network.UploadWorker
-import ua.POE.Task_abon.presentation.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.Task
 import ua.POE.Task_abon.utils.XmlResult
 import ua.POE.Task_abon.utils.mapLatestIterable
 import javax.inject.Inject
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
-    private val dynamicTaskData: TaskCustomerDaoImpl,
+    private val dynamicTaskData: TaskCustomerRepository,
     private val task: TaskDao,
     private val directory: DirectoryDao,
     private val result: ResultDao,
@@ -39,7 +39,7 @@ class TaskViewModel @Inject constructor(
     private val _createXmlState = MutableSharedFlow<String>(0)
     val createXmlState : SharedFlow<String> = _createXmlState
 
-    val tasks: Flow<List<TaskInfo>> =
+    val tasks: Flow<List<Task>> =
         task.getAll().mapLatestIterable {
             it.toTaskInfo()
         }

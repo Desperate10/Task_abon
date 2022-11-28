@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentTasksBinding
-import ua.POE.Task_abon.presentation.model.TaskInfo
+import ua.POE.Task_abon.presentation.model.Task
 import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
 import ua.POE.Task_abon.presentation.ui.task.dialog.ClearTaskDataDialogFragment
 import ua.POE.Task_abon.presentation.ui.task.dialog.DeleteTaskDialogFragment
@@ -60,37 +60,9 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
-        binding.recyclerview.adapter = adapter
-        adapter.onTaskClickListener = this
-        binding.recyclerview.layoutManager = linearLayoutManager
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.tasks.collectLatest { tasks ->
-                    if (tasks.isNotEmpty()) {
-                        adapter.submitList(tasks)
-                        binding.noTasks.visibility = View.GONE
-                        binding.recyclerview.visibility = View.VISIBLE
-                    } else {
-                        binding.noTasks.visibility = View.VISIBLE
-                        binding.recyclerview.visibility = View.GONE
-                    }
-                }
-            }
-        }
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.createXmlState.collectLatest {
-                    binding.rootLayout.snackbar(it)
-                }
-            }
-        }
-
-        binding.choose.setOnClickListener {
-            chooseFile()
-        }
-
+        bindViews()
+        observeViewModel()
+        setupClickListeners()
         setupClickMenuDialog()
         setupClearDataDialogListener()
         setupDeleteTaskDialogListener()
@@ -122,6 +94,43 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
                 true
             }
             else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    private fun bindViews() {
+        val linearLayoutManager = LinearLayoutManager(activity, RecyclerView.VERTICAL, false)
+        binding.recyclerview.adapter = adapter
+        binding.recyclerview.layoutManager = linearLayoutManager
+        adapter.onTaskClickListener = this
+    }
+
+    private fun setupClickListeners() {
+        binding.choose.setOnClickListener {
+            chooseFile()
+        }
+    }
+
+    private fun observeViewModel() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.tasks.collectLatest { tasks ->
+                    if (tasks.isNotEmpty()) {
+                        adapter.submitList(tasks)
+                        binding.noTasks.visibility = View.GONE
+                        binding.recyclerview.visibility = View.VISIBLE
+                    } else {
+                        binding.noTasks.visibility = View.VISIBLE
+                        binding.recyclerview.visibility = View.GONE
+                    }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.createXmlState.collectLatest {
+                    binding.rootLayout.snackbar(it)
+                }
+            }
         }
     }
 
@@ -157,15 +166,15 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
             }
     }
 
-    override fun onClick(task: TaskInfo) {
+    override fun onClick(task: Task) {
         navigateToTaskDetailFragment(task)
     }
 
-    override fun onLongClick(task: TaskInfo) {
+    override fun onLongClick(task: Task) {
         TaskClickMenuFragmentDialog.show(parentFragmentManager, task)
     }
 
-    private fun navigateToTaskDetailFragment(task: TaskInfo) {
+    private fun navigateToTaskDetailFragment(task: Task) {
         findNavController().navigate(
             TasksFragmentDirections.actionTasksFragmentToTaskDetailFragment(
                 task,
@@ -179,7 +188,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
             parentFragmentManager,
             viewLifecycleOwner
         ) { taskInfo, which ->
-            val task = Gson().fromJson<TaskInfo>(taskInfo, object : TypeToken<TaskInfo>() {}.type)
+            val task = Gson().fromJson<Task>(taskInfo, object : TypeToken<Task>() {}.type)
             when (which) {
                 getString(R.string.upload_task) -> {
                     createDoc(task)
@@ -226,7 +235,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
         it.data?.data?.also { uri -> viewModel.insert(uri) }
     }
 
-    private fun createDoc(task: TaskInfo) {
+    private fun createDoc(task: Task) {
         taskId = task.id
         val export = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
