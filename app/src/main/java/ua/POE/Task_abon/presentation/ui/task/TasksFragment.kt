@@ -109,6 +109,10 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
+            android.R.id.home -> {
+                requireActivity().onBackPressedDispatcher.onBackPressed()
+                true
+            }
             R.id.add_task -> {
                 chooseFile()
                 true

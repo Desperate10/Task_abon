@@ -112,6 +112,9 @@ abstract class AppDatabase : RoomDatabase() {
                 MIGRATION_5_6,
                 MIGRATION_6_7,
                 MIGRATION_7_8
-            ).addCallback(AppDatabaseCallback(scope)).allowMainThreadQueries().build()
+            ).addCallback(AppDatabaseCallback(scope))
+                .allowMainThreadQueries()
+                .fallbackToDestructiveMigrationFrom(8)
+                .build()
     }
 }

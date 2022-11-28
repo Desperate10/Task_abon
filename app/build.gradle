@@ -13,8 +13,8 @@ android {
         applicationId "ua.POE.Task_abon"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 32
-        versionName '6.3.2'
+        versionCode 33
+        versionName '6.4'
 
         buildConfigField "String", "MY_CLOUD_API", '"http://task.poe.pl.ua:8880/app/"'
         buildConfigField "String", "MY_PHOTO_STORAGE", '"http://10.107.4.132/abon/"'
@@ -31,9 +31,10 @@ android {
                 }
             }
         }
-        /*getByName("debug") {
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
             minifyEnabled false
-        }*/
+        }
     }
 
     compileOptions {
@@ -80,8 +81,6 @@ dependencies {
     //Network
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    /* implementation("com.squareup.okhttp3:okhttp:4.9.0")
-     implementation 'com.squareup.okhttp3:logging-interceptor:4.7.2'*/
     //workManager
     implementation("androidx.work:work-runtime-ktx:2.7.1")
 
@@ -101,20 +100,17 @@ dependencies {
     def coroutines_android_version = '1.6.4'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_android_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_android_version"
-    //Glide
-    /*implementation 'com.github.bumptech.glide:glide:4.11.0'
-    kapt 'com.github.bumptech.glide:compiler:4.11.0'*/
 
     //Room Database
     implementation "androidx.room:room-runtime:2.5.0-beta01"
     kapt "androidx.room:room-compiler:2.5.0-beta01"
-    // optional - Kotlin Extensions and Coroutines support for Room
+    //Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:2.5.0-beta01"
 
     implementation 'androidx.preference:preference-ktx:1.1.1'
 
     implementation 'org.apache.commons:commons-text:1.6'
-
+    //handle permission requests
     implementation 'com.guolindev.permissionx:permissionx:1.7.1'
 
     // debugImplementation because LeakCanary should only run in debug builds.

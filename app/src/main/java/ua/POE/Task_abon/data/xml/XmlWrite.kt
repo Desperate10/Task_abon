@@ -350,10 +350,10 @@ class XmlWrite @Inject constructor(
                 ""
             }
 
-            val isMainTel = if (results[i].is_main.toString().isNullOrEmpty()) {
+            val isMainTel = if (results[i].isMain.toString().isNullOrEmpty()) {
                 "0"
             } else {
-                results[i].is_main
+                results[i].isMain
             }
 
             val oldNum = if (results[i].oldPhoneNumber.toString().isNullOrEmpty()) {
@@ -362,10 +362,10 @@ class XmlWrite @Inject constructor(
                 results[i].oldPhoneNumber
             }
 
-            val pointCondition = if (results[i].point_condition.isNullOrEmpty()) {
+            val pointCondition = if (results[i].pointCondition.isNullOrEmpty()) {
                 ""
             } else {
-                results[i].point_condition
+                results[i].pointCondition
             }
 
             val counterNumb = if (results[i].counter.isNullOrEmpty()) {

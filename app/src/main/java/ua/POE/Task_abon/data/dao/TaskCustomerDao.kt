@@ -9,5 +9,5 @@ import ua.POE.Task_abon.data.entities.UserData
 interface TaskCustomerDao {
 
     @RawQuery
-    fun getSearchedCustomersList(query: SimpleSQLiteQuery) : List<UserData>
+    suspend fun getSearchedCustomersList(query: SimpleSQLiteQuery) : List<UserData>
 }

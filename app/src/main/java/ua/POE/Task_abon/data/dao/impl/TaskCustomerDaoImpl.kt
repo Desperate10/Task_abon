@@ -7,6 +7,8 @@ import androidx.room.Ignore
 import androidx.room.OnConflictStrategy
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.TaskCustomerDao
 import ua.POE.Task_abon.data.entities.UserData
@@ -29,7 +31,7 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
     fun getCheckedConditions(taskId: Int, index: Int) =
         getCheckedConditions(sdb, taskId, index)
 
-    fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>, status: String?) : List<UserData> {
+    suspend fun getUsers(taskId: Int, keys: List<String>, values:ArrayList<String>, status: String?) : List<UserData> {
         val whereSize = keys.size
         var whereClause = StringBuilder()
         var query = "SELECT * FROM TD$taskId "
@@ -50,7 +52,6 @@ class TaskCustomerDaoImpl @Inject constructor(appDatabase: AppDatabase, private 
             }
         }
         val st = query + whereClause.toString()
-        //make flow from rawquery?
         return taskCustomer.getSearchedCustomersList(SimpleSQLiteQuery(st))
     }
 
