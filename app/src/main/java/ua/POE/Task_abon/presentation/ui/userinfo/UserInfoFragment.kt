@@ -65,6 +65,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private var zone1 = ""
     private var zone2 = ""
     private var zone3 = ""
+    private var sourcePosition = 0
     private var sourceAdapter: ArrayAdapter<String>? = null
     private var locationManager: LocationManager? = null
 
@@ -88,6 +89,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         if (savedInstanceState != null) {
             viewModel.setSelectedCustomer(savedInstanceState.getInt("index"))
+            sourcePosition = savedInstanceState.getInt("sourcePosition")
             zone1 = savedInstanceState.getString("zone1") ?: ""
             zone2 = savedInstanceState.getString("zone2") ?: ""
             zone3 = savedInstanceState.getString("zone3") ?: ""
@@ -113,6 +115,15 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 viewModel.sources.collectLatest {
                     if (it.isNotEmpty()) {
                         setupSourceSpinner(it)
+                    }
+                }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.sourceSpinnerPosition.collectLatest { position ->
+                    if (position != 0) {
+                        binding.results.sourceSpinner.setSelection(position)
                     }
                 }
             }
@@ -202,7 +213,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.lastDate.gravity = Gravity.CENTER
 
         val lastCount: List<String> = it.lastCount.split("/")
-            binding.results.previousMeters1.text = lastCount[0]
+        binding.results.previousMeters1.text = lastCount[0]
         if (lastCount.size == ZONE_COUNT_2) {
             binding.results.previousMeters2.text = lastCount[1]
         } else if (lastCount.size == ZONE_COUNT_3) {
@@ -404,6 +415,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         ) { isNext, buttonPressed ->
             if (buttonPressed == DialogInterface.BUTTON_POSITIVE) {
                 saveResult(true, isNext)
+            } else {
+                selectCustomer(isNext)
             }
         }
     }
@@ -551,15 +564,16 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     private fun selectCustomer(isNext: Boolean) {
         latestTmpUri = null
+        sourcePosition = 0
         viewModel.selectCustomer(isNext)
     }
 
     private fun resetFields() {
         binding.results.date.text = dateFormat.format(calendar.time)
         binding.results.newDate.text = dateFormat.format(calendar.time)
-        /*if(viewModel.isResultSaved()) {
+        if (viewModel.sourceSpinnerPosition.value != 0 && sourcePosition == 0) {
             binding.results.sourceSpinner.setSelection(0)
-        }*/
+        }
         binding.results.newMeters1.setText(zone1, TextView.BufferType.EDITABLE)
         binding.results.newMeters2.setText(zone2, TextView.BufferType.EDITABLE)
         binding.results.newMeters3.setText(zone3, TextView.BufferType.EDITABLE)
@@ -604,6 +618,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     override fun onSaveInstanceState(savedInstanceState: Bundle) {
         savedInstanceState.putInt("index", viewModel.customerIndex.value)
+        savedInstanceState.putInt("sourcePosition", viewModel.sourceSpinnerPosition.value)
         savedInstanceState.putString("zone1", binding.results.newMeters1.text.toString())
         savedInstanceState.putString("zone2", binding.results.newMeters2.text.toString())
         savedInstanceState.putString("zone3", binding.results.newMeters3.text.toString())

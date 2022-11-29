@@ -72,6 +72,7 @@ class UserInfoViewModel @Inject constructor(
 
     //тоже нужно отслеживать во фрагменте
     private val _sourceSpinnerPosition = MutableStateFlow(0)
+    val sourceSpinnerPosition : StateFlow<Int> = _sourceSpinnerPosition
 
     private val _sourceSpinnerPositionCode = MutableStateFlow("")
     val sourceSpinnerPositionCode : StateFlow<String> = _sourceSpinnerPositionCode
@@ -445,7 +446,6 @@ class UserInfoViewModel @Inject constructor(
 
     fun setSourceSpinnerPosition(position: Int) {
         _sourceSpinnerPosition.value = position
-        Log.d("testim", _sourceSpinnerPosition.value.toString())
         getSelectedSourceCode(position)
     }
 
