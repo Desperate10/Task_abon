@@ -1,6 +1,12 @@
 package ua.POE.Task_abon.presentation.model
 
+import android.net.Uri
+
 data class DataToSave(
+    val userIndex: Int,
+    val status: Int,
+    val sourceCode: String,
+    val features: List<String>,
     val date: String,
     val zone1: String,
     val zone2: String,
@@ -10,7 +16,7 @@ data class DataToSave(
     val isMainPhone: Boolean,
     val lat: String,
     val lng: String,
-    val photo: String,
+    val photoUri: Uri?,
     val selectCustomer: Boolean,
     val isNext: Boolean
 )

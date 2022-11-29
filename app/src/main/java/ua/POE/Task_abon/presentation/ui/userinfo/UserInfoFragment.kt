@@ -39,13 +39,10 @@ import ua.POE.Task_abon.BuildConfig
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.databinding.FragmentUserInfoBinding
 import ua.POE.Task_abon.presentation.model.BasicInfo
+import ua.POE.Task_abon.presentation.model.DataToSave
 import ua.POE.Task_abon.presentation.model.SavedData
 import ua.POE.Task_abon.presentation.model.Technical
-import ua.POE.Task_abon.presentation.model.DataToSave
-import ua.POE.Task_abon.presentation.ui.userinfo.dialog.IconsDialogFragment
-import ua.POE.Task_abon.presentation.ui.userinfo.dialog.LocationToggleDialogFragment
-import ua.POE.Task_abon.presentation.ui.userinfo.dialog.SaveConfirmationDialogFragment
-import ua.POE.Task_abon.presentation.ui.userinfo.dialog.SaveCoordinatesDialogFragment
+import ua.POE.Task_abon.presentation.ui.userinfo.dialog.*
 import ua.POE.Task_abon.presentation.ui.userinfo.listener.MyLocationListener
 import ua.POE.Task_abon.presentation.ui.userinfo.textwatcher.DiffTextWatcher
 import ua.POE.Task_abon.utils.autoCleaned
@@ -99,6 +96,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         checkPermissions()
         setupSaveConfirmationDialogFragmentListener()
         setupSaveCoordinatesDialogFragmentListener()
+        setupAddPhotoDialogFragment()
         registerItemListeners()
         registerClickListeners()
         observeViewModel()
@@ -113,14 +111,18 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.sources.collectLatest {
-                    setupSourceSpinner(it)
+                    if (it.isNotEmpty()) {
+                        setupSourceSpinner(it)
+                    }
                 }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.blockNames.collect {
-                    setupMainBlockSpinner(it)
+                    if (it.isNotEmpty()) {
+                        setupMainBlockSpinner(it)
+                    }
                 }
             }
         }
@@ -200,7 +202,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.lastDate.gravity = Gravity.CENTER
 
         val lastCount: List<String> = it.lastCount.split("/")
-        binding.results.previousMeters1.text = lastCount[0]
+            binding.results.previousMeters1.text = lastCount[0]
         if (lastCount.size == ZONE_COUNT_2) {
             binding.results.previousMeters2.text = lastCount[1]
         } else if (lastCount.size == ZONE_COUNT_3) {
@@ -447,18 +449,45 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 showDatePickerDialog()
             }
             R.id.add_photo -> {
-                pickPhoto()
+                showAddPhotoDialogFragment()
+            }
+        }
+    }
+
+    private fun showAddPhotoDialogFragment() {
+        if (latestTmpUri != null) {
+            AddPhotoDialogFragment.show(parentFragmentManager)
+        } else {
+            pickPhoto()
+        }
+    }
+
+    private fun setupAddPhotoDialogFragment() {
+        AddPhotoDialogFragment.setupListeners(parentFragmentManager, viewLifecycleOwner) {
+            when (it) {
+                getString(R.string.replace_photo) -> {
+                    pickPhoto()
+                }
+                getString(R.string.delete_photo) -> {
+                    deletePhoto()
+                }
             }
         }
     }
 
     private fun pickPhoto() {
+        deletePhoto()
         lifecycleScope.launchWhenStarted {
             getTmpFileUri().let { uri ->
                 latestTmpUri = uri
                 takeImageResult.launch(uri)
             }
         }
+    }
+
+    private fun deletePhoto() {
+        binding.results.addPhoto.setImageDrawable(null)
+        viewModel.deletePhoto(latestTmpUri)
     }
 
     private fun setPic(uri: Uri) {
@@ -528,7 +557,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private fun resetFields() {
         binding.results.date.text = dateFormat.format(calendar.time)
         binding.results.newDate.text = dateFormat.format(calendar.time)
-        binding.results.sourceSpinner.setSelection(0)
+        /*if(viewModel.isResultSaved()) {
+            binding.results.sourceSpinner.setSelection(0)
+        }*/
         binding.results.newMeters1.setText(zone1, TextView.BufferType.EDITABLE)
         binding.results.newMeters2.setText(zone2, TextView.BufferType.EDITABLE)
         binding.results.newMeters3.setText(zone3, TextView.BufferType.EDITABLE)
@@ -562,7 +593,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.checkBox.isChecked = savedData.isMainPhone ?: true
 
         if (!savedData.photo.isNullOrEmpty() && latestTmpUri == null) {
-            binding.results.addPhoto.setImageURI(Uri.parse(savedData.photo))
+            latestTmpUri = Uri.parse(savedData.photo)
+            binding.results.addPhoto.setImageURI(latestTmpUri)
         }
 
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
@@ -630,6 +662,10 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private fun saveResult(selectCustomer: Boolean = false, isNext: Boolean = true) {
         viewModel.saveResults(
             DataToSave(
+                userIndex = viewModel.customerIndex.value,
+                status = viewModel.statusSpinnerPosition.value,
+                sourceCode = viewModel.sourceSpinnerPositionCode.value,
+                features = viewModel.selectedFeatureList.value,
                 date = binding.results.newDate.text.toString(),
                 zone1 = binding.results.newMeters1.text.toString(),
                 zone2 = binding.results.newMeters2.text.toString(),
@@ -639,7 +675,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 lat = binding.lat.text.toString(),
                 lng = binding.lng.text.toString(),
                 isMainPhone = binding.results.checkBox.isChecked,
-                photo = latestTmpUri.toString(),
+                photoUri = latestTmpUri,
                 selectCustomer = selectCustomer,
                 isNext = isNext
             )
@@ -647,7 +683,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     companion object {
-        const val ZONE_COUNT_1 = 1
         const val ZONE_COUNT_2 = 2
         const val ZONE_COUNT_3 = 3
         const val EVERY_SECOND = 1000L

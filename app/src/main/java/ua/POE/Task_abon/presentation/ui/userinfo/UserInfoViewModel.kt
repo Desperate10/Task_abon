@@ -1,6 +1,9 @@
 package ua.POE.Task_abon.presentation.ui.userinfo
 
+import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
@@ -14,12 +17,14 @@ import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.repository.TaskCustomerRepository
 import ua.POE.Task_abon.data.entities.ResultEntity
 import ua.POE.Task_abon.data.entities.TimingEntity
+import ua.POE.Task_abon.data.mapper.ResultMapper
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
 import ua.POE.Task_abon.data.mapper.mapResultToSavedData
 import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.presentation.model.*
 import ua.POE.Task_abon.utils.getNeededEmojis
 import ua.POE.Task_abon.utils.mapLatestIterable
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
@@ -38,11 +43,7 @@ class UserInfoViewModel @Inject constructor(
 ) : ViewModel() {
 
     private var sourceType: String = "2"
-    private var isResultSaved = false
     private var startEditTime: String = ""
-    private var selectedSourceCode = ""
-    private var multiSpinnerSelectedFeatures = listOf<String>()
-    private var counter = ""
     private var personalAccount = ""
     private var personalAccountKey = ""
     private var personalAccountEmoji = ""
@@ -69,7 +70,14 @@ class UserInfoViewModel @Inject constructor(
     private val _statusSpinnerPosition = MutableStateFlow(0)
     val statusSpinnerPosition: StateFlow<Int> = _statusSpinnerPosition
 
-    private val sourceSpinnerPosition = MutableStateFlow(0)
+    //тоже нужно отслеживать во фрагменте
+    private val _sourceSpinnerPosition = MutableStateFlow(0)
+
+    private val _sourceSpinnerPositionCode = MutableStateFlow("")
+    val sourceSpinnerPositionCode : StateFlow<String> = _sourceSpinnerPositionCode
+
+    private val _selectedFeatureList = MutableStateFlow<List<String>>(emptyList())
+    val selectedFeatureList: StateFlow<List<String>> = _selectedFeatureList
 
     private val _taskInfo = MutableStateFlow(Task())
     private val _techInfo = MutableStateFlow<Map<String, String>>(emptyMap())
@@ -85,6 +93,9 @@ class UserInfoViewModel @Inject constructor(
 
     private val _sources = MutableStateFlow<List<String>>(emptyList())
     val sources: StateFlow<List<String>> = _sources
+
+    private val _isResultSaved = MutableStateFlow<Boolean>(false)
+    val isResultSaved : StateFlow<Boolean> = _isResultSaved
 
     private val timer = Timer()
     private var time = 0
@@ -130,15 +141,16 @@ class UserInfoViewModel @Inject constructor(
     }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
 
-    val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, _ ->
-        getSavedData(index)
+    val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, status ->
+        getSavedData(index, status)
     }
         .flowOn(Dispatchers.Main)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     //разобраться с сохранением состояния
-    private suspend fun getSavedData(index: Int): SavedData {
+    private suspend fun getSavedData(index: Int, status: Int): SavedData {
         val savedData = mapResultToSavedData(result.getResultByCustomer(taskId, index))
+        //не обновлять если не менялся статус
         updateSourceList()
         val sourceName = if (!savedData.source.isNullOrEmpty()) {
             catalog.getSelectedSourceName(savedData.source, sourceType)
@@ -219,7 +231,7 @@ class UserInfoViewModel @Inject constructor(
                     technical.type = value
                 }
                 "Counter_numb" -> {
-                    counter = value
+                    technical.counter = value
                 }
                 "Rozr" -> {
                     technical.capacity = value
@@ -351,57 +363,12 @@ class UserInfoViewModel @Inject constructor(
         timing.updateEditSeconds(taskId, num, newEditTime)
     }
 
-    fun saveResults(
-        newData: DataToSave
-    ) {
-        if (isNewDataValid(newData)) {
+    fun saveResults(newData: DataToSave) {
             viewModelScope.launch {
+                if (isNewDataValid(newData)) {
                 withContext(Dispatchers.IO) {
                     saveEditTiming()
-                    val currentCustomer = getCustomerMissingData()
-                    val isMainPhoneInt = if (newData.isMainPhone) 1 else 0
-                    val photoValid = if (newData.photo.length > 4) {
-                        newData.photo
-                    } else {
-                        null
-                    }
-
-                    val saveData = ResultEntity(
-                        _taskInfo.value.name,
-                        _taskInfo.value.date,
-                        taskId,
-                        _taskInfo.value.filial,
-                        _customerIndex.value,
-                        currentCustomer["num"]!!,
-                        currentCustomer["accountId"]!!,
-                        newData.date,
-                        statusSpinnerPosition.value.toString(),
-                        selectedSourceCode,
-                        multiSpinnerSelectedFeatures.joinToString(),
-                        newData.zone1,
-                        newData.zone2,
-                        newData.zone3,
-                        newData.note,
-                        currentCustomer["tel"]!!,
-                        newData.phoneNumber,
-                        isMainPhoneInt,
-                        "",
-                        preloadResultTab.value.type,
-                        counter,
-                        preloadResultTab.value.zoneCount,
-                        preloadResultTab.value.capacity,
-                        preloadResultTab.value.averageUsage,
-                        newData.lat,
-                        newData.lng,
-                        personalAccount,
-                        currentCustomer["family"],
-                        currentCustomer["Adress"],
-                        photoValid,
-                        currentCustomer["counpleas"]
-                    )
-
-                    result.insertNewData(saveData)
-                    customer.setDone(taskId, currentCustomer["num"]!!)
+                    saveData(newData)
                     setResultSavedState(true)
                     if (newData.selectCustomer) {
                         selectCustomer(newData.isNext)
@@ -416,14 +383,25 @@ class UserInfoViewModel @Inject constructor(
         var isValid = false
         if (data.phoneNumber.isNotEmpty() && (data.phoneNumber.take(3) !in operators.value || data.phoneNumber.length < 10)) {
             _saveAnswer.value = "Неправильний формат номера телефону"
-        } else if (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value == 0) {
+        } else if (_statusSpinnerPosition.value == 1 && _sourceSpinnerPosition.value == 0) {
             _saveAnswer.value = "Ви забули вказати джерело"
-        } else if (data.zone1.isNotEmpty() || (statusSpinnerPosition.value == 1 && sourceSpinnerPosition.value != 0)) {
+        } else if (data.zone1.isNotEmpty() || (_statusSpinnerPosition.value == 1 && _sourceSpinnerPosition.value != 0)) {
             isValid = true
         } else {
             _saveAnswer.value = "Ви не ввели нові показники"
         }
         return isValid
+    }
+
+    private suspend fun saveData(newData: DataToSave) {
+        val missingData = getCustomerMissingData()
+        val saveData = ResultMapper.mapNeededDataToResult(_taskInfo.value, missingData, newData, preloadResultTab.value)
+        changeStatusToDone(missingData["num"]!!)
+        result.insertNewData(saveData)
+    }
+
+    private fun changeStatusToDone(num: String) {
+        customer.setDone(taskId, num)
     }
 
     private fun getCustomerMissingData(): HashMap<String,String> {
@@ -466,12 +444,13 @@ class UserInfoViewModel @Inject constructor(
     }
 
     fun setSourceSpinnerPosition(position: Int) {
-        sourceSpinnerPosition.value = position
+        _sourceSpinnerPosition.value = position
+        Log.d("testim", _sourceSpinnerPosition.value.toString())
         getSelectedSourceCode(position)
     }
 
     private fun getSelectedSourceCode(position: Int) {
-        selectedSourceCode = if (position != 0) {
+        _sourceSpinnerPositionCode.value = if (position != 0) {
             sourceList?.get(position)?.code!!
         } else ""
     }
@@ -490,7 +469,7 @@ class UserInfoViewModel @Inject constructor(
     }
 
     fun setItems(items: List<KeyPairBoolData>) {
-        multiSpinnerSelectedFeatures = items.flatMap { item ->
+        _selectedFeatureList.value = items.flatMap { item ->
             featureList.value
                 .filter { item.name == it.text }
                 .map { it.code.toString() }
@@ -522,11 +501,20 @@ class UserInfoViewModel @Inject constructor(
     }
 
     fun setResultSavedState(isSaved: Boolean) {
-        isResultSaved = isSaved
+        _isResultSaved.value = isSaved
     }
 
     fun isResultSaved(): Boolean {
-        return isResultSaved
+        return _isResultSaved.value
+    }
+
+    fun deletePhoto(uri : Uri?) {
+        viewModelScope.launch {
+            uri?.path?.let { File(it).delete() }
+            withContext(Dispatchers.IO) {
+                result.deletePhoto(taskId, _customerIndex.value)
+            }
+        }
     }
 
     companion object {

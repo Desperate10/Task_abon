@@ -37,7 +37,7 @@ class TaskClickMenuFragmentDialog : DialogFragment() {
         )
 
         return AlertDialog.Builder(requireContext())
-            .setTitle("Виберіть дію:")
+            .setTitle(R.string.choose_action)
             .setItems(options) { _: DialogInterface, item: Int ->
                     parentFragmentManager.setFragmentResult(
                         REQUEST_KEY,

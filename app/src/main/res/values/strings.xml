@@ -61,4 +61,7 @@
     <string name="zone_count_3_tv">3</string>
     <string name="zone_count_2_tv">2</string>
     <string name="zone_count_1_tv">1</string>
+    <string name="choose_action">Виберіть дію</string>
+    <string name="replace_photo">Замінити фото</string>
+    <string name="delete_photo">Видалити фото</string>
 </resources>

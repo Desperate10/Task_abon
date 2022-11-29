@@ -1,5 +1,6 @@
 package ua.POE.Task_abon.data.entities
 
+import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 

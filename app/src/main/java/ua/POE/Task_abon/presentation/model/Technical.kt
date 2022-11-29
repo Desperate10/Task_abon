@@ -6,9 +6,10 @@ data class Technical(
     var lastCount: String,
     var averageUsage: String,
     var type: String,
+    var counter: String,
     var capacity: String,
     var checkDate: String,
     var inspector: String
 ) {
-    constructor() : this("", "", "", "", "", "", "", "")
+    constructor() : this("", "", "", "", "","", "", "", "")
 }
