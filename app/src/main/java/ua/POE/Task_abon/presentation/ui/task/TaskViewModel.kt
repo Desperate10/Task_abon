@@ -14,7 +14,7 @@ import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.dao.TaskDao
 import ua.POE.Task_abon.data.dao.TimingDao
-import ua.POE.Task_abon.data.repository.TaskCustomerRepository
+import ua.POE.Task_abon.data.dao.TaskDataDaoImpl
 import ua.POE.Task_abon.data.mapper.toTaskInfo
 import ua.POE.Task_abon.data.xml.XmlRead
 import ua.POE.Task_abon.data.xml.XmlWrite
@@ -26,7 +26,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TaskViewModel @Inject constructor(
-    private val dynamicTaskData: TaskCustomerRepository,
+    private val dynamicTaskData: TaskDataDaoImpl,
     private val task: TaskDao,
     private val directory: DirectoryDao,
     private val result: ResultDao,

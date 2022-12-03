@@ -14,7 +14,7 @@ import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.data.dao.CatalogDao
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.TaskDao
-import ua.POE.Task_abon.data.repository.TaskCustomerRepository
+import ua.POE.Task_abon.data.dao.TaskDataDaoImpl
 import ua.POE.Task_abon.data.entities.CatalogEntity
 import ua.POE.Task_abon.data.entities.DirectoryEntity
 import ua.POE.Task_abon.data.entities.TaskEntity
@@ -233,7 +233,7 @@ class XmlRead @Inject constructor(
                                     )
                                 }
                                 cv.put("IsDone", "Не виконано")
-                                TaskCustomerRepository.insertRows(sdb, tableName, cv)
+                                TaskDataDaoImpl.insertRows(sdb, tableName, cv)
                             }
                         }
                     }

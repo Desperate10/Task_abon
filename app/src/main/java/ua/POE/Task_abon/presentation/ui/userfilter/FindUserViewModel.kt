@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
-import ua.POE.Task_abon.data.repository.TaskCustomerRepository
+import ua.POE.Task_abon.data.dao.TaskDataDaoImpl
 import ua.POE.Task_abon.presentation.model.Task
 import javax.inject.Inject
 
@@ -18,7 +18,7 @@ import javax.inject.Inject
 class FindUserViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val directoryDao: DirectoryDao,
-    private val dynamicTaskData: TaskCustomerRepository
+    private val dynamicTaskData: TaskDataDaoImpl
 ) : ViewModel() {
 
     private val task = savedStateHandle.get<Task>("task") ?: throw RuntimeException("task is null")

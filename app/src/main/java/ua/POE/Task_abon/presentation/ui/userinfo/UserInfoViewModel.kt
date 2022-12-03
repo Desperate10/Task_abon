@@ -3,7 +3,6 @@ package ua.POE.Task_abon.presentation.ui.userinfo
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.androidbuts.multispinnerfilter.KeyPairBoolData
@@ -14,8 +13,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.dao.*
-import ua.POE.Task_abon.data.repository.TaskCustomerRepository
-import ua.POE.Task_abon.data.entities.ResultEntity
+import ua.POE.Task_abon.data.dao.TaskDataDaoImpl
 import ua.POE.Task_abon.data.entities.TimingEntity
 import ua.POE.Task_abon.data.mapper.ResultMapper
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
@@ -36,7 +34,7 @@ class UserInfoViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val directory: DirectoryDao,
     private val task: TaskDao,
-    private val customer: TaskCustomerRepository,
+    private val customer: TaskDataDaoImpl,
     private val timing: TimingDao,
     private val result: ResultDao,
     private val catalog: CatalogDao
@@ -80,6 +78,7 @@ class UserInfoViewModel @Inject constructor(
     private val _selectedFeatureList = MutableStateFlow<List<String>>(emptyList())
     val selectedFeatureList: StateFlow<List<String>> = _selectedFeatureList
 
+    //нужно ли здесь сохранение стейта?
     private val _taskInfo = MutableStateFlow(Task())
     private val _techInfo = MutableStateFlow<Map<String, String>>(emptyMap())
 
@@ -491,6 +490,7 @@ class UserInfoViewModel @Inject constructor(
                     taskCustomerQuantity
                 }
             }
+            resetTimer()
             setSelectedCustomer(index)
             setStartEditTime()
         }

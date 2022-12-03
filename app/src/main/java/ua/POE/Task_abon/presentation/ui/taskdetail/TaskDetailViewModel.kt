@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.ResultDao
-import ua.POE.Task_abon.data.repository.TaskCustomerRepository
+import ua.POE.Task_abon.data.dao.TaskDataDaoImpl
 import ua.POE.Task_abon.data.entities.UserDataEntity
 import ua.POE.Task_abon.presentation.model.Task
 import ua.POE.Task_abon.presentation.model.SearchMap
@@ -19,7 +19,7 @@ import javax.inject.Inject
 class TaskDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val directoryDao: DirectoryDao,
-    private val taskCustomerData: TaskCustomerRepository,
+    private val taskCustomerData: TaskDataDaoImpl,
     resultDao: ResultDao
 ) : ViewModel() {
 
