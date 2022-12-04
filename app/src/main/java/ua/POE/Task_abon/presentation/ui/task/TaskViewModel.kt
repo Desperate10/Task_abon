@@ -90,7 +90,7 @@ class TaskViewModel @Inject constructor(
         }
     }
 
-    fun uploadImagesRequestBuilder(taskId: Int) {
+    private fun uploadImagesRequestBuilder(taskId: Int) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 val photoUris = result.getAllPhotos(taskId)

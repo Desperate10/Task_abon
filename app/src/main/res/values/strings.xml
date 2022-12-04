@@ -64,4 +64,5 @@
     <string name="choose_action">Виберіть дію</string>
     <string name="replace_photo">Замінити фото</string>
     <string name="delete_photo">Видалити фото</string>
+    <string name="inn">Идент. код</string>
 </resources>

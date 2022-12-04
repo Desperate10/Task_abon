@@ -43,6 +43,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     private var adapter: TaskListAdapter by autoCleaned { TaskListAdapter(requireContext()) }
     private var taskId: Int = 0
 
+    //TODO findNavController and permissionX Read external storage api 33
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -191,7 +192,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
             val task = Gson().fromJson<Task>(taskInfo, object : TypeToken<Task>() {}.type)
             when (which) {
                 getString(R.string.upload_task) -> {
-                    createDoc(task)
+                    createXmlDocument(task)
                 }
                 getString(R.string.clear_field_btn) -> {
                     ClearTaskDataDialogFragment.show(parentFragmentManager, task.id)
@@ -235,7 +236,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
         it.data?.data?.also { uri -> viewModel.insert(uri) }
     }
 
-    private fun createDoc(task: Task) {
+    private fun createXmlDocument(task: Task) {
         taskId = task.id
         val export = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
@@ -256,7 +257,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     ) {
         val uri = it?.data?.data
         viewModel.createXml(taskId, uri)
-        //uploadImages(taskId)
     }
 
     private fun showInfo() {

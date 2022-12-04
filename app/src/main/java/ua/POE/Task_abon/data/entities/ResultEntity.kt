@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 
+/**
+ * Entity for storing saved results and creating output xml file
+ * */
 @Entity(tableName = "result", primaryKeys = ["TSzdn_id", "Numb"])
 data class ResultEntity(
     @ColumnInfo(name = "Task_name") var taskName: String?,
@@ -36,5 +39,6 @@ data class ResultEntity(
     @ColumnInfo(name = "family") var family: String?,
     @ColumnInfo(name = "adress") var adress: String?,
     @ColumnInfo(name = "photo") var photo: String?,
-    @ColumnInfo(name = "counpleas") var counterPlace: String?
+    @ColumnInfo(name = "counpleas") var counterPlace: String?,
+    @ColumnInfo(name = "Ident_code") var identificationCode: String?
 )

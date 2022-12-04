@@ -1,18 +1,20 @@
 {
-  "version": 2,
+  "version": 3,
   "artifactType": {
     "type": "APK",
     "kind": "Directory"
   },
   "applicationId": "ua.POE.Task_abon",
-  "variantName": "processReleaseResources",
+  "variantName": "release",
   "elements": [
     {
       "type": "SINGLE",
       "filters": [],
-      "versionCode": 28,
-      "versionName": "6.2.4",
-      "outputFile": "Task_abon-6.2.4.apk"
+      "attributes": [],
+      "versionCode": 32,
+      "versionName": "6.3.2",
+      "outputFile": "Task_abon-6.3.2.apk"
     }
-  ]
+  ],
+  "elementType": "File"
 }

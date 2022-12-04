@@ -8,6 +8,9 @@ import okio.BufferedSink
 import java.io.File
 import java.io.FileInputStream
 
+/**
+ * Process of uploading image to remote storage
+ * */
 class UploadRequestBody(private val file: File,
                         private val contentType: String,
                         private val callback: UploadCallback) : RequestBody(){

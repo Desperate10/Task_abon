@@ -49,6 +49,7 @@ class UserInfoViewModel @Inject constructor(
     private var name = ""
     private var counterKey = ""
     private var counterValue = ""
+    private var identificationCode = ""
     private var counterEmoji = ""
     private var sourceList: List<Catalog>? = null
 
@@ -88,14 +89,13 @@ class UserInfoViewModel @Inject constructor(
     private val _selectedBlock = MutableStateFlow(RESULTS_BLOCK)
     val selectedBlock: StateFlow<String> = _selectedBlock
 
-    private val _saveAnswer = MutableStateFlow("")
-    val saveAnswer: StateFlow<String> = _saveAnswer
+    private val _saveAnswer = MutableSharedFlow<String>(0)
+    val saveAnswer: SharedFlow<String> = _saveAnswer
 
     private val _sources = MutableStateFlow<List<String>>(emptyList())
     val sources: StateFlow<List<String>> = _sources
 
-    private val _isResultSaved = MutableStateFlow<Boolean>(false)
-    val isResultSaved : StateFlow<Boolean> = _isResultSaved
+    private val _isResultSaved = MutableStateFlow(false)
 
     private val timer = Timer()
     private var time = 0
@@ -109,6 +109,7 @@ class UserInfoViewModel @Inject constructor(
         timer.cancel()
     }
 
+    //Tracking controllers time management in seconds
     private fun startTimer() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -121,6 +122,7 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
+    //store main spinner block names
     val blockNames = flow {
         val blockNameList = mutableListOf<String>()
         blockNameList.add(0, RESULTS_BLOCK)
@@ -130,6 +132,7 @@ class UserInfoViewModel @Inject constructor(
     }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), listOf(RESULTS_BLOCK))
 
+    //store selected block name data
     val selectedBlockData = combine(_customerIndex, _selectedBlock) { _, selectedBlock ->
         if (selectedBlock == RESULTS_BLOCK) {
             updateTechInfoMap()
@@ -141,16 +144,15 @@ class UserInfoViewModel @Inject constructor(
     }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
 
-    val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, status ->
-        getSavedData(index, status)
+    //getting savedData of current customer
+    val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, _ ->
+        getSavedData(index)
     }
         .flowOn(Dispatchers.Main)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
-    //разобраться с сохранением состояния
-    private suspend fun getSavedData(index: Int, status: Int): SavedData {
+    private suspend fun getSavedData(index: Int): SavedData {
         val savedData = mapResultToSavedData(result.getResultByCustomer(taskId, index))
-        //не обновлять если не менялся статус
         updateSourceList()
         val sourceName = if (!savedData.source.isNullOrEmpty()) {
             catalog.getSelectedSourceName(savedData.source, sourceType)
@@ -161,6 +163,7 @@ class UserInfoViewModel @Inject constructor(
         return savedData.copy(source = sourceName)
     }
 
+    //updating list of sources in source spinner(depends on statusSpinner)
     private suspend fun updateSourceList() {
         sourceList = catalog.getSourceList(sourceType)
             .map { mapCatalogEntityToCatalog(it) }
@@ -198,6 +201,7 @@ class UserInfoViewModel @Inject constructor(
         return conditionArray
     }
 
+    //store data of tech block for selected customer
     @OptIn(ExperimentalCoroutinesApi::class)
     val preloadResultTab: StateFlow<Technical> = _customerIndex
         .flatMapLatest {
@@ -269,6 +273,7 @@ class UserInfoViewModel @Inject constructor(
         val basicFields = directory.getBasicFields(taskId)
         basicInfoFieldsList.addAll(basicFields)
         basicInfoFieldsList.add("Counter_numb")
+        basicInfoFieldsList.add("Ident_code")
         val tdHash = customer.getFieldsByBlock(taskId, basicInfoFieldsList, _customerIndex.value)
         var pillar = ""
         val otherInfo = StringBuilder()
@@ -301,6 +306,9 @@ class UserInfoViewModel @Inject constructor(
                     "icons_counter", "Иконки с" -> {
                         counterKey = getNeededEmojis(icons, value)
                     }
+                    "ІД код" -> {
+                        identificationCode = value
+                    }
                     else -> {
                         if (value.isNotEmpty())
                             otherInfo.append("$value ")
@@ -314,6 +322,7 @@ class UserInfoViewModel @Inject constructor(
             address = address,
             name = name,
             counter = counterEmoji,
+            identificationCode = identificationCode,
             other = otherInfo.toString()
         )
     }
@@ -321,13 +330,14 @@ class UserInfoViewModel @Inject constructor(
     private suspend fun updateTechInfoMap() {
         val fields = directory.getFieldsByBlockName(TECHNICAL_BLOCK, taskId)
         _techInfo.value =
-            customer.getTextByFields("TD$taskId", fields, _customerIndex.value)
+            customer.getFieldsValue("TD$taskId", fields, _customerIndex.value)
     }
 
-    //save date when pressing saveResult
+    //save date timings when pressing saveResult
     private suspend fun saveEditTiming() {
         val currentDateAndTime =
             dateAndTimeFormat.format(Date())
+        //when saving first time save only start and end date
         if (timing.getStartTaskDate(taskId, _customerIndex.value).isNullOrEmpty()) {
             timing.insertTiming(
                 TimingEntity(
@@ -337,6 +347,7 @@ class UserInfoViewModel @Inject constructor(
                     endTaskTime = currentDateAndTime
                 )
             )
+            //when editing first time save edit time and seconds spent for editing
         } else if (timing.getFirstEditDate(taskId, _customerIndex.value).isNullOrEmpty()) {
             timing.updateFirstEditDate(
                 taskId,
@@ -344,6 +355,7 @@ class UserInfoViewModel @Inject constructor(
                 startEditTime
             )
             updateEditTime(taskId, currentDateAndTime)
+            //else update previous edit data
         } else {
             updateEditTime(taskId, currentDateAndTime)
         }
@@ -363,6 +375,8 @@ class UserInfoViewModel @Inject constructor(
         timing.updateEditSeconds(taskId, num, newEditTime)
     }
 
+    //Save data that came from controller and getting ready for creating xml
+    // storing data in result table
     fun saveResults(newData: DataToSave) {
             viewModelScope.launch {
                 if (isNewDataValid(newData)) {
@@ -373,22 +387,24 @@ class UserInfoViewModel @Inject constructor(
                     if (newData.selectCustomer) {
                         selectCustomer(newData.isNext)
                     }
-                    _saveAnswer.value = "Результати збережено"
+                    _saveAnswer.emit("Результати збережено")
                 }
             }
         }
     }
 
-    private fun isNewDataValid(data: DataToSave): Boolean {
+    private suspend fun isNewDataValid(data: DataToSave): Boolean {
         var isValid = false
         if (data.phoneNumber.isNotEmpty() && (data.phoneNumber.take(3) !in operators.value || data.phoneNumber.length < 10)) {
-            _saveAnswer.value = "Неправильний формат номера телефону"
+            _saveAnswer.emit("Неправильний формат номера телефону")
+        } else if (data.identificationCode.isNotEmpty() && data.identificationCode.length < 10) {
+            _saveAnswer.emit("Неправильний формат IД-кода")
         } else if (_statusSpinnerPosition.value == 1 && _sourceSpinnerPosition.value == 0) {
-            _saveAnswer.value = "Ви забули вказати джерело"
+            _saveAnswer.emit("Ви забули вказати джерело")
         } else if (data.zone1.isNotEmpty() || (_statusSpinnerPosition.value == 1 && _sourceSpinnerPosition.value != 0)) {
             isValid = true
         } else {
-            _saveAnswer.value = "Ви не ввели нові показники"
+            _saveAnswer.emit("Ви не ввели нові показники")
         }
         return isValid
     }
@@ -400,6 +416,8 @@ class UserInfoViewModel @Inject constructor(
         result.insertNewData(saveData)
     }
 
+    //change customers status to done
+    // uses when filtering users on taskDetailFragment
     private fun changeStatusToDone(num: String) {
         customer.setDone(taskId, num)
     }
@@ -413,9 +431,10 @@ class UserInfoViewModel @Inject constructor(
                 "family",
                 "Adress",
                 "tel",
-                "counpleas"
+                "counpleas",
+                "Ident_code"
             )
-        return customer.getTextByFields("TD$taskId", fields, customerIndex.value)
+        return customer.getFieldsValue("TD$taskId", fields, customerIndex.value)
     }
 
     fun getTask() {
@@ -424,14 +443,15 @@ class UserInfoViewModel @Inject constructor(
         }
     }
 
-    fun getOperatorsList() {
+
+    fun getMobileOperatorsList() {
         viewModelScope.launch {
             operators.value = catalog.getOperatorsList()
         }
     }
 
     private fun getCheckedConditions() =
-        customer.getCheckedConditions(taskId, _customerIndex.value)
+        customer.getCustomerPointCondition(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
         sourceType = (position + 2).toString()
@@ -462,7 +482,7 @@ class UserInfoViewModel @Inject constructor(
         _selectedBlock.value = blockName
     }
 
-    //сбрасываем таймер при переключении юзера
+    //resetting timer when changing customer
     private fun resetTimer() {
         time = 0
     }

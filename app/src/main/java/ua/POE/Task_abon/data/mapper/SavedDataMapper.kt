@@ -13,6 +13,7 @@ fun mapResultToSavedData(result: ResultEntity?) = SavedData(
     zone3 = result?.zone3,
     pointCondition = result?.pointCondition,
     note = result?.note,
+    identificationCode = result?.identificationCode,
     phoneNumber = result?.phoneNumber,
     isMainPhone = result?.isMain != 0,
     photo = result?.photo

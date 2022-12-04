@@ -30,6 +30,9 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 
+/**
+ * WorkManager for photoUploading
+ * */
 @HiltWorker
 class UploadWorker @AssistedInject constructor(
     @Assisted val context: Context,

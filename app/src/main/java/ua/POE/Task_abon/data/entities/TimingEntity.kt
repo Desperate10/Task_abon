@@ -3,6 +3,9 @@ package ua.POE.Task_abon.data.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 
+/**
+ * Entity for storing timings that controller spends during the tour
+ * */
 @Entity(tableName = "timing", primaryKeys = ["task_id", "Numb"])
 data class TimingEntity(@ColumnInfo(name = "task_id") var taskId: Int,
                         @ColumnInfo(name = "Numb") var num: Int,

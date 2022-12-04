@@ -23,7 +23,9 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 import javax.inject.Inject
 
-
+/**
+ * Populate database from xml file
+ * */
 class XmlRead @Inject constructor(
     private val context: Context,
     private val database: AppDatabase,

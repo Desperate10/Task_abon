@@ -1,5 +1,6 @@
 package ua.POE.Task_abon.presentation.ui.taskdetail
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -10,7 +11,7 @@ import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.DirectoryDao
 import ua.POE.Task_abon.data.dao.ResultDao
 import ua.POE.Task_abon.data.dao.TaskDataDaoImpl
-import ua.POE.Task_abon.data.entities.UserDataEntity
+import ua.POE.Task_abon.presentation.model.CustomerMainData
 import ua.POE.Task_abon.presentation.model.Task
 import ua.POE.Task_abon.presentation.model.SearchMap
 import javax.inject.Inject
@@ -28,7 +29,7 @@ class TaskDetailViewModel @Inject constructor(
     private val searchParams = savedStateHandle.get<SearchMap>("searchList")
 
     private val _customerFilterStatus = MutableSharedFlow<String>(2)
-    private val customers = MutableStateFlow<List<UserDataEntity>>(emptyList())
+    private val customers = MutableStateFlow<List<CustomerMainData>>(emptyList())
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val getCustomersData = _customerFilterStatus
@@ -52,7 +53,7 @@ class TaskDetailViewModel @Inject constructor(
                 values.add(value)
             }
         }
-        customers.value = taskCustomerData.getUsers(taskId, keys, values, status)
+        customers.value = taskCustomerData.getCustomers(taskId, keys, values, status)
     }
 
     fun resetFilter() {

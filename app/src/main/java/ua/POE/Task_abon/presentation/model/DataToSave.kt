@@ -2,6 +2,9 @@ package ua.POE.Task_abon.presentation.model
 
 import android.net.Uri
 
+/**
+ * Model for transfer data to from controller input
+ * */
 data class DataToSave(
     val userIndex: Int,
     val status: Int,
@@ -12,6 +15,7 @@ data class DataToSave(
     val zone2: String,
     val zone3: String,
     val note: String,
+    val identificationCode: String,
     val phoneNumber: String,
     val isMainPhone: Boolean,
     val lat: String,

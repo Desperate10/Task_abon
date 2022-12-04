@@ -36,7 +36,7 @@ class FindUserViewModel @Inject constructor(
         viewModelScope.launch {
             val fieldName = getSearchFieldNameByTxt(taskId, value)
             _searchFieldsValues.value =
-                dynamicTaskData.getSearchedItemsByField("TD$taskId", fieldName)
+                dynamicTaskData.getSearchFieldValue("TD$taskId", fieldName)
         }
     }
 

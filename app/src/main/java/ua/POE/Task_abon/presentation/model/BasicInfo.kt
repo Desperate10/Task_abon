@@ -5,5 +5,6 @@ data class BasicInfo(
     val address: String,
     val name: String,
     val counter: String,
+    val identificationCode: String,
     val other: String
 )

@@ -5,15 +5,18 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.UserDataEntity
+import ua.POE.Task_abon.presentation.model.CustomerMainData
 import ua.POE.Task_abon.databinding.RowPersonBinding
 import ua.POE.Task_abon.utils.getIcons
 import ua.POE.Task_abon.utils.getNeededEmojis
 import javax.inject.Inject
 
+/**
+ * RecyclerViewAdapter for displaying list of customers on TaskDetailFragment
+ * */
 class CustomerListAdapter @Inject constructor(
     private val context: Context,
-) : ListAdapter<UserDataEntity, CustomerListViewHolder>(CustomerListDiffUtil) {
+) : ListAdapter<CustomerMainData, CustomerListViewHolder>(CustomerListDiffUtil) {
 
     private val iconsList = context.getIcons()
 

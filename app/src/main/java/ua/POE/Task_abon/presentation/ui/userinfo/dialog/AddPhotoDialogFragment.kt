@@ -38,13 +38,11 @@ class AddPhotoDialogFragment : DialogFragment() {
 
     companion object {
         private const val TAG = "AddPhotoDialogFragment"
-        private const val URI = "photoUri"
         private const val REQUEST_KEY = "$TAG:addPhoto"
         private const val KEY_BUTTON = "button"
 
         fun show(fragmentManager: FragmentManager) {
             val fragment = AddPhotoDialogFragment()
-           // fragment.arguments = bundleOf(URI to uri)
             fragment.show(fragmentManager, TAG)
         }
 

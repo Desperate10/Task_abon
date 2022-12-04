@@ -17,6 +17,9 @@ import java.io.OutputStreamWriter
 import java.io.Writer
 import javax.inject.Inject
 
+/**
+ * Create import xml file
+ * */
 class XmlWrite @Inject constructor(
     private val context: Context,
     private val result: ResultDao,
@@ -338,6 +341,14 @@ class XmlWrite @Inject constructor(
         writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='50'/>")
         writeLine(sb, "</s:AttributeType>")
 
+        writeLine(
+            sb,
+            "<s:AttributeType name='Ident_code' rs:number='37' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='Ident_code'>")
+        writeLine(sb, "<s:datatype dt:type='int' dt:maxLength='10' rs:precision='0' rs:fixedlength='true'")
+        writeLine(sb, "</s:AttributeType>")
+
         writeLine(sb, "<s:extends type='rs:rowbase'/>")
         writeLine(sb, "</s:ElementType>")
         writeLine(sb, "</s:Schema>")
@@ -396,7 +407,8 @@ class XmlWrite @Inject constructor(
                             " editCount='${timings[i].editCount}'" +
                             " editSeconds='${timings[i].editSeconds}'" +
                             " lastEditDate='${timings[i].lastEditDate}'" +
-                            " counpleas='${results[i].counterPlace}'" + " />"
+                            " counpleas='${results[i].counterPlace}'" +
+                            " Ident_code='${results[i].identificationCode}'" +" />"
                 )
             } else {
                 writeLine(
@@ -434,7 +446,8 @@ class XmlWrite @Inject constructor(
                             " editCount='${timings[i].editCount}'" +
                             " editSeconds='${timings[i].editSeconds}'" +
                             " lastEditDate='${timings[i].lastEditDate}'" +
-                            " counpleas='${results[i].counterPlace}'" + " />"
+                            " counpleas='${results[i].counterPlace}'" +
+                            " Ident_code='${results[i].identificationCode}'" +" />"
 
                 )
             }

@@ -1,5 +1,6 @@
 package ua.POE.Task_abon.presentation.model
 
+//Technical block of data
 data class Technical(
     var zoneCount: String,
     var lastDate: String,

@@ -29,7 +29,7 @@ object ResultMapper {
             newData.zone1,
             newData.zone2,
             newData.zone3,
-            newData.note,
+            newData.note.replace("[\\t\\n\\r]+", " "),
             missingData["tel"]!!,
             newData.phoneNumber,
             isMainPhoneToInt(newData.isMainPhone),
@@ -45,7 +45,8 @@ object ResultMapper {
             missingData["family"],
             missingData["Adress"],
             getValidUri(newData.photoUri),
-            missingData["counpleas"]
+            missingData["counpleas"],
+            newData.identificationCode
         )
     }
 

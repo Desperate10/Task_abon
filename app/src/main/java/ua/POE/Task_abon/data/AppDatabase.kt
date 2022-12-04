@@ -12,7 +12,7 @@ import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
 
 @Database(
-    entities = [TaskEntity::class, DirectoryEntity::class, CatalogEntity::class, UserDataEntity::class, ResultEntity::class, TimingEntity::class],
+    entities = [TaskEntity::class, DirectoryEntity::class, CatalogEntity::class, ResultEntity::class, TimingEntity::class],
     version = 9,
     exportSchema = false
 )

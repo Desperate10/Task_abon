@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.presentation.ui.userfilter
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
@@ -153,6 +154,7 @@ class FindUserFragment : Fragment(), View.OnClickListener {
     }
 
     private fun showFilteredUsers() {
+        Log.d("testim", searchListHash.toString())
         findNavController().navigate(
             FindUserFragmentDirections.actionFindUserFragmentToTaskDetailFragment(
                 args.task,

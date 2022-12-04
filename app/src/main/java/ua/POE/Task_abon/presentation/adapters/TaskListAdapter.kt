@@ -9,6 +9,9 @@ import ua.POE.Task_abon.databinding.RowTaskBinding
 import ua.POE.Task_abon.presentation.model.Task
 import javax.inject.Inject
 
+/**
+ * RecyclerViewAdapter for displaying list of tasks on TaskFragment
+ * */
 class TaskListAdapter @Inject constructor(val context: Context) :
     ListAdapter<Task, TaskListViewHolder>(TaskListDiffUtil) {
 

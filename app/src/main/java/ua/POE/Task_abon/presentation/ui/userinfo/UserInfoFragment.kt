@@ -15,7 +15,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
-import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -83,6 +82,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             }
         }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setHasOptionsMenu(true)
@@ -96,9 +96,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
 
         checkPermissions()
-        setupSaveConfirmationDialogFragmentListener()
-        setupSaveCoordinatesDialogFragmentListener()
-        setupAddPhotoDialogFragment()
+        setupDialogs()
         registerItemListeners()
         registerClickListeners()
         observeViewModel()
@@ -108,7 +106,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         viewModel.getTask()
         viewModel.setStartEditTime()
-        viewModel.getOperatorsList()
+        viewModel.getMobileOperatorsList()
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -185,7 +183,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         }
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.saveAnswer.collectLatest {
+                viewModel.saveAnswer.collect {
                     if (it.isNotEmpty()) {
                         Toast.makeText(requireContext(), it, Toast.LENGTH_SHORT).show()
                     }
@@ -390,18 +388,31 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 navigateToTaskDetailFragment()
             }
             R.id.save_customer_data -> {
-                if (binding.lat.text != "0.0") {
-                    saveResult()
-                } else {
-                    showSaveCoordinatesDialog()
-                }
+                checkBeforeSave()
             }
         }
         return super.onOptionsItemSelected(item)
     }
 
+    private fun checkBeforeSave() {
+        if (binding.lat.text != "0.0" && binding.results.identCode.text.isNotEmpty()) {
+            saveResult()
+        } else if (binding.lat.text == "0.0") {
+            showSaveCoordinatesDialog()
+        } else {
+            showSaveIdCodeDialog()
+        }
+    }
+
     private fun navigateToTaskDetailFragment() {
         findNavController().popBackStack()
+    }
+
+    private fun setupDialogs() {
+        setupSaveConfirmationDialogFragmentListener()
+        setupSaveCoordinatesDialogFragmentListener()
+        setupSaveIdCodeDialogFragmentListener()
+        setupAddPhotoDialogFragment()
     }
 
     private fun showConfirmationDialog(isForward: Boolean) {
@@ -428,7 +439,27 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private fun setupSaveCoordinatesDialogFragmentListener() {
         SaveCoordinatesDialogFragment.setupListeners(parentFragmentManager, this) {
             when (it) {
-                DialogInterface.BUTTON_POSITIVE -> saveResult()
+                DialogInterface.BUTTON_POSITIVE -> {
+                    if (binding.results.identCode.text.isEmpty()) {
+                        showSaveIdCodeDialog()
+                    } else {
+                        saveResult()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun showSaveIdCodeDialog() {
+        SaveIdCodeDialogFragment.show(parentFragmentManager)
+    }
+
+    private fun setupSaveIdCodeDialogFragmentListener() {
+        SaveIdCodeDialogFragment.setupListeners(parentFragmentManager, viewLifecycleOwner) {
+            when (it) {
+                DialogInterface.BUTTON_POSITIVE -> {
+                    saveResult()
+                }
             }
         }
     }
@@ -603,6 +634,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         if (!savedData.zone3.isNullOrEmpty())
             binding.results.newMeters3.setText(savedData.zone3)
         binding.results.note.setText(savedData.note)
+        binding.results.identCode.setText(savedData.identificationCode)
         binding.results.phone.setText(savedData.phoneNumber)
         binding.results.checkBox.isChecked = savedData.isMainPhone ?: true
 
@@ -632,6 +664,15 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.name.text = basicInfo.name
         binding.counter.text = basicInfo.counter
         binding.otherInfo.text = basicInfo.other
+        if (basicInfo.identificationCode.isNotEmpty()) {
+            binding.results.identCode.setText(basicInfo.identificationCode)
+            binding.results.identCodeTv.visibility = GONE
+            binding.results.identCode.visibility = GONE
+        } else {
+            binding.results.identCode.setText("")
+            binding.results.identCodeTv.visibility = VISIBLE
+            binding.results.identCode.visibility = VISIBLE
+        }
     }
 
     private fun updateView(tdHash: Map<String, String>) {
@@ -685,7 +726,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 zone1 = binding.results.newMeters1.text.toString(),
                 zone2 = binding.results.newMeters2.text.toString(),
                 zone3 = binding.results.newMeters3.text.toString(),
-                note = binding.results.note.text.toString().replace("[\\t\\n\\r]+", " "),
+                note = binding.results.note.text.toString(),
+                identificationCode = binding.results.identCode.text.toString(),
                 phoneNumber = binding.results.phone.text.toString(),
                 lat = binding.lat.text.toString(),
                 lng = binding.lng.text.toString(),

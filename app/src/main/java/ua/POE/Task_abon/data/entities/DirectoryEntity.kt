@@ -3,6 +3,9 @@ package ua.POE.Task_abon.data.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
+/**
+ * Entity that holding info about all fields getting from xml file
+ * */
 @Entity(tableName = "directory")
 data class DirectoryEntity(@PrimaryKey(autoGenerate = true) var id: Int,
                            var taskId: Int,

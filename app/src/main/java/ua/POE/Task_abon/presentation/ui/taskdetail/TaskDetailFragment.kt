@@ -15,7 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.R
-import ua.POE.Task_abon.data.entities.UserDataEntity
+import ua.POE.Task_abon.presentation.model.CustomerMainData
 import ua.POE.Task_abon.databinding.FragmentTaskDetailBinding
 import ua.POE.Task_abon.presentation.adapters.CustomerListAdapter
 import ua.POE.Task_abon.presentation.ui.taskdetail.dialog.IconsHelpDialogFragment
@@ -33,7 +33,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     private var adapter: CustomerListAdapter by autoCleaned()
     private var count = 0
 
-    private var userData = listOf<UserDataEntity>()
+    private var userData = listOf<CustomerMainData>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +83,7 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
                     userData = it
                     adapter.submitList(it)
                     binding.finished.text =
-                        getString(R.string.status_done, args.task.userCount, userData.size)
+                        getString(R.string.status_done, count, userData.size)
                 }
             }
         }

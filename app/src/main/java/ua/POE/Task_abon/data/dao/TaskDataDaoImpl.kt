@@ -8,36 +8,70 @@ import androidx.room.OnConflictStrategy
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
 import ua.POE.Task_abon.data.AppDatabase
-import ua.POE.Task_abon.data.entities.UserDataEntity
+import ua.POE.Task_abon.presentation.model.CustomerMainData
 import javax.inject.Inject
 
+/**
+ * We are not creating room entity for tasks because every new task has new set of data
+ * We creating table for every task dynamically, and working with data by yourself
+ * */
 class TaskDataDaoImpl @Inject constructor(
     appDatabase: AppDatabase,
     private val taskCustomer: TaskCustomerDao
 ) {
     private var sdb: SupportSQLiteDatabase = appDatabase.openHelper.readableDatabase
 
+    /**
+     * Each field belongs to different block of data (such as "Technical", "Results", etc.)
+     * @param taskId getting fields belongs only to current taskId
+     * @param fields list of fields of selected block
+     * @param num getting fields belongs only to current user
+     * */
     fun getFieldsByBlock(taskId: Int, fields: List<String>, num: Int) =
         getFieldsByBlock(sdb, taskId, fields, num)
 
-    fun getTextByFields(tableName: String, fields: List<String>, num: Int) =
-        getSearchedItemsByField(sdb, tableName, fields, num)
+    /**
+     * Function to get value of fields in list
+     * @param tableName getting fields belongs only to current table
+     * @param fields list of fields which value we are searching for
+     * @param num getting fields belongs only to current user
+     * */
+    fun getFieldsValue(tableName: String, fields: List<String>, num: Int) =
+        getFieldsValue(sdb, tableName, fields, num)
 
-    fun getSearchedItemsByField(tableName: String, field: String) =
-        getItemsByField(sdb, tableName, field)
+    /**
+     * Function to get value of specified field for customers filtering purposes
+     * @param tableName getting field belongs only to current table
+     * @param field list of fields which value we are searching for
+     * */
+    fun getSearchFieldValue(tableName: String, field: String) =
+        getFieldValue(sdb, tableName, field)
 
-    fun getCheckedConditions(taskId: Int, index: Int) =
-        getCheckedConditions(sdb, taskId, index)
+    /**
+     * Function to get value of point_condition field of current user
+     * @param taskId getting fields belongs only to current task
+     * @param index id of customer
+     * */
+    fun getCustomerPointCondition(taskId: Int, index: Int) =
+        getPointConditions(sdb, taskId, index)
 
-    suspend fun getUsers(
+    /**
+     * Function to get customers
+     * @param taskId getting fields belongs only to current task
+     * @param keys list of selected fields
+     * @param values list of selected fields values
+     * @param status customer's isDone status
+     * */
+    suspend fun getCustomers(
         taskId: Int,
         keys: List<String>,
         values: ArrayList<String>,
         status: String?
-    ): List<UserDataEntity> {
+    ): List<CustomerMainData> {
         val whereSize = keys.size
         var whereClause = StringBuilder()
         var query = "SELECT * FROM TD$taskId "
+
 
         for (i in 0 until whereSize) {
             if (i == 0) query += "WHERE "
@@ -106,8 +140,8 @@ class TaskDataDaoImpl @Inject constructor(
         }
 
         @SuppressLint("Range")
-        // @Ignore
-        fun getSearchedItemsByField(
+        @Ignore
+        fun getFieldsValue(
             sdb: SupportSQLiteDatabase,
             tableName: String,
             fields: List<String>,
@@ -131,7 +165,7 @@ class TaskDataDaoImpl @Inject constructor(
 
         @SuppressLint("Range")
         @Ignore
-        fun getCheckedConditions(sdb: SupportSQLiteDatabase, taskId: Int, index: Int): String {
+        fun getPointConditions(sdb: SupportSQLiteDatabase, taskId: Int, index: Int): String {
             var isExist = false
             val cursor = sdb.query("PRAGMA table_info('TD$taskId')", emptyArray())
             cursor.use { cursor ->
@@ -158,7 +192,7 @@ class TaskDataDaoImpl @Inject constructor(
 
         @SuppressLint("Range")
         @Ignore
-        fun getItemsByField(
+        fun getFieldValue(
             sdb: SupportSQLiteDatabase,
             tableName: String,
             field: String
