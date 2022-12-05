@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".presentation.userinfo.UserInfoFragment">
+    tools:context=".presentation.ui.userinfo.UserInfoFragment">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -14,8 +15,8 @@
             android:id="@+id/lat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
             android:layout_weight="1"
+            android:background="@color/colorPrimary"
             android:gravity="center"
             android:text="0.0" />
 
@@ -23,14 +24,16 @@
             android:id="@+id/lng"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
             android:layout_weight="1"
+            android:background="@color/colorPrimary"
             android:gravity="center"
             android:text="0.0" />
     </LinearLayout>
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -41,6 +44,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:stretchColumns="*">
+
                 <TableRow
                     android:id="@+id/account_row"
                     android:layout_width="match_parent"
@@ -49,30 +53,30 @@
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:layout_weight="0.4"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center"
                         android:minHeight="20dp"
                         android:paddingStart="8dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:background="@color/colorPrimary"
-                        android:textSize="17sp"
-                        android:gravity="start|center"
-                        android:layout_weight="0.4"
-                        android:layout_marginTop="2dp"
-                        android:layout_marginEnd="2dp"
-                        android:text="О/р" />
+                        android:text="О/р"
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/personal_account"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:textSize="17sp"
-                        android:paddingStart="8dp"
-                        android:maxLines="4"
-                        android:layout_weight="0.6"
                         android:layout_marginEnd="2dp"
                         android:layout_marginBottom="2dp"
+                        android:layout_weight="0.6"
                         android:gravity="start|center"
-                        android:text="" />
+                        android:maxLines="4"
+                        android:paddingStart="8dp"
+                        android:text=""
+                        android:textSize="17sp" />
                 </TableRow>
 
                 <TableRow
@@ -82,29 +86,29 @@
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:layout_weight="0.4"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center"
                         android:minHeight="20dp"
                         android:paddingStart="8dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:background="@color/colorPrimary"
-                        android:textSize="17sp"
-                        android:gravity="start|center"
-                        android:layout_weight="0.4"
-                        android:layout_marginTop="2dp"
-                        android:layout_marginEnd="2dp"
-                        android:text="Адреса" />
+                        android:text="Адреса"
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/address"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:textSize="17sp"
-                        android:paddingStart="8dp"
-                        android:maxLines="4"
-                        android:layout_weight="0.6"
                         android:layout_marginEnd="2dp"
+                        android:layout_weight="0.6"
                         android:gravity="start|center"
-                        android:text="" />
+                        android:maxLines="4"
+                        android:paddingStart="8dp"
+                        android:text=""
+                        android:textSize="17sp" />
                 </TableRow>
 
                 <TableRow
@@ -114,30 +118,30 @@
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:layout_weight="0.4"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center"
                         android:minHeight="20dp"
                         android:paddingStart="8dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:background="@color/colorPrimary"
-                        android:textSize="17sp"
-                        android:gravity="start|center"
-                        android:layout_weight="0.4"
-                        android:layout_marginTop="2dp"
-                        android:layout_marginEnd="2dp"
-                        android:text="ПІБ" />
+                        android:text="ПІБ"
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/name"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:textSize="17sp"
-                        android:paddingStart="8dp"
-                        android:maxLines="4"
-                        android:layout_weight="0.6"
                         android:layout_marginEnd="2dp"
                         android:layout_marginBottom="2dp"
+                        android:layout_weight="0.6"
                         android:gravity="start|center"
-                        android:text="" />
+                        android:maxLines="4"
+                        android:paddingStart="8dp"
+                        android:text=""
+                        android:textSize="17sp" />
                 </TableRow>
 
                 <TableRow
@@ -147,30 +151,30 @@
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:layout_marginTop="2dp"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="0.4"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center"
                         android:paddingStart="8dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:background="@color/colorPrimary"
-                        android:textSize="17sp"
-                        android:gravity="start|center"
-                        android:layout_weight="0.4"
-                        android:layout_marginTop="2dp"
-                        android:layout_marginBottom="2dp"
-                        android:layout_marginEnd="2dp"
-                        android:text="Лічильник" />
+                        android:text="Лічильник"
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/counter"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:textSize="17sp"
-                        android:paddingStart="8dp"
-                        android:maxLines="4"
-                        android:layout_weight="0.6"
                         android:layout_marginEnd="2dp"
                         android:layout_marginBottom="2dp"
+                        android:layout_weight="0.6"
                         android:gravity="start|center"
-                        android:text="" />
+                        android:maxLines="4"
+                        android:paddingStart="8dp"
+                        android:text=""
+                        android:textSize="17sp" />
                 </TableRow>
 
                 <TableRow
@@ -180,79 +184,76 @@
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_marginEnd="2dp"
+                        android:layout_marginBottom="2dp"
+                        android:layout_weight="0.4"
+                        android:background="@color/colorPrimary"
+                        android:gravity="start|center"
                         android:minHeight="20dp"
                         android:paddingStart="8dp"
                         android:paddingTop="8dp"
                         android:paddingBottom="8dp"
-                        android:background="@color/colorPrimary"
-                        android:textSize="17sp"
-                        android:gravity="start|center"
-                        android:layout_weight="0.4"
-                        android:layout_marginEnd="2dp"
-                        android:layout_marginBottom="2dp"
-                        android:text="Інше/Фідер" />
+                        android:text="Інше/Фідер"
+                        android:textSize="17sp" />
 
                     <TextView
                         android:id="@+id/other_info"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:textSize="17sp"
-                        android:paddingStart="8dp"
-                        android:maxLines="4"
-                        android:layout_weight="0.6"
                         android:layout_marginEnd="2dp"
                         android:layout_marginBottom="2dp"
+                        android:layout_weight="0.6"
                         android:gravity="start|center"
-                        android:text="" />
+                        android:maxLines="4"
+                        android:paddingStart="8dp"
+                        android:text=""
+                        android:textSize="17sp" />
                 </TableRow>
             </TableLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
+
                 <Button
                     android:id="@+id/previous"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.25"
-                    android:drawableLeft="@drawable/ic_arrow_left"
-                    android:text="@string/previous"
-                    android:singleLine="true"/>
+                    android:drawableStart="@drawable/ic_arrow_left"
+                    android:singleLine="true"
+                    android:text="@string/previous" />
+
                 <Spinner
                     android:id="@+id/block_name"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
-                    android:layout_weight="0.5"/>
+                    android:layout_weight="0.5" />
+
                 <Button
                     android:id="@+id/next"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="0.25"
-                    android:drawableRight="@drawable/ic_arrow_right"
-                    android:text="@string/next"
-                    android:singleLine="true"/>
+                    android:drawableEnd="@drawable/ic_arrow_right"
+                    android:singleLine="true"
+                    android:text="@string/next" />
 
             </LinearLayout>
-            <ScrollView
-                android:id="@+id/info_tables"
+
+            <TableLayout
+                android:id="@+id/info_table"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <TableLayout
-                    android:id="@+id/info_table"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:stretchColumns="*"/>
-
-            </ScrollView>
+                android:layout_height="wrap_content"
+                android:stretchColumns="*" />
 
             <include
                 android:id="@+id/results"
                 layout="@layout/results_tab_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone"/>
+                android:visibility="gone" />
         </LinearLayout>
 
     </ScrollView>

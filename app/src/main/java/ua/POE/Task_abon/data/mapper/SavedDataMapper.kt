@@ -1,19 +1,20 @@
 package ua.POE.Task_abon.data.mapper
 
-import ua.POE.Task_abon.domain.model.SavedData
-import ua.POE.Task_abon.data.entities.Result
+import ua.POE.Task_abon.presentation.model.SavedData
+import ua.POE.Task_abon.data.entities.ResultEntity
 
 
-fun mapResultToSavedData(result: Result?) = SavedData(
+fun mapResultToSavedData(result: ResultEntity?) = SavedData(
     status = result?.notDone,
     source = result?.dataSource,
     date = result?.doneDate,
     zone1 = result?.zone1,
     zone2 = result?.zone2,
     zone3 = result?.zone3,
-    pointCondition = result?.point_condition,
+    pointCondition = result?.pointCondition,
     note = result?.note,
+    identificationCode = result?.identificationCode,
     phoneNumber = result?.phoneNumber,
-    isMainPhone = result?.is_main != 0,
+    isMainPhone = result?.isMain != 0,
     photo = result?.photo
 )

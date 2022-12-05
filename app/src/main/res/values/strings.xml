@@ -1,35 +1,12 @@
 <resources>
     <string name="app_name">Task_abon</string>
-    
-    <string-array name="reason_fields">
-        <item name="відсутній абонент"/>
-        <item name="абонент не відчинив"/>
-        <item name="відсутній лічильник"/>
-        <item name="Внесено помилково"/>
-        <item name="Заборгованість оплачено"/>
-        <item name="Абонент відмовився від підпису"/>
-    </string-array>
-    <!-- TODO: Add more sources -->
-    <string-array name="source_fields">
-        <item>-Не вибране-</item>
-        <item>Не мав доступу до лічильника</item>
-        <item>По телефону</item>
-        <item>Зі слів при відвіданні  АГ</item>
-        <item>Рейдова бригада</item>
-        <item>Тел.довідник</item>
-        <item>ВЕБ-сайт</item>
-    </string-array>
 
     <string-array name="status_fields">
         <item>Виконано</item>
         <item>Не виконано</item>
     </string-array>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="enter_password_hint">Введіть пароль</string>
     <string name="noTask">Схоже, завдань немає…</string>
-    <string name="login_hint">Введіть пароль</string>
     <string name="contr_pokaz">Показ. контр:</string>
     <string name="enter_data_hint">Введіть дані</string>
     <string name="clear_field_btn">Очистити поле</string>
@@ -52,7 +29,6 @@
     <string name="use">Витрата</string>
     <string name="new_index">Нові</string>
     <string name="enter">Ввести</string>
-    <string name="info">Інфо</string>
     <string name="add">Додати</string>
     <string name="about">Про програму</string>
     <string name="save">Зберегти</string>
@@ -70,9 +46,23 @@
     <string name="account_counter_template">%1$s%2$s</string>
     <string name="status_done">Виконано: %1$d/%2$d</string>
     <string name="info_template">Id завдання: %1$s , Записи: %2$s, Дата створення: %3$s, Юр.особи: %4$s</string>
-    <string name="diff_template">Расход/nСредн: %1$s</string>
+    <string name="diff_template">Витрат/nСеред: %1$s</string>
     <string name="ok">Ок</string>
     <string name="no_needed_icons">Без позначок</string>
     <string name="contr_template">Показ. контр: %1$s</string>
     <string name="reset_filter">Скинути фільтр</string>
+    <string name="explain_permission_text">Базовий функціонал оснований на цих дозволах</string>
+    <string name="forward_to_settings_text">Вам потрібно дати необхідні дозволи в налаштуваннях вручну</string>
+    <string name="denied_permissions_text">"Ці дозволи відхилені: "</string>
+    <string name="feature_spinner_hint">Можливий вибір декількох пунктів:</string>
+    <string name="remove_all">Очистити все</string>
+    <string name="app_info_text_template">Додаток створено для контролерів АТ ПОЛТАВАОБЛЕНЕРГО\nРозробник: Громов Євгеній, тел.510–557\nВерсія: %1$s</string>
+    <string name="photo_holder_description">Holder for taken photo</string>
+    <string name="zone_count_3_tv">3</string>
+    <string name="zone_count_2_tv">2</string>
+    <string name="zone_count_1_tv">1</string>
+    <string name="choose_action">Виберіть дію</string>
+    <string name="replace_photo">Замінити фото</string>
+    <string name="delete_photo">Видалити фото</string>
+    <string name="inn">Идент. код</string>
 </resources>

@@ -2,6 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-parcelize'
+apply plugin: 'androidx.navigation.safeargs'
 apply plugin: 'dagger.hilt.android.plugin'
 
 android {
@@ -12,15 +13,17 @@ android {
         applicationId "ua.POE.Task_abon"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 32
-        versionName '6.3.2'
+        versionCode 33
+        versionName '6.4'
 
+        buildConfigField "String", "MY_CLOUD_API", '"http://task.poe.pl.ua:8880/app/"'
+        buildConfigField "String", "MY_PHOTO_STORAGE", '"http://10.107.4.132/abon/"'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
-        release {
-            minifyEnabled false
+        getByName("release") {
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->
                 variant.outputs.all {
@@ -28,6 +31,10 @@ android {
                 }
             }
         }
+        /*getByName("debug") {
+            applicationIdSuffix = ".debug"
+            minifyEnabled false
+        }*/
     }
 
     compileOptions {
@@ -55,15 +62,15 @@ dependencies {
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-common-java8:2.3.1"
-    testImplementation 'junit:junit:4.+'
+    implementation 'androidx.hilt:hilt-common:1.0.0'
+    implementation 'androidx.hilt:hilt-work:1.0.0'
+    testImplementation 'junit:junit:'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation("com.squareup:javapoet:1.13.0")
 
     // ViewModel
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0"
-    // LiveData
-    implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.4.0"
     // LifeCycle
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.0'
 
@@ -74,15 +81,14 @@ dependencies {
     //Network
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
-    /* implementation("com.squareup.okhttp3:okhttp:4.9.0")
-     implementation 'com.squareup.okhttp3:logging-interceptor:4.7.2'*/
+    //workManager
+    implementation("androidx.work:work-runtime-ktx:2.7.1")
 
     //DI Hilt
     implementation("com.google.dagger:hilt-android:2.42")
     kapt("com.google.dagger:hilt-android-compiler:2.42")
-
     //For Hilt support for ViewModel
-    kapt 'androidx.hilt:hilt-compiler:1.0.0-alpha02'
+    kapt 'androidx.hilt:hilt-compiler:1.0.0'
 
     //Activity extension, referring with  "by viewModels"
     implementation "androidx.activity:activity-ktx:1.6.1"
@@ -94,20 +100,17 @@ dependencies {
     def coroutines_android_version = '1.6.4'
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutines_android_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_android_version"
-    //Glide
-    /*implementation 'com.github.bumptech.glide:glide:4.11.0'
-    kapt 'com.github.bumptech.glide:compiler:4.11.0'*/
 
     //Room Database
     implementation "androidx.room:room-runtime:2.5.0-beta01"
     kapt "androidx.room:room-compiler:2.5.0-beta01"
-    // optional - Kotlin Extensions and Coroutines support for Room
+    //Kotlin Extensions and Coroutines support for Room
     implementation "androidx.room:room-ktx:2.5.0-beta01"
 
     implementation 'androidx.preference:preference-ktx:1.1.1'
 
     implementation 'org.apache.commons:commons-text:1.6'
-
+    //handle permission requests
     implementation 'com.guolindev.permissionx:permissionx:1.7.1'
 
     // debugImplementation because LeakCanary should only run in debug builds.

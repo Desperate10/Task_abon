@@ -4,26 +4,25 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
-import ua.POE.Task_abon.data.entities.Timing
+import ua.POE.Task_abon.data.entities.TimingEntity
 
 @Dao
 interface TimingDao {
 
     @Insert(onConflict = IGNORE)
-    suspend fun insertTiming(timing: Timing)
+    suspend fun insertTiming(timing: TimingEntity)
 
     @Query("SELECT * FROM timing WHERE task_id = :taskId")
-    suspend fun getTiming(taskId: Int): List<Timing>
+    suspend fun getTiming(taskId: Int): List<TimingEntity>
 
     @Query("SELECT startTaskTime FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
-    suspend fun getStartTaskDate(taskId: Int, num: Int): String
+    suspend fun getStartTaskDate(taskId: Int, num: Int): String?
 
     @Query("SELECT firstEditDate FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
-    suspend fun getFirstEditDate(taskId: Int, num: Int): String
+    suspend fun getFirstEditDate(taskId: Int, num: Int): String?
 
     @Query("SELECT editSeconds FROM timing WHERE task_id = :taskId AND Numb = :num LIMIT 1")
-    suspend fun getEditTime(taskId: Int, num: Int): Int
+    suspend fun getEditTime(taskId: Int, num: Int): Int?
 
     @Query("UPDATE timing SET firstEditDate = :firstEditDate WHERE task_id = :taskId AND Numb = :num")
     suspend fun updateFirstEditDate(taskId: Int, num: Int, firstEditDate: String)
@@ -41,6 +40,6 @@ interface TimingDao {
     suspend fun upEditCount(taskId: Int, num: Int)
 
     @Query("DELETE FROM timing WHERE task_id = :taskId")
-    suspend fun deleteByTaskId(taskId: Int)
+    suspend fun delete(taskId: Int)
 
 }

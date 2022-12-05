@@ -8,6 +8,9 @@ import okio.BufferedSink
 import java.io.File
 import java.io.FileInputStream
 
+/**
+ * Process of uploading image to remote storage
+ * */
 class UploadRequestBody(private val file: File,
                         private val contentType: String,
                         private val callback: UploadCallback) : RequestBody(){
@@ -25,7 +28,7 @@ class UploadRequestBody(private val file: File,
             var read: Int
             val handler = Handler(Looper.getMainLooper())
             while (inputStream.read(buffer).also { read = it } != -1) {
-                handler.post(ProgressUpdater(uploaded, length))
+                handler.post(ProgressUpdater(uploaded, length, file.name))
                 uploaded += read
                 sink.write(buffer, 0, read)
             }
@@ -33,15 +36,16 @@ class UploadRequestBody(private val file: File,
     }
 
     interface UploadCallback {
-        fun onProgressUpdate(percentage: Int)
+        fun onProgressUpdate(percentage: Int, fileName: String)
     }
 
     inner class ProgressUpdater(
         private val uploaded: Long,
-        private val total: Long
+        private val total: Long,
+        private val name: String
     ) : Runnable {
         override fun run() {
-            callback.onProgressUpdate((100 * uploaded / total).toInt())
+            callback.onProgressUpdate((100 * uploaded / total).toInt(), name)
         }
     }
 

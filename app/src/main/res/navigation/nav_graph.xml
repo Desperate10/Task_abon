@@ -2,48 +2,73 @@
 <navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/nav_graph"
     app:startDestination="@id/tasksFragment">
 
     <fragment
         android:id="@+id/tasksFragment"
-        android:name="ua.POE.Task_abon.presentation.tasks.TasksFragment"
-        android:label="fragment_tasks"
+        android:name="ua.POE.Task_abon.presentation.ui.task.TasksFragment"
+        android:label="Список завдань"
         tools:layout="@layout/fragment_tasks" >
         <action
             android:id="@+id/action_tasksFragment_to_taskDetailFragment"
-            app:destination="@id/taskDetailFragment" />
+            app:destination="@id/taskDetailFragment"
+            app:popUpTo="@id/tasksFragment"
+            app:popUpToInclusive="false" />
         <argument
             android:name="taskId"
             app:argType="integer" />
     </fragment>
     <fragment
         android:id="@+id/taskDetailFragment"
-        android:name="ua.POE.Task_abon.presentation.taskdetail.TaskDetailFragment"
-        android:label="fragment_task_detail"
+        android:name="ua.POE.Task_abon.presentation.ui.taskdetail.TaskDetailFragment"
+        android:label="Список абонентів"
         tools:layout="@layout/fragment_task_detail" >
         <action
             android:id="@+id/action_taskDetailFragment_to_userInfoFragment"
-            app:destination="@id/userInfoFragment" />
+            app:destination="@id/userInfoFragment"
+            app:popUpTo="@id/userInfoFragment"
+            app:popUpToInclusive="true" />
         <action
             android:id="@+id/action_taskDetailFragment_to_findUserFragment"
-            app:destination="@id/findUserFragment" />
-        <action
-            android:id="@+id/action_taskDetailFragment_to_tasksFragment"
-            app:destination="@id/tasksFragment" />
+            app:destination="@id/findUserFragment"
+            app:popUpTo="@id/findUserFragment"
+            app:popUpToInclusive="true" />
+        <argument
+            android:name="task"
+            app:argType="ua.POE.Task_abon.presentation.model.Task" />
+        <argument
+            android:name="searchList"
+            app:argType="ua.POE.Task_abon.presentation.model.SearchMap"
+            app:nullable="true" />
     </fragment>
     <fragment
         android:id="@+id/userInfoFragment"
-        android:name="ua.POE.Task_abon.presentation.userinfo.UserInfoFragment"
-        android:label="fragment_user_info"
-        tools:layout="@layout/fragment_user_info" />
+        android:name="ua.POE.Task_abon.presentation.ui.userinfo.UserInfoFragment"
+        android:label="Інформація"
+        tools:layout="@layout/fragment_user_info" >
+        <argument
+            android:name="taskId"
+            app:argType="integer" />
+        <argument
+            android:name="filial"
+            app:argType="string" />
+        <argument
+            android:name="userId"
+            app:argType="integer" />
+        <argument
+            android:name="count"
+            app:argType="integer" />
+    </fragment>
     <fragment
         android:id="@+id/findUserFragment"
-        android:name="ua.POE.Task_abon.presentation.finduser.FindUserFragment"
-        android:label="fragment_find_user"
+        android:name="ua.POE.Task_abon.presentation.ui.userfilter.FindUserFragment"
+        android:label="Критерії пошуку"
         tools:layout="@layout/fragment_find_user" >
         <action
             android:id="@+id/action_findUserFragment_to_taskDetailFragment"
             app:destination="@id/taskDetailFragment" />
+        <argument
+            android:name="task"
+            app:argType="ua.POE.Task_abon.presentation.model.Task" />
     </fragment>
 </navigation>

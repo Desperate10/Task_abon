@@ -10,10 +10,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
-import ua.POE.Task_abon.data.entities.UserData
 
 @Database(
-    entities = [TestEntity::class, TaskEntity::class, Directory::class, CatalogEntity::class, UserData::class, Result::class, Timing::class],
+    entities = [TaskEntity::class, DirectoryEntity::class, CatalogEntity::class, ResultEntity::class, TimingEntity::class],
     version = 9,
     exportSchema = false
 )
@@ -25,9 +24,9 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun directoryDao(): DirectoryDao
 
-    abstract fun testEntityDao(): TestEntityDao
-
     abstract fun resultDao(): ResultDao
+
+    abstract fun taskCustomerDao(): TaskCustomerDao
 
     abstract fun timingDao(): TimingDao
 
@@ -82,22 +81,23 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_5_6 = object : Migration(5, 6) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE UserData ADD COLUMN Counter_numb TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN Counter_numb TEXT")
             }
         }
 
         private val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE UserData ADD COLUMN opora TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN opora TEXT")
             }
         }
 
         private val MIGRATION_7_8 = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE UserData ADD COLUMN icons_account TEXT")
-                database.execSQL("ALTER TABLE UserData ADD COLUMN icons_counter TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN icons_account TEXT")
+                database.execSQL("ALTER TABLE UserDataEntity ADD COLUMN icons_counter TEXT")
             }
         }
+
 
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase =
             INSTANCE ?: synchronized(this) {
@@ -105,17 +105,16 @@ abstract class AppDatabase : RoomDatabase() {
             }
 
         private fun buildDatabase(appContext: Context, scope: CoroutineScope) =
-            Room.databaseBuilder(appContext, AppDatabase::class.java, "app_database")
-                .addMigrations(
-                    MIGRATION_2_3,
-                    MIGRATION_3_4,
-                    MIGRATION_4_5,
-                    MIGRATION_5_6,
-                    MIGRATION_6_7,
-                    MIGRATION_7_8
-                )
-                .addCallback(AppDatabaseCallback(scope))
+            Room.databaseBuilder(appContext, AppDatabase::class.java, "app_database").addMigrations(
+                MIGRATION_2_3,
+                MIGRATION_3_4,
+                MIGRATION_4_5,
+                MIGRATION_5_6,
+                MIGRATION_6_7,
+                MIGRATION_7_8
+            ).addCallback(AppDatabaseCallback(scope))
                 .allowMainThreadQueries()
+                .fallbackToDestructiveMigrationFrom(9)
                 .build()
     }
 }
