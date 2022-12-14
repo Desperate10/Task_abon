@@ -727,7 +727,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 zone2 = binding.results.newMeters2.text.toString(),
                 zone3 = binding.results.newMeters3.text.toString(),
                 note = binding.results.note.text.toString(),
-                identificationCode = binding.results.identCode.text.toString(),
+                identificationCode = if (binding.results.identCode.visibility == VISIBLE) {
+                    "${binding.results.identCode.text}*"
+                } else {
+                    binding.results.identCode.text.toString()
+                },
                 phoneNumber = binding.results.phone.text.toString(),
                 lat = binding.lat.text.toString(),
                 lng = binding.lng.text.toString(),
