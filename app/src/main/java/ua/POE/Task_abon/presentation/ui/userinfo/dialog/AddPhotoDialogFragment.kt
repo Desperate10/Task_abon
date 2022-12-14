@@ -24,7 +24,7 @@ class AddPhotoDialogFragment : DialogFragment() {
 
         return AlertDialog.Builder(requireContext())
             .setTitle(R.string.choose_action)
-            .setItems(options) { dialog: DialogInterface, item: Int ->
+            .setItems(options) { _: DialogInterface, item: Int ->
                 parentFragmentManager.setFragmentResult(
                     REQUEST_KEY,
                     bundleOf(

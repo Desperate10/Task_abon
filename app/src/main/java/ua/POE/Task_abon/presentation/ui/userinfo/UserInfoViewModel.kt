@@ -1,7 +1,6 @@
 package ua.POE.Task_abon.presentation.ui.userinfo
 
 import android.net.Uri
-import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +12,6 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ua.POE.Task_abon.data.dao.*
-import ua.POE.Task_abon.data.dao.TaskDataDaoImpl
 import ua.POE.Task_abon.data.entities.TimingEntity
 import ua.POE.Task_abon.data.mapper.ResultMapper
 import ua.POE.Task_abon.data.mapper.mapCatalogEntityToCatalog
@@ -26,7 +24,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
-import kotlin.collections.HashMap
 
 @HiltViewModel
 class UserInfoViewModel @Inject constructor(
@@ -71,10 +68,10 @@ class UserInfoViewModel @Inject constructor(
 
     //тоже нужно отслеживать во фрагменте
     private val _sourceSpinnerPosition = MutableStateFlow(0)
-    val sourceSpinnerPosition : StateFlow<Int> = _sourceSpinnerPosition
+    val sourceSpinnerPosition: StateFlow<Int> = _sourceSpinnerPosition
 
     private val _sourceSpinnerPositionCode = MutableStateFlow("")
-    val sourceSpinnerPositionCode : StateFlow<String> = _sourceSpinnerPositionCode
+    val sourceSpinnerPositionCode: StateFlow<String> = _sourceSpinnerPositionCode
 
     private val _selectedFeatureList = MutableStateFlow<List<String>>(emptyList())
     val selectedFeatureList: StateFlow<List<String>> = _selectedFeatureList
@@ -148,7 +145,7 @@ class UserInfoViewModel @Inject constructor(
     val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, _ ->
         getSavedData(index)
     }
-        .flowOn(Dispatchers.Main)
+        .flowOn(Dispatchers.IO)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     private suspend fun getSavedData(index: Int): SavedData {
@@ -159,7 +156,6 @@ class UserInfoViewModel @Inject constructor(
         } else {
             ""
         }
-
         return savedData.copy(source = sourceName)
     }
 
@@ -174,7 +170,7 @@ class UserInfoViewModel @Inject constructor(
     val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
         .flatMapLatest {
             featureList.combine(savedData) { list, result ->
-                setupFeatureSpinner(result.pointCondition, list)
+                setupFeatureSpinner(result?.pointCondition, list)
             }
         }
         .flowOn(Dispatchers.IO)
@@ -378,8 +374,8 @@ class UserInfoViewModel @Inject constructor(
     //Save data that came from controller and getting ready for creating xml
     // storing data in result table
     fun saveResults(newData: DataToSave) {
-            viewModelScope.launch {
-                if (isNewDataValid(newData)) {
+        viewModelScope.launch {
+            if (isNewDataValid(newData)) {
                 withContext(Dispatchers.IO) {
                     saveEditTiming()
                     saveData(newData)
@@ -411,7 +407,12 @@ class UserInfoViewModel @Inject constructor(
 
     private suspend fun saveData(newData: DataToSave) {
         val missingData = getCustomerMissingData()
-        val saveData = ResultMapper.mapNeededDataToResult(_taskInfo.value, missingData, newData, preloadResultTab.value)
+        val saveData = ResultMapper.mapNeededDataToResult(
+            _taskInfo.value,
+            missingData,
+            newData,
+            preloadResultTab.value
+        )
         changeStatusToDone(missingData["num"]!!)
         result.insertNewData(saveData)
     }
@@ -422,7 +423,7 @@ class UserInfoViewModel @Inject constructor(
         customer.setDone(taskId, num)
     }
 
-    private fun getCustomerMissingData(): HashMap<String,String> {
+    private fun getCustomerMissingData(): HashMap<String, String> {
         val fields =
             listOf(
                 "num",
@@ -528,7 +529,7 @@ class UserInfoViewModel @Inject constructor(
         return _isResultSaved.value
     }
 
-    fun deletePhoto(uri : Uri?) {
+    fun deletePhoto(uri: Uri?) {
         viewModelScope.launch {
             uri?.path?.let { File(it).delete() }
             withContext(Dispatchers.IO) {

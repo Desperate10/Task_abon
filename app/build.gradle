@@ -13,8 +13,8 @@ android {
         applicationId "ua.POE.Task_abon"
         minSdkVersion 24
         targetSdkVersion 33
-        versionCode 33
-        versionName '6.4'
+        versionCode 34
+        versionName '6.4.1'
 
         buildConfigField "String", "MY_CLOUD_API", '"http://task.poe.pl.ua:8880/app/"'
         buildConfigField "String", "MY_PHOTO_STORAGE", '"http://10.107.4.132/abon/"'
@@ -23,7 +23,7 @@ android {
 
     buildTypes {
         getByName("release") {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             applicationVariants.all { variant ->
                 variant.outputs.all {
