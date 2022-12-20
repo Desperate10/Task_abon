@@ -12,8 +12,12 @@ import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
 
 @Database(
-    entities = [TaskEntity::class, DirectoryEntity::class, CatalogEntity::class, ResultEntity::class, TimingEntity::class],
-    version = 9,
+    entities = [TaskEntity::class,
+        DirectoryEntity::class,
+        CatalogEntity::class,
+        ResultEntity::class,
+        TimingEntity::class],
+    version = 10,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -98,6 +102,13 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE result ADD COLUMN Physical_PersonId TEXT")
+                database.execSQL("DROP TABLE IF EXISTS 'TD$'");
+            }
+
+        }
 
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase =
             INSTANCE ?: synchronized(this) {
@@ -111,10 +122,11 @@ abstract class AppDatabase : RoomDatabase() {
                 MIGRATION_4_5,
                 MIGRATION_5_6,
                 MIGRATION_6_7,
-                MIGRATION_7_8
+                MIGRATION_7_8,
+                MIGRATION_9_10
             ).addCallback(AppDatabaseCallback(scope))
                 .allowMainThreadQueries()
-                .fallbackToDestructiveMigrationFrom(9)
+              //  .fallbackToDestructiveMigrationFrom(9)
                 .build()
     }
 }

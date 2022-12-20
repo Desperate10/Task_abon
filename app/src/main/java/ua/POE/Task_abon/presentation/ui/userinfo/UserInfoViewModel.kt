@@ -435,7 +435,8 @@ class UserInfoViewModel @Inject constructor(
                 "Adress",
                 "tel",
                 "counpleas",
-                "Ident_code"
+                "Ident_code",
+                "Physical_PersonId"
             )
         return customer.getFieldsValue("TD$taskId", fields, customerIndex.value)
     }
@@ -457,12 +458,7 @@ class UserInfoViewModel @Inject constructor(
         customer.getCustomerPointCondition(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
-        sourceType = (position + 2).toString()
-        if (position != _statusSpinnerPosition.value) {
-            viewModelScope.launch {
-                updateSourceList()
-            }
-        }
+        handleStatusChange(position)
         _statusSpinnerPosition.value = position
     }
 
