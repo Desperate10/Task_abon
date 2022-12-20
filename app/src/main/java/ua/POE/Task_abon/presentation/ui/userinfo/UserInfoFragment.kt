@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -61,10 +62,12 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val date = "dd.MM.yyyy"
     private val dateFormat = SimpleDateFormat(date, Locale.getDefault())
+    private var _status = 0
     private var zone1 = ""
     private var zone2 = ""
     private var zone3 = ""
     private var sourcePosition = 0
+    private var isSavedData = false
     private var sourceAdapter: ArrayAdapter<String>? = null
     private var locationManager: LocationManager? = null
 
@@ -169,6 +172,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.savedData.collectLatest { savedData ->
+                    Log.d("testim", "$savedData omg")
                     resetFields()
                     savedData.status?.let { getResultIfExist(savedData) }
                 }
@@ -283,7 +287,13 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             viewModel.setSelectedBlock(selectedItem)
         }
         binding.results.statusSpinner.onItemSelected { position ->
-            viewModel.setStatusSpinnerPosition(position)
+            _status = if (isSavedData) {
+                viewModel.handleStatusChange(position)
+                position
+            } else {
+                viewModel.setStatusSpinnerPosition(position)
+                viewModel.statusSpinnerPosition.value
+            }
         }
         binding.results.sourceSpinner.onItemSelected { position ->
             viewModel.setSourceSpinnerPosition(position)
@@ -306,7 +316,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     @SuppressLint("MissingPermission")
     private fun checkPermissions() {
-        PermissionX.init(requireActivity())
+        PermissionX.init(this)
             .permissions(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -600,6 +610,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun resetFields() {
+        isSavedData = false
         binding.results.date.text = dateFormat.format(calendar.time)
         binding.results.newDate.text = dateFormat.format(calendar.time)
         if (viewModel.sourceSpinnerPosition.value != 0 && sourcePosition == 0) {
@@ -624,6 +635,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun getResultIfExist(savedData: SavedData) {
+        isSavedData = true
         viewModel.setStatusSpinnerPosition(savedData.status?.toInt() ?: 0)
         binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
         binding.results.date.text = savedData.date
@@ -645,6 +657,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
         spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
+        if (spinnerPosition == -1) {
+            binding.results.sourceSpinner.setSelection(0)
+        }
         viewModel.setResultSavedState(true)
     }
 
@@ -719,7 +734,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         viewModel.saveResults(
             DataToSave(
                 userIndex = viewModel.customerIndex.value,
-                status = viewModel.statusSpinnerPosition.value,
+                status = _status,//viewModel.statusSpinnerPosition.value
                 sourceCode = viewModel.sourceSpinnerPositionCode.value,
                 features = viewModel.selectedFeatureList.value,
                 date = binding.results.newDate.text.toString(),

@@ -140,21 +140,25 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
     }
 
     private fun navigateToFindUserFragment() {
-        findNavController().navigate(
-            TaskDetailFragmentDirections.actionTaskDetailFragmentToFindUserFragment(
-                args.task
+        if (findNavController().currentDestination?.id == R.id.taskDetailFragment) {
+            findNavController().navigate(
+                TaskDetailFragmentDirections.actionTaskDetailFragmentToFindUserFragment(
+                    args.task
+                )
             )
-        )
+        }
     }
 
     private fun navigateToUserInfoFragment(position: Int) {
-        findNavController().navigate(
-            TaskDetailFragmentDirections.actionTaskDetailFragmentToUserInfoFragment(
-                args.task.id,
-                args.task.filial,
-                userData[position].id,
-                adapter.itemCount
+        if (findNavController().currentDestination?.id == R.id.taskDetailFragment) {
+            findNavController().navigate(
+                TaskDetailFragmentDirections.actionTaskDetailFragmentToUserInfoFragment(
+                    args.task.id,
+                    args.task.filial,
+                    userData[position].id,
+                    adapter.itemCount
+                )
             )
-        )
+        }
     }
 }
