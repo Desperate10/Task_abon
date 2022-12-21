@@ -1,6 +1,8 @@
 package ua.POE.Task_abon.data
 
 import android.content.Context
+import android.database.Cursor
+import android.widget.Toast
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -10,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import ua.POE.Task_abon.data.dao.*
 import ua.POE.Task_abon.data.entities.*
+
 
 @Database(
     entities = [TaskEntity::class,
@@ -104,6 +107,16 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
+                val c: Cursor =
+                    database.query("SELECT name FROM sqlite_master WHERE type='table'")
+                if (c.moveToFirst()) {
+                    while (!c.isAfterLast) {
+                        if (c.getString(0).toString().contains("TD")) {
+                            database.execSQL("DROP TABLE IF EXISTS '" + c.getString(0) + "'")
+                        }
+                        c.moveToNext()
+                    }
+                }
                 database.execSQL("ALTER TABLE result ADD COLUMN Physical_PersonId TEXT")
             }
 
