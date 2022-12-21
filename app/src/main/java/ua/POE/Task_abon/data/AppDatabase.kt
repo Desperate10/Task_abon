@@ -107,16 +107,6 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                val c: Cursor =
-                    database.query("SELECT name FROM sqlite_master WHERE type='table'")
-                if (c.moveToFirst()) {
-                    while (!c.isAfterLast) {
-                        if (c.getString(0).toString().contains("TD")) {
-                            database.execSQL("DROP TABLE IF EXISTS '" + c.getString(0) + "'")
-                        }
-                        c.moveToNext()
-                    }
-                }
                 database.execSQL("ALTER TABLE result ADD COLUMN Physical_PersonId TEXT")
             }
 
