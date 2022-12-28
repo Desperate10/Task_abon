@@ -379,6 +379,7 @@ class XmlWrite @Inject constructor(
             val zoneCount = StringUtils.defaultIfBlank(results[i].zoneCount.toString(), "0")
             val counterCapacity =
                 StringUtils.defaultIfBlank(results[i].counterCapacity.toString(), "0")
+            val physicalPersonId = StringUtils.defaultIfBlank(results[i].physicalPersonId, "0")
 
             writeLine(
                 sb, "<z:row  Task_name=" + "'" + results[i].taskName + "'" +
@@ -418,7 +419,7 @@ class XmlWrite @Inject constructor(
                         " lastEditDate='${timings[i].lastEditDate}'" +
                         " counpleas='${results[i].counterPlace}'" +
                         " Ident_code='${results[i].identificationCode}'" +
-                        " Physical_PersonId='${results[i].physicalPersonId}'" + " />"
+                        " Physical_PersonId='$physicalPersonId'" + " />"
             )
         }
         writeLine(sb, "</rs:data>")

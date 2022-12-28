@@ -15,7 +15,6 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
-import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
@@ -172,7 +171,6 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.savedData.collectLatest { savedData ->
-                    Log.d("testim", "$savedData omg")
                     resetFields()
                     savedData.status?.let { getResultIfExist(savedData) }
                 }
@@ -742,7 +740,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 zone2 = binding.results.newMeters2.text.toString(),
                 zone3 = binding.results.newMeters3.text.toString(),
                 note = binding.results.note.text.toString(),
-                identificationCode = if (binding.results.identCode.visibility == VISIBLE) {
+                identificationCode = if (binding.results.identCode.visibility == VISIBLE
+                    && binding.results.identCode.text.isNotEmpty()
+                ) {
                     "${binding.results.identCode.text}*"
                 } else {
                     binding.results.identCode.text.toString()
