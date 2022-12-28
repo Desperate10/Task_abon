@@ -1,8 +1,6 @@
 package ua.POE.Task_abon.data
 
 import android.content.Context
-import android.database.Cursor
-import android.widget.Toast
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -128,7 +126,6 @@ abstract class AppDatabase : RoomDatabase() {
                 MIGRATION_9_10
             ).addCallback(AppDatabaseCallback(scope))
                 .allowMainThreadQueries()
-              //  .fallbackToDestructiveMigrationFrom(9)
                 .build()
     }
 }
