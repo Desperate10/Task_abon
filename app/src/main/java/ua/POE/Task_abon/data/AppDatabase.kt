@@ -107,7 +107,7 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE result ADD COLUMN Physical_PersonId TEXT")
+                database.execSQL("ALTER TABLE result ADD COLUMN Physical_PersonId TEXT DEFAULT 0")
             }
 
         }
