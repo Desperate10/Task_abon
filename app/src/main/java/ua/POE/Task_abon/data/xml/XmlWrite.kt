@@ -2,7 +2,6 @@ package ua.POE.Task_abon.data.xml
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.apache.commons.lang3.StringUtils
@@ -26,7 +25,7 @@ class XmlWrite @Inject constructor(
     private val timing: TimingDao
 ) {
 
-    suspend operator fun invoke(taskId: Int, uri: Uri) : XmlResult {
+    suspend operator fun invoke(taskId: Int, uri: Uri): XmlResult {
         try {
             val os = context.contentResolver.openOutputStream(uri)
             withContext(Dispatchers.IO) {
@@ -346,6 +345,14 @@ class XmlWrite @Inject constructor(
             "<s:AttributeType name='Ident_code' rs:number='37' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
         )
         writeLine(sb, "rs:basetable='task_result' rs:basecolumn='Ident_code'>")
+        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='20'/>")
+        writeLine(sb, "</s:AttributeType>")
+
+        writeLine(
+            sb,
+            "<s:AttributeType name='Physical_PersonId' rs:number='38' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='Physical_PersonId'>")
         writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='10'/>")
         writeLine(sb, "</s:AttributeType>")
 
@@ -363,94 +370,57 @@ class XmlWrite @Inject constructor(
                 ""
             }
 
+            val accountId = StringUtils.defaultIfBlank(results[i].accountId.toString(), "0")
             val isMainTel = StringUtils.defaultIfBlank(results[i].isMain.toString(), "0")
             val oldNum = StringUtils.defaultIfBlank(results[i].oldPhoneNumber.toString(), "")
-            val pointCondition = StringUtils.defaultIfBlank(results[i].pointCondition.toString(), "")
+            val pointCondition =
+                StringUtils.defaultIfBlank(results[i].pointCondition.toString(), "")
             val counterNumb = StringUtils.defaultIfBlank(results[i].counter.toString(), "0")
             val zoneCount = StringUtils.defaultIfBlank(results[i].zoneCount.toString(), "0")
-            val counterCapacity = StringUtils.defaultIfBlank(results[i].counterCapacity.toString(), "0")
+            val counterCapacity =
+                StringUtils.defaultIfBlank(results[i].counterCapacity.toString(), "0")
+            val physicalPersonId = StringUtils.defaultIfBlank(results[i].physicalPersonId, "0")
 
-            if (!results[i].accountId.isNullOrEmpty()) {
-                writeLine(
-                    sb, "<z:row  Task_name=" + "'" + results[i].taskName + "'" +
-                            " Dt_Crt=" + "'${results[i].createDate}'" +
-                            " TSzdn_id=" + "'${results[i].taskId}'" +
-                            " Filial=" + "'${results[i].filial}'" +
-                            " Numb='${results[i].num}'" +
-                            " AccountID='${results[i].accountId}'" +
-                            " DT_vpl='${results[i].doneDate}'" +
-                            " No_vpln='${results[i].notDone}'" +
-                            " Istochnk='${results[i].dataSource}'" +
-                            " Pok_1='${results[i].zone1}'" +
-                            " Pok_2='${results[i].zone2}'" +
-                            " pok_3='${results[i].zone3}'" +
-                            " Note='${results[i].note}'" +
-                            " tel='${results[i].phoneNumber}'" +
-                            " DT_ins='${results[i].insertDate}'" +
-                            " type='${results[i].type}'" +
-                            " Counter_numb='$counterNumb'" +
-                            " Zonnost='$zoneCount'" +
-                            " Counter_capacity='$counterCapacity'" +
-                            " Sred_rashod='${results[i].avgUsage}'" +
-                            " lat='${results[i].lat}'" +
-                            " lng='${results[i].lng}'" +
-                            " numbpers='${results[i].numbpers}'" +
-                            " family='${results[i].family}'" +
-                            " adress='${results[i].adress}'" +
-                            " ismain_tel='$isMainTel'" +
-                            " old_tel='$oldNum'" +
-                            " point_condition='$pointCondition'" +
-                            " photo='$photo'" +
-                            " startTaskTime='${timings[i].startTaskTime}'" +
-                            " endTaskTime='${timings[i].endTaskTime}'" +
-                            " firstEditDate='${timings[i].firstEditDate}'" +
-                            " editCount='${timings[i].editCount}'" +
-                            " editSeconds='${timings[i].editSeconds}'" +
-                            " lastEditDate='${timings[i].lastEditDate}'" +
-                            " counpleas='${results[i].counterPlace}'" +
-                            " Ident_code='${results[i].identificationCode}'" +" />"
-                )
-            } else {
-                writeLine(
-                    sb, "<z:row  Task_name=" + "'" + results[i].taskName + "'" +
-                            " Dt_Crt=" + "'${results[i].createDate}'" +
-                            " TSzdn_id=" + "'${results[i].taskId}'" +
-                            " Filial=" + "'${results[i].filial}'" +
-                            " Numb='${results[i].num}'" +
-                            " DT_vpl='${results[i].doneDate}'" +
-                            " No_vpln='${results[i].notDone}'" +
-                            " Istochnk='${results[i].dataSource}'" +
-                            " Pok_1='${results[i].zone1}'" +
-                            " Pok_2='${results[i].zone2}'" +
-                            " pok_3='${results[i].zone3}'" +
-                            " Note='${results[i].note}'" +
-                            " tel='${results[i].phoneNumber}'" +
-                            " DT_ins='${results[i].insertDate}'" +
-                            " type='${results[i].type}'" +
-                            " Counter_numb='$counterNumb'" +
-                            " Zonnost='$zoneCount'" +
-                            " Counter_capacity='$counterCapacity'" +
-                            " Sred_rashod='${results[i].avgUsage}'" +
-                            " lat='${results[i].lat}'" +
-                            " lng='${results[i].lng}'" +
-                            " numbpers='${results[i].numbpers}'" +
-                            " family='${results[i].family}'" +
-                            " adress='${results[i].adress}'" +
-                            " ismain_tel='$isMainTel'" +
-                            " old_tel='$oldNum'" +
-                            " point_condition='$pointCondition'" +
-                            " photo='$photo'" +
-                            " startTaskTime='${timings[i].startTaskTime}'" +
-                            " endTaskTime='${timings[i].endTaskTime}'" +
-                            " firstEditDate='${timings[i].firstEditDate}'" +
-                            " editCount='${timings[i].editCount}'" +
-                            " editSeconds='${timings[i].editSeconds}'" +
-                            " lastEditDate='${timings[i].lastEditDate}'" +
-                            " counpleas='${results[i].counterPlace}'" +
-                            " Ident_code='${results[i].identificationCode}'" +" />"
-
-                )
-            }
+            writeLine(
+                sb, "<z:row  Task_name=" + "'" + results[i].taskName + "'" +
+                        " Dt_Crt=" + "'${results[i].createDate}'" +
+                        " TSzdn_id=" + "'${results[i].taskId}'" +
+                        " Filial=" + "'${results[i].filial}'" +
+                        " Numb='${results[i].num}'" +
+                        " AccountID='$accountId'" +
+                        " DT_vpl='${results[i].doneDate}'" +
+                        " No_vpln='${results[i].notDone}'" +
+                        " Istochnk='${results[i].dataSource}'" +
+                        " Pok_1='${results[i].zone1}'" +
+                        " Pok_2='${results[i].zone2}'" +
+                        " pok_3='${results[i].zone3}'" +
+                        " Note='${results[i].note}'" +
+                        " tel='${results[i].phoneNumber}'" +
+                        " DT_ins='${results[i].insertDate}'" +
+                        " type='${results[i].type}'" +
+                        " Counter_numb='$counterNumb'" +
+                        " Zonnost='$zoneCount'" +
+                        " Counter_capacity='$counterCapacity'" +
+                        " Sred_rashod='${results[i].avgUsage}'" +
+                        " lat='${results[i].lat}'" +
+                        " lng='${results[i].lng}'" +
+                        " numbpers='${results[i].numbpers}'" +
+                        " family='${results[i].family}'" +
+                        " adress='${results[i].adress}'" +
+                        " ismain_tel='$isMainTel'" +
+                        " old_tel='$oldNum'" +
+                        " point_condition='$pointCondition'" +
+                        " photo='$photo'" +
+                        " startTaskTime='${timings[i].startTaskTime}'" +
+                        " endTaskTime='${timings[i].endTaskTime}'" +
+                        " firstEditDate='${timings[i].firstEditDate}'" +
+                        " editCount='${timings[i].editCount}'" +
+                        " editSeconds='${timings[i].editSeconds}'" +
+                        " lastEditDate='${timings[i].lastEditDate}'" +
+                        " counpleas='${results[i].counterPlace}'" +
+                        " Ident_code='${results[i].identificationCode}'" +
+                        " Physical_PersonId='$physicalPersonId'" + " />"
+            )
         }
         writeLine(sb, "</rs:data>")
         writeLine(sb, "</xml>")

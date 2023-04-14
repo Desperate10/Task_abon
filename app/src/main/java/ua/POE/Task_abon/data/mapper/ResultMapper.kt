@@ -46,7 +46,8 @@ object ResultMapper {
             missingData["Adress"],
             getValidUri(newData.photoUri),
             missingData["counpleas"],
-            newData.identificationCode
+            newData.identificationCode,
+            missingData["Physical_PersonId"]
         )
     }
 

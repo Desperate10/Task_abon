@@ -1,6 +1,7 @@
 package ua.POE.Task_abon.presentation.ui.userinfo
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -145,12 +146,13 @@ class UserInfoViewModel @Inject constructor(
     val savedData = combine(_customerIndex, _statusSpinnerPosition) { index, _ ->
         getSavedData(index)
     }
+        .debounce(50L)
         .flowOn(Dispatchers.IO)
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), 2)
 
     private suspend fun getSavedData(index: Int): SavedData {
-        val savedData = mapResultToSavedData(result.getResultByCustomer(taskId, index))
         updateSourceList()
+        val savedData = mapResultToSavedData(result.getResultByCustomer(taskId, index))
         val sourceName = if (!savedData.source.isNullOrEmpty()) {
             catalog.getSelectedSourceName(savedData.source, sourceType)
         } else {
@@ -170,7 +172,7 @@ class UserInfoViewModel @Inject constructor(
     val customerFeatures: StateFlow<List<KeyPairBoolData>> = _customerIndex
         .flatMapLatest {
             featureList.combine(savedData) { list, result ->
-                setupFeatureSpinner(result?.pointCondition, list)
+                setupFeatureSpinner(result.pointCondition, list)
             }
         }
         .flowOn(Dispatchers.IO)
@@ -395,9 +397,9 @@ class UserInfoViewModel @Inject constructor(
             _saveAnswer.emit("Неправильний формат номера телефону")
         } else if (data.identificationCode.isNotEmpty() && data.identificationCode.length < 10) {
             _saveAnswer.emit("Неправильний формат IД-кода")
-        } else if (_statusSpinnerPosition.value == 1 && _sourceSpinnerPosition.value == 0) {
+        } else if (data.status == 1 && _sourceSpinnerPosition.value == 0) {
             _saveAnswer.emit("Ви забули вказати джерело")
-        } else if (data.zone1.isNotEmpty() || (_statusSpinnerPosition.value == 1 && _sourceSpinnerPosition.value != 0)) {
+        } else if (data.zone1.isNotEmpty() || (data.status == 1 && _sourceSpinnerPosition.value != 0)) {
             isValid = true
         } else {
             _saveAnswer.emit("Ви не ввели нові показники")
@@ -433,7 +435,8 @@ class UserInfoViewModel @Inject constructor(
                 "Adress",
                 "tel",
                 "counpleas",
-                "Ident_code"
+                "Ident_code",
+                "Physical_PersonId"
             )
         return customer.getFieldsValue("TD$taskId", fields, customerIndex.value)
     }
@@ -455,13 +458,17 @@ class UserInfoViewModel @Inject constructor(
         customer.getCustomerPointCondition(taskId, _customerIndex.value)
 
     fun setStatusSpinnerPosition(position: Int) {
+        handleStatusChange(position)
+        _statusSpinnerPosition.value = position
+    }
+
+    fun handleStatusChange(position: Int) {
         sourceType = (position + 2).toString()
         if (position != _statusSpinnerPosition.value) {
             viewModelScope.launch {
                 updateSourceList()
             }
         }
-        _statusSpinnerPosition.value = position
     }
 
     fun setSourceSpinnerPosition(position: Int) {

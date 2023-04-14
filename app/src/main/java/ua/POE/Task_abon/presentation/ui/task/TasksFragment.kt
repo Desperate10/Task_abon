@@ -43,7 +43,6 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     private var adapter: TaskListAdapter by autoCleaned { TaskListAdapter(requireContext()) }
     private var taskId: Int = 0
 
-    //TODO findNavController and permissionX Read external storage api 33
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
@@ -176,12 +175,14 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
     }
 
     private fun navigateToTaskDetailFragment(task: Task) {
-        findNavController().navigate(
-            TasksFragmentDirections.actionTasksFragmentToTaskDetailFragment(
-                task,
-                null
+        if (findNavController().currentDestination?.id == R.id.tasksFragment) {
+            findNavController().navigate(
+                TasksFragmentDirections.actionTasksFragmentToTaskDetailFragment(
+                    task,
+                    null
+                )
             )
-        )
+        }
     }
 
     private fun setupClickMenuDialog() {

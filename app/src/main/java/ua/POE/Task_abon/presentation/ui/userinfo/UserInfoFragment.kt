@@ -61,10 +61,12 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private val calendar = Calendar.getInstance(TimeZone.getDefault())
     private val date = "dd.MM.yyyy"
     private val dateFormat = SimpleDateFormat(date, Locale.getDefault())
+    private var _status = 0
     private var zone1 = ""
     private var zone2 = ""
     private var zone3 = ""
     private var sourcePosition = 0
+    private var isSavedData = false
     private var sourceAdapter: ArrayAdapter<String>? = null
     private var locationManager: LocationManager? = null
 
@@ -283,7 +285,13 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             viewModel.setSelectedBlock(selectedItem)
         }
         binding.results.statusSpinner.onItemSelected { position ->
-            viewModel.setStatusSpinnerPosition(position)
+            _status = if (isSavedData) {
+                viewModel.handleStatusChange(position)
+                position
+            } else {
+                viewModel.setStatusSpinnerPosition(position)
+                viewModel.statusSpinnerPosition.value
+            }
         }
         binding.results.sourceSpinner.onItemSelected { position ->
             viewModel.setSourceSpinnerPosition(position)
@@ -306,7 +314,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
     @SuppressLint("MissingPermission")
     private fun checkPermissions() {
-        PermissionX.init(requireActivity())
+        PermissionX.init(this)
             .permissions(
                 Manifest.permission.ACCESS_COARSE_LOCATION,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -600,6 +608,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun resetFields() {
+        isSavedData = false
         binding.results.date.text = dateFormat.format(calendar.time)
         binding.results.newDate.text = dateFormat.format(calendar.time)
         if (viewModel.sourceSpinnerPosition.value != 0 && sourcePosition == 0) {
@@ -624,6 +633,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     }
 
     private fun getResultIfExist(savedData: SavedData) {
+        isSavedData = true
         viewModel.setStatusSpinnerPosition(savedData.status?.toInt() ?: 0)
         binding.results.statusSpinner.setSelection(viewModel.statusSpinnerPosition.value)
         binding.results.date.text = savedData.date
@@ -645,6 +655,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
 
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
         spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
+        if (spinnerPosition == -1) {
+            binding.results.sourceSpinner.setSelection(0)
+        }
         viewModel.setResultSavedState(true)
     }
 
@@ -719,7 +732,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         viewModel.saveResults(
             DataToSave(
                 userIndex = viewModel.customerIndex.value,
-                status = viewModel.statusSpinnerPosition.value,
+                status = _status,//viewModel.statusSpinnerPosition.value
                 sourceCode = viewModel.sourceSpinnerPositionCode.value,
                 features = viewModel.selectedFeatureList.value,
                 date = binding.results.newDate.text.toString(),
@@ -727,7 +740,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 zone2 = binding.results.newMeters2.text.toString(),
                 zone3 = binding.results.newMeters3.text.toString(),
                 note = binding.results.note.text.toString(),
-                identificationCode = if (binding.results.identCode.visibility == VISIBLE) {
+                identificationCode = if (binding.results.identCode.visibility == VISIBLE
+                    && binding.results.identCode.text.isNotEmpty()
+                ) {
                     "${binding.results.identCode.text}*"
                 } else {
                     binding.results.identCode.text.toString()
