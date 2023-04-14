@@ -59,7 +59,7 @@
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:text="О/р"
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
 
                 <TextView
                     android:id="@+id/personal_account"
@@ -72,7 +72,7 @@
                     android:maxLines="4"
                     android:paddingStart="8dp"
                     android:text=""
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
             </TableRow>
 
             <TableRow
@@ -92,19 +92,21 @@
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:text="Адреса"
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
 
-                <TextView
-                    android:id="@+id/address"
+                <androidx.core.widget.NestedScrollView
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="2dp"
-                    android:layout_weight="0.6"
-                    android:gravity="start|center"
-                    android:maxLines="4"
-                    android:paddingStart="8dp"
-                    android:text=""
-                    android:textSize="17sp" />
+                    android:layout_weight="0.6">
+                    <TextView
+                        android:id="@+id/address"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="start|center"
+                        android:paddingStart="8dp"
+                        android:textSize="17dp" />
+                </androidx.core.widget.NestedScrollView>
             </TableRow>
 
             <TableRow
@@ -124,7 +126,7 @@
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:text="ПІБ"
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
 
                 <TextView
                     android:id="@+id/name"
@@ -137,7 +139,7 @@
                     android:maxLines="4"
                     android:paddingStart="8dp"
                     android:text=""
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
             </TableRow>
 
             <TableRow
@@ -157,7 +159,7 @@
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:text="Лічильник"
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
 
                 <TextView
                     android:id="@+id/counter"
@@ -170,7 +172,7 @@
                     android:maxLines="4"
                     android:paddingStart="8dp"
                     android:text=""
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
             </TableRow>
 
             <TableRow
@@ -190,20 +192,22 @@
                     android:paddingTop="8dp"
                     android:paddingBottom="8dp"
                     android:text="Інше/Фідер"
-                    android:textSize="17sp" />
+                    android:textSize="17dp" />
 
-                <TextView
-                    android:id="@+id/other_info"
+                <androidx.core.widget.NestedScrollView
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="2dp"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="0.6"
-                    android:gravity="start|center"
-                    android:maxLines="4"
-                    android:paddingStart="8dp"
-                    android:text=""
-                    android:textSize="17sp" />
+                    android:layout_weight="0.6">
+                    <TextView
+                        android:id="@+id/other_info"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="start|center"
+                        android:paddingStart="8dp"
+                        android:textSize="17dp" />
+                </androidx.core.widget.NestedScrollView>
             </TableRow>
         </TableLayout>
 

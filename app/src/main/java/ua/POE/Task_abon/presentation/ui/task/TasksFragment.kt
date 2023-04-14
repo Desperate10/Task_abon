@@ -32,7 +32,6 @@ import ua.POE.Task_abon.presentation.adapters.TaskListAdapter
 import ua.POE.Task_abon.presentation.ui.task.dialog.ClearTaskDataDialogFragment
 import ua.POE.Task_abon.presentation.ui.task.dialog.DeleteTaskDialogFragment
 import ua.POE.Task_abon.presentation.ui.task.dialog.TaskClickMenuFragmentDialog
-import ua.POE.Task_abon.presentation.ui.taskdetail.TaskDetailFragmentDirections
 import ua.POE.Task_abon.utils.autoCleaned
 import ua.POE.Task_abon.utils.snackbar
 

@@ -11,10 +11,10 @@ android {
 
     defaultConfig {
         applicationId "ua.POE.Task_abon"
-        minSdkVersion 24
+        minSdkVersion 21
         targetSdkVersion 33
-        versionCode 35
-        versionName '6.5'
+        versionCode 36
+        versionName '6.5.1'
 
         buildConfigField "String", "MY_CLOUD_API", '"http://task.poe.pl.ua:8880/app/"'
         buildConfigField "String", "MY_PHOTO_STORAGE", '"http://10.107.4.132/abon/"'
