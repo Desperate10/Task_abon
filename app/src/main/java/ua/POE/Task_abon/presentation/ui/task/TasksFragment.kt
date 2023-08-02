@@ -134,6 +134,7 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
         }
     }
 
+
     @SuppressLint("InlinedApi")
     private fun requestPermission() {
         PermissionX.init(this)
