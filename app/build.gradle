@@ -6,15 +6,14 @@ apply plugin: 'androidx.navigation.safeargs'
 apply plugin: 'dagger.hilt.android.plugin'
 
 android {
-    compileSdkVersion 33
-    buildToolsVersion "30.0.3"
+    compileSdk 33
 
     defaultConfig {
         applicationId "ua.POE.Task_abon"
         minSdkVersion 21
         targetSdkVersion 33
-        versionCode 37
-        versionName '6.5.2'
+        versionCode 38
+        versionName '6.5.3'
 
         buildConfigField "String", "MY_CLOUD_API", '"http://task.poe.pl.ua:8880/app/"'
         buildConfigField "String", "MY_PHOTO_STORAGE", '"http://10.107.4.132/abon/"'
@@ -60,10 +59,10 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-common-java8:2.3.1"
     implementation 'androidx.hilt:hilt-common:1.0.0'
     implementation 'androidx.hilt:hilt-work:1.0.0'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
     testImplementation 'junit:junit:'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'

@@ -272,6 +272,7 @@ class UserInfoViewModel @Inject constructor(
         basicInfoFieldsList.addAll(basicFields)
         basicInfoFieldsList.add("Counter_numb")
         basicInfoFieldsList.add("Ident_code")
+        basicInfoFieldsList.add("counpleas")
         val tdHash = customer.getFieldsByBlock(taskId, basicInfoFieldsList, _customerIndex.value)
         var pillar = ""
         val otherInfo = StringBuilder()
