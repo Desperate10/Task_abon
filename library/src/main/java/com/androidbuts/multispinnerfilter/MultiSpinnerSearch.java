@@ -2,7 +2,6 @@ package com.androidbuts.multispinnerfilter;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.app.Instrumentation;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
@@ -13,7 +12,6 @@ import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,8 +37,8 @@ public class MultiSpinnerSearch extends AppCompatSpinner implements OnCancelList
 	public static AlertDialog ad;
 
 	private boolean highlightSelected = false;
-	private int highlightColor = Color.RED;
-	private int textColor = Color.RED;
+	private int highlightColor = ContextCompat.getColor(getContext(), R.color.list_selected);
+	private int textColor = Color.GRAY;
 	private int limit = -1;
 	private int selected = 0;
 	private String defaultText = "";
@@ -76,7 +74,7 @@ public class MultiSpinnerSearch extends AppCompatSpinner implements OnCancelList
 			} else if (attr == R.styleable.MultiSpinnerSearch_highlightSelected) {
 				highlightSelected = a.getBoolean(attr, false);
 			} else if (attr == R.styleable.MultiSpinnerSearch_highlightColor) {
-				highlightColor = a.getColor(attr, Color.RED);
+				highlightColor = a.getColor(attr, ContextCompat.getColor(getContext(), R.color.red));
 			} else if (attr == R.styleable.MultiSpinnerSearch_textColor) {
 				textColor = a.getColor(attr, Color.RED);
 			}else if (attr == R.styleable.MultiSpinnerSearch_clearText){
@@ -175,17 +173,10 @@ public class MultiSpinnerSearch extends AppCompatSpinner implements OnCancelList
 		if (adapter != null)
 			adapter.notifyDataSetChanged();
 
-		listener.onItemsSelected(selectedData);
+        listener.onItemsSelected(selectedData);
+        onDetachedFromWindow();
 
-		/*
-		 * To hide dropdown which is already opened at the time of performClick...
-		 * This code will hide automatically and no need to tap by user.
-		 */
-		new Thread(() -> {
-			Instrumentation inst = new Instrumentation();
-			inst.sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);
-		}).start();
-	}
+    }
 
 	@Override
 	public boolean performClick() {
