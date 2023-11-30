@@ -46,6 +46,7 @@ class UserInfoViewModel @Inject constructor(
     private var address = ""
     private var name = ""
     private var counterKey = ""
+    private var phoneNumber = ""
     private var counterValue = ""
     private var identificationCode = ""
     private var counterEmoji = ""
@@ -273,11 +274,13 @@ class UserInfoViewModel @Inject constructor(
         basicInfoFieldsList.add("Counter_numb")
         basicInfoFieldsList.add("Ident_code")
         basicInfoFieldsList.add("counpleas")
+        basicInfoFieldsList.add("tel")
         val tdHash = customer.getFieldsByBlock(taskId, basicInfoFieldsList, _customerIndex.value)
         var pillar = ""
         val otherInfo = StringBuilder()
         tdHash.forEach { (key, value) ->
             if (key.isNotEmpty()) {
+                Log.d("testimkey", key)
                 when (key) {
                     "О/р" -> {
                         personalAccountKey = key
@@ -308,6 +311,9 @@ class UserInfoViewModel @Inject constructor(
                     "ІД код" -> {
                         identificationCode = value
                     }
+                    "Телефон" -> {
+                        phoneNumber = value
+                    }
                     else -> {
                         if (value.isNotEmpty())
                             otherInfo.append("$value ")
@@ -322,7 +328,8 @@ class UserInfoViewModel @Inject constructor(
             name = name,
             counter = counterEmoji,
             identificationCode = identificationCode,
-            other = otherInfo.toString()
+            other = otherInfo.toString(),
+            phoneNumber = phoneNumber
         )
     }
 

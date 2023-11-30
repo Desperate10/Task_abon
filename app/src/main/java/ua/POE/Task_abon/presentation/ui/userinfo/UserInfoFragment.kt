@@ -259,6 +259,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.date.setOnClickListener(this)
         binding.results.newDate.setOnClickListener(this)
         binding.results.addPhoto.setOnClickListener(this)
+        binding.results.saveBtn.setOnClickListener(this)
     }
 
     private fun setupMainBlockSpinner(list: List<String>) {
@@ -503,6 +504,9 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             R.id.add_photo -> {
                 showAddPhotoDialogFragment()
             }
+            R.id.save_Btn -> {
+                checkBeforeSave()
+            }
         }
     }
 
@@ -677,6 +681,10 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.name.text = basicInfo.name
         binding.counter.text = basicInfo.counter
         binding.otherInfo.text = basicInfo.other
+        binding.phoneNumber!!.text = basicInfo.phoneNumber
+        Linkify.addLinks(binding.phoneNumber!!, Linkify.PHONE_NUMBERS)
+        binding.phoneNumber!!.linksClickable = true
+
         if (basicInfo.identificationCode.isNotEmpty()) {
             binding.results.identCode.setText(basicInfo.identificationCode)
             binding.results.identCodeTv.visibility = GONE
