@@ -14,3 +14,4 @@ task_abon.jks
 # Project exclude paths
 /library/build/
 /library/build/intermediates/javac/debug/classes/
+MultiSelectSpinner/build

@@ -283,6 +283,7 @@ class UserInfoViewModel @Inject constructor(
                 Log.d("testimkey", key)
                 when (key) {
                     "О/р" -> {
+                        Log.d("testimA", personalAccount.toString())
                         personalAccountKey = key
                         personalAccount = value
                     }
@@ -555,7 +556,7 @@ class UserInfoViewModel @Inject constructor(
 
     companion object {
         private const val RESULTS_BLOCK = "Результати"
-        private const val TECHNICAL_BLOCK = "Тех.информация"
+        private const val TECHNICAL_BLOCK = "Тех.інформація"
     }
 
 }

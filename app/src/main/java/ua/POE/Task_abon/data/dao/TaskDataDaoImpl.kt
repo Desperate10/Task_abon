@@ -3,12 +3,14 @@ package ua.POE.Task_abon.data.dao
 import android.annotation.SuppressLint
 import android.content.ContentValues
 import android.database.Cursor
+import android.util.Log
 import androidx.room.Ignore
 import androidx.room.OnConflictStrategy
 import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteDatabase
 import ua.POE.Task_abon.data.AppDatabase
 import ua.POE.Task_abon.presentation.model.CustomerMainData
+import java.util.SortedMap
 import javax.inject.Inject
 
 /**
@@ -101,8 +103,8 @@ class TaskDataDaoImpl @Inject constructor(
             taskId: Int,
             fields: List<String>,
             index: Int
-        ): HashMap<String, String> {
-            var csr: Cursor =
+        ): SortedMap<String, String> {
+            val csr: Cursor =
                 sdb.query("SELECT ${fields.joinToString()} FROM TD$taskId WHERE _id = $index")
             val data: HashMap<String, String> = HashMap()
             val data2: HashMap<String, String> = HashMap()
@@ -121,22 +123,24 @@ class TaskDataDaoImpl @Inject constructor(
             }
             var sl1 = sl.toString().replace("[", "(")
             sl1 = sl1.replace("]", ")")
-            csr =
+            val csr1: Cursor =
                 sdb.query("SELECT fieldName ,fieldNameTxt FROM directory WHERE fieldName in $sl1 AND taskId = $taskId")
             val common: HashMap<String, String> = HashMap()
-            csr.use { csr ->
-                csr.moveToFirst()
-                while (csr.moveToNext()) {
-                    data2[csr.getString(csr.getColumnIndex("fieldName"))] =
-                        csr.getString(csr.getColumnIndex("fieldNameTxt"))
-                }
+            csr1.use { csr1 ->
+                csr1.moveToFirst()
+                do {
+                    Log.d("testim", csr1.getString(csr1.getColumnIndex("fieldNameTxt")))
+                    data2[csr1.getString(csr1.getColumnIndex("fieldName"))] =
+                        csr1.getString(csr1.getColumnIndex("fieldNameTxt"))
+                } while (csr1.moveToNext())
                 data.flatMap { dataEntry ->
                     data2
                         .filterKeys { dataEntry.key == it }
                         .map { common[it.value] = dataEntry.value }
                 }
             }
-            return common
+
+            return common.toSortedMap(naturalOrder())
         }
 
         @SuppressLint("Range")
