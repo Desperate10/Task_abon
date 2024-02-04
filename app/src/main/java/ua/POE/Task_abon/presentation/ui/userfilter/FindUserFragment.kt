@@ -154,7 +154,7 @@ class FindUserFragment : Fragment(), View.OnClickListener {
     }
 
     private fun showFilteredUsers() {
-        Log.d("testim", searchListHash.toString())
+        //Log.d("testim", searchListHash.toString())
         findNavController().navigate(
             FindUserFragmentDirections.actionFindUserFragmentToTaskDetailFragment(
                 args.task,

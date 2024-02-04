@@ -9,6 +9,7 @@ import com.androidbuts.multispinnerfilter.KeyPairBoolData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -280,10 +281,10 @@ class UserInfoViewModel @Inject constructor(
         val otherInfo = StringBuilder()
         tdHash.forEach { (key, value) ->
             if (key.isNotEmpty()) {
-                Log.d("testimkey", key)
+                //Log.d("testimkey", key)
                 when (key) {
                     "О/р" -> {
-                        Log.d("testimA", personalAccount.toString())
+                        //Log.d("testimA", personalAccount.toString())
                         personalAccountKey = key
                         personalAccount = value
                     }
@@ -386,6 +387,7 @@ class UserInfoViewModel @Inject constructor(
     // storing data in result table
     fun saveResults(newData: DataToSave) {
         viewModelScope.launch {
+            delay(400)
             if (isNewDataValid(newData)) {
                 withContext(Dispatchers.IO) {
                     saveEditTiming()

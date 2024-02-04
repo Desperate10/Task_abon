@@ -103,8 +103,8 @@ class TaskDataDaoImpl @Inject constructor(
             taskId: Int,
             fields: List<String>,
             index: Int
-        ): SortedMap<String, String> {
-            val csr: Cursor =
+        ): HashMap<String, String> {
+            var csr: Cursor =
                 sdb.query("SELECT ${fields.joinToString()} FROM TD$taskId WHERE _id = $index")
             val data: HashMap<String, String> = HashMap()
             val data2: HashMap<String, String> = HashMap()
@@ -123,16 +123,17 @@ class TaskDataDaoImpl @Inject constructor(
             }
             var sl1 = sl.toString().replace("[", "(")
             sl1 = sl1.replace("]", ")")
-            val csr1: Cursor =
+            csr =
                 sdb.query("SELECT fieldName ,fieldNameTxt FROM directory WHERE fieldName in $sl1 AND taskId = $taskId")
             val common: HashMap<String, String> = HashMap()
-            csr1.use { csr1 ->
-                csr1.moveToFirst()
-                do {
-                    Log.d("testim", csr1.getString(csr1.getColumnIndex("fieldNameTxt")))
-                    data2[csr1.getString(csr1.getColumnIndex("fieldName"))] =
-                        csr1.getString(csr1.getColumnIndex("fieldNameTxt"))
-                } while (csr1.moveToNext())
+            csr.use { csr ->
+                csr.moveToFirst()
+                while(csr.moveToNext()) {
+                //
+                   // Log.d("testim", csr.getString(csr.getColumnIndex("fieldNameTxt")))
+                    data2[csr.getString(csr.getColumnIndex("fieldName"))] =
+                        csr.getString(csr.getColumnIndex("fieldNameTxt"))
+                }
                 data.flatMap { dataEntry ->
                     data2
                         .filterKeys { dataEntry.key == it }
@@ -140,7 +141,7 @@ class TaskDataDaoImpl @Inject constructor(
                 }
             }
 
-            return common.toSortedMap(naturalOrder())
+            return common//.toSortedMap(naturalOrder())
         }
 
         @SuppressLint("Range")

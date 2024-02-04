@@ -15,6 +15,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.text.TextWatcher
 import android.text.util.Linkify
+import android.util.Log
 import android.view.*
 import android.view.View.GONE
 import android.view.View.VISIBLE
