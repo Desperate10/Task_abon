@@ -356,6 +356,22 @@ class XmlWrite @Inject constructor(
         writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='10'/>")
         writeLine(sb, "</s:AttributeType>")
 
+        writeLine(
+            sb,
+            "<s:AttributeType name='opr' rs:number='39' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='opr'>")
+        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='10'/>")
+        writeLine(sb, "</s:AttributeType>")
+
+        writeLine(
+            sb,
+            "<s:AttributeType name='opr_note' rs:number='40' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='opr_note'>")
+        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='100'/>")
+        writeLine(sb, "</s:AttributeType>")
+
         writeLine(sb, "<s:extends type='rs:rowbase'/>")
         writeLine(sb, "</s:ElementType>")
         writeLine(sb, "</s:Schema>")
@@ -419,7 +435,10 @@ class XmlWrite @Inject constructor(
                         " lastEditDate='${timings[i].lastEditDate}'" +
                         " counpleas='${results[i].counterPlace}'" +
                         " Ident_code='${results[i].identificationCode}'" +
-                        " Physical_PersonId='$physicalPersonId'" + " />"
+                        " Physical_PersonId='$physicalPersonId'" +
+                        " opr='${results[i].opr}'" +
+                        " opr_note='${results[i].oprNote}'" +
+                        " />"
             )
         }
         writeLine(sb, "</rs:data>")

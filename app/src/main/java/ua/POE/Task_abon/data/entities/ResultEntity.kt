@@ -41,5 +41,7 @@ data class ResultEntity(
     @ColumnInfo(name = "photo") var photo: String?,
     @ColumnInfo(name = "counpleas") var counterPlace: String?,
     @ColumnInfo(name = "Ident_code") var identificationCode: String?,
-    @ColumnInfo(name = "Physical_PersonId") var physicalPersonId: String?
+    @ColumnInfo(name = "Physical_PersonId") var physicalPersonId: String?,
+    @ColumnInfo(name = "opr") var opr: String?,
+    @ColumnInfo(name = "opr_note") var oprNote: String?
 )

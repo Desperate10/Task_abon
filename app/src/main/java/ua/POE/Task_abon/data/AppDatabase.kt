@@ -18,7 +18,7 @@ import ua.POE.Task_abon.data.entities.*
         CatalogEntity::class,
         ResultEntity::class,
         TimingEntity::class],
-    version = 10,
+    version = 11,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -110,6 +110,14 @@ abstract class AppDatabase : RoomDatabase() {
 
         }
 
+        private val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE result ADD COLUMN opr TEXT")
+                database.execSQL("ALTER TABLE result ADD COLUMN opr_note TEXT")
+            }
+
+        }
+
         fun getDatabase(context: Context, scope: CoroutineScope): AppDatabase =
             INSTANCE ?: synchronized(this) {
                 INSTANCE ?: buildDatabase(context, scope).also { INSTANCE = it }
@@ -123,7 +131,8 @@ abstract class AppDatabase : RoomDatabase() {
                 MIGRATION_5_6,
                 MIGRATION_6_7,
                 MIGRATION_7_8,
-                MIGRATION_9_10
+                MIGRATION_9_10,
+                MIGRATION_10_11
             ).addCallback(AppDatabaseCallback(scope))
                 .allowMainThreadQueries()
                 .build()

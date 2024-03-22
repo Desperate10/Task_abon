@@ -16,5 +16,7 @@ fun mapResultToSavedData(result: ResultEntity?) = SavedData(
     identificationCode = result?.identificationCode,
     phoneNumber = result?.phoneNumber,
     isMainPhone = result?.isMain != 0,
-    photo = result?.photo
+    photo = result?.photo,
+    opr = result?.opr,
+    oprNote = result?.oprNote
 )

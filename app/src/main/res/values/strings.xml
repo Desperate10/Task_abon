@@ -22,6 +22,7 @@
     <string name="source">Джерело</string>
     <string name="phone_number">Номер тел.</string>
     <string name="note">Записи</string>
+    <string name="opr_note">Примітка до нової опори</string>
     <string name="new_phone_number">Новий номер телефону</string>
     <string name="details_to">Характеристики ТО</string>
     <string name="zone">Зона</string>
@@ -65,4 +66,5 @@
     <string name="replace_photo">Замінити фото</string>
     <string name="delete_photo">Видалити фото</string>
     <string name="inn">Идент. код</string>
+    <string name="opr_name">Опора</string>
 </resources>

@@ -210,7 +210,6 @@
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="20dp">
-
                 <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
@@ -225,23 +224,66 @@
                     android:paddingBottom="8dp"
                     android:text="Інше/Фідер"
                     android:textSize="17dp" />
-
-                <androidx.core.widget.NestedScrollView
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="2dp"
                     android:layout_marginBottom="2dp"
-                    android:layout_weight="0.6">
-                    <TextView
-                        android:id="@+id/other_info"
-                        android:layout_width="match_parent"
+                    android:layout_weight="0.6"
+                    android:orientation="horizontal">
+                    <androidx.core.widget.NestedScrollView
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0.8">
+                        <TextView
+                            android:id="@+id/other_info"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="start|center"
+                            android:paddingStart="8dp"
+                            android:textSize="17dp" />
+                    </androidx.core.widget.NestedScrollView>
+                    <CheckBox
+                        android:id="@+id/checkBoxOpr"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:gravity="start|center"
-                        android:paddingStart="8dp"
-                        android:textSize="17dp" />
-                </androidx.core.widget.NestedScrollView>
+                        android:layout_weight="0.2"
+                        android:checked="true"/>
+                </LinearLayout>
             </TableRow>
-
+            <TableRow
+                android:id="@+id/new_opr_row"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_marginEnd="6dp"
+                android:visibility="gone"
+                >
+                <EditText
+                    android:id="@+id/opr_note"
+                    android:inputType="textMultiLine"
+                    android:lines="3"
+                    android:maxLines="3"
+                    android:gravity="top|left"
+                    android:hint="@string/opr_note"
+                    android:background="@drawable/edit_text_border"
+                    android:layout_margin="16dp"
+                    android:padding="16dp"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.8"
+                    android:scrollbars="vertical"/>
+                <EditText
+                    android:id="@+id/opr"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight="0.2"
+                    android:inputType="text"
+                    android:maxLength="6"
+                    android:textAlignment="center"
+                    android:hint="@string/opr_name"
+                    android:layout_gravity="center"
+                    android:autofillHints="0"/>
+            </TableRow>
             <TableRow
                 android:layout_width="match_parent"
                 android:layout_height="20dp">

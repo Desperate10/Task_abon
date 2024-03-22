@@ -21,6 +21,8 @@ data class DataToSave(
     val lat: String,
     val lng: String,
     val photoUri: Uri?,
+    val opr: String?,
+    val oprNote: String?,
     val selectCustomer: Boolean,
     val isNext: Boolean
 )

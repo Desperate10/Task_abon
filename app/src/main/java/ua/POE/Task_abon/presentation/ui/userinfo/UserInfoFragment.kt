@@ -103,6 +103,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         registerItemListeners()
         registerClickListeners()
         observeViewModel()
+        onShowOprNoteCheckBoxClicked()
     }
 
     private fun observeViewModel() {
@@ -226,6 +227,16 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.results.contrDate.text = it.checkDate
         binding.results.contrText.text =
             String.format(getString(R.string.contr_template), it.inspector)
+    }
+
+    private fun onShowOprNoteCheckBoxClicked() {
+        binding.checkBoxOpr!!.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                binding.newOprRow?.visibility = GONE
+            } else {
+                binding.newOprRow?.visibility = VISIBLE
+            }
+        }
     }
 
     private fun registerWatchers() {
@@ -626,6 +637,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         zone2 = ""
         zone3 = ""
         binding.results.checkBox.isChecked = false
+        binding.checkBoxOpr?.isChecked = true
         binding.results.difference1.text = ""
         binding.results.difference2.text = ""
         binding.results.difference3.text = ""
@@ -656,6 +668,11 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         if (!savedData.photo.isNullOrEmpty() && latestTmpUri == null) {
             latestTmpUri = Uri.parse(savedData.photo)
             binding.results.addPhoto.setImageURI(latestTmpUri)
+        }
+        if(savedData.opr?.isNotEmpty() == true) {
+            binding.checkBoxOpr?.isChecked = false
+            binding.opr?.setText(savedData.opr)
+            binding.oprNote?.setText(savedData.oprNote)
         }
 
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
@@ -762,6 +779,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 lng = binding.lng.text.toString(),
                 isMainPhone = binding.results.checkBox.isChecked,
                 photoUri = latestTmpUri,
+                opr = binding.opr?.text.toString(),
+                oprNote = binding.oprNote?.text.toString(),
                 selectCustomer = selectCustomer,
                 isNext = isNext
             )

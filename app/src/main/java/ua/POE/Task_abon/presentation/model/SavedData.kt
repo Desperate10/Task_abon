@@ -15,5 +15,7 @@ data class SavedData(
     val identificationCode: String?,
     val phoneNumber: String?,
     val isMainPhone: Boolean?,
-    val photo: String?
+    val photo: String?,
+    val opr: String?,
+    val oprNote: String?
 )
