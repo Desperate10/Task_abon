@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
+import android.content.res.Configuration;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -38,8 +39,8 @@ public class MultiSpinnerSearch extends AppCompatSpinner implements OnCancelList
 	public static AlertDialog ad;
 
 	private boolean highlightSelected = false;
-	private int highlightColor = ContextCompat.getColor(getContext(), R.color.list_selected);
-	private int textColor = Color.GRAY;
+	private int highlightColor = Color.RED;
+	private int textColor = Color.RED;
 	private int limit = -1;
 	private int selected = 0;
 	private String defaultText = "";
@@ -75,9 +76,9 @@ public class MultiSpinnerSearch extends AppCompatSpinner implements OnCancelList
 			} else if (attr == R.styleable.MultiSpinnerSearch_highlightSelected) {
 				highlightSelected = a.getBoolean(attr, false);
 			} else if (attr == R.styleable.MultiSpinnerSearch_highlightColor) {
-				highlightColor = a.getColor(attr, ContextCompat.getColor(getContext(), R.color.list_selected));
+				highlightColor = a.getColor(attr, Color.RED);
 			} else if (attr == R.styleable.MultiSpinnerSearch_textColor) {
-				textColor = a.getColor(attr, Color.GRAY);
+				textColor = a.getColor(attr, Color.RED);
 			}else if (attr == R.styleable.MultiSpinnerSearch_clearText){
 				this.setClearText(a.getString(attr));
 			}
@@ -353,6 +354,14 @@ public class MultiSpinnerSearch extends AppCompatSpinner implements OnCancelList
 			}
 
 			int background = R.color.white;
+			switch (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) {
+				case Configuration.UI_MODE_NIGHT_YES:
+					background = R.color.black;
+					break;
+				case Configuration.UI_MODE_NIGHT_NO:
+					background = R.color.white;
+					break;
+			}
 			if (colorSeparation) {
 				final int backgroundColor = (position % 2 == 0) ? R.color.list_even : R.color.list_odd;
 				background = backgroundColor;

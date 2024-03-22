@@ -181,6 +181,38 @@
 
                 <TextView
                     android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:layout_weight="0.4"
+                    android:background="@color/colorPrimary"
+                    android:gravity="start|center"
+                    android:paddingStart="8dp"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:text="Місце ліч."
+                    android:textSize="17dp" />
+
+                <TextView
+                    android:id="@+id/counterPlace"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:layout_weight="0.6"
+                    android:gravity="start|center"
+                    android:paddingStart="8dp"
+                    android:text=""
+                    android:textSize="17dp" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="20dp">
+
+                <TextView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="2dp"
                     android:layout_marginBottom="2dp"

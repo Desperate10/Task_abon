@@ -216,19 +216,18 @@
 
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/contr_text"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0.7"
-                    android:layout_marginBottom="2dp"
+                    android:layout_weight="1"
                     android:background="@color/colorPrimary"
                     android:gravity="center"
-                    android:maxLines="3"
-                    android:minHeight="60dp"
+                    android:maxLines="4"
+                    android:padding="8dp"
                     android:paddingLeft="2dp"
                     android:paddingRight="2dp"
                     android:text="@string/contr_pokaz"
@@ -239,9 +238,8 @@
                 <Button
                     android:id="@+id/save_Btn"
                     android:layout_width="0dp"
-                    android:layout_height="55dp"
-                    android:layout_weight="0.3"
-                    android:layout_marginTop="7dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="0.4"
                     android:background="@color/colorPrimary"
                     android:text="Зберегти" />
             </LinearLayout>

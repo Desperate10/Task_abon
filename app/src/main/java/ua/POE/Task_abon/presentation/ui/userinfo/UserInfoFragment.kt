@@ -681,6 +681,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.address.text = basicInfo.address
         binding.name.text = basicInfo.name
         binding.counter.text = basicInfo.counter
+        binding.counterPlace!!.text = basicInfo.counterPlace
         binding.otherInfo.text = basicInfo.other
         binding.phoneNumber!!.text = basicInfo.phoneNumber
         Linkify.addLinks(binding.phoneNumber!!, Linkify.PHONE_NUMBERS)

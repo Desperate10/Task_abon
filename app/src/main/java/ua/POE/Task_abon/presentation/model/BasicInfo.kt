@@ -8,6 +8,7 @@ data class BasicInfo(
     val name: String,
     val counter: String,
     val identificationCode: String,
+    val counterPlace: String,
     val other: String,
     val phoneNumber: String
 )

@@ -47,6 +47,7 @@ class UserInfoViewModel @Inject constructor(
     private var address = ""
     private var name = ""
     private var counterKey = ""
+    private var counterPlace = ""
     private var phoneNumber = ""
     private var counterValue = ""
     private var identificationCode = ""
@@ -138,8 +139,12 @@ class UserInfoViewModel @Inject constructor(
             updateTechInfoMap()
             _techInfo.value
         } else {
-            val fields = directory.getFieldsByBlockName(selectedBlock, taskId)
-            customer.getFieldsByBlock(taskId, fields, _customerIndex.value)
+            try {
+                val fields = directory.getFieldsByBlockName(selectedBlock, taskId)
+                customer.getFieldsByBlock(taskId, fields, _customerIndex.value)
+            } catch (e: Exception) {
+                emptyMap()
+            }
         }
     }.flowOn(Dispatchers.IO)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
@@ -250,6 +255,9 @@ class UserInfoViewModel @Inject constructor(
                 "contr_name" -> {
                     controlInfo.append(" $value")
                 }
+                "source_inf" -> {
+                    controlInfo.append(" $value")
+                }
             }
         }
         technical.inspector = controlInfo.toString()
@@ -316,6 +324,9 @@ class UserInfoViewModel @Inject constructor(
                     "Телефон" -> {
                         phoneNumber = value
                     }
+                    "Місце вст.ліч." -> {
+                        counterPlace = value
+                    }
                     else -> {
                         if (value.isNotEmpty())
                             otherInfo.append("$value ")
@@ -330,6 +341,7 @@ class UserInfoViewModel @Inject constructor(
             name = name,
             counter = counterEmoji,
             identificationCode = identificationCode,
+            counterPlace = counterPlace,
             other = otherInfo.toString(),
             phoneNumber = phoneNumber
         )
@@ -387,7 +399,7 @@ class UserInfoViewModel @Inject constructor(
     // storing data in result table
     fun saveResults(newData: DataToSave) {
         viewModelScope.launch {
-            delay(400)
+            delay(300)
             if (isNewDataValid(newData)) {
                 withContext(Dispatchers.IO) {
                     saveEditTiming()

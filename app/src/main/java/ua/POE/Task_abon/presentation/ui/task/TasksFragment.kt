@@ -3,6 +3,7 @@ package ua.POE.Task_abon.presentation.ui.task
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.*
 import android.widget.Toast
@@ -137,11 +138,14 @@ class TasksFragment : Fragment(), TaskListAdapter.OnTaskClickListener {
 
     @SuppressLint("InlinedApi")
     private fun requestPermission() {
+        val perm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.POST_NOTIFICATIONS)
+        }
         PermissionX.init(this)
-            .permissions(
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.POST_NOTIFICATIONS
-            )
+            .permissions(*perm)
             .onExplainRequestReason { scope, deniedList ->
                 scope.showRequestReasonDialog(
                     deniedList,
