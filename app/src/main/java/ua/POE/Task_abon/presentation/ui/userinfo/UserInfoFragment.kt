@@ -8,6 +8,7 @@ import android.content.DialogInterface
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
@@ -22,6 +23,7 @@ import android.view.View.VISIBLE
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -202,10 +204,12 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 binding.results.secondZoneRow.visibility = GONE
                 binding.results.thirdZoneRow.visibility = GONE
             }
+
             "2" -> {
                 binding.results.secondZoneRow.visibility = VISIBLE
                 binding.results.thirdZoneRow.visibility = GONE
             }
+
             "3" -> {
                 binding.results.secondZoneRow.visibility = VISIBLE
                 binding.results.thirdZoneRow.visibility = VISIBLE
@@ -380,6 +384,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             when (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) {
                 Configuration.UI_MODE_NIGHT_YES ->
                     setBackgroundColor(Color.GRAY)
+
                 Configuration.UI_MODE_NIGHT_NO ->
                     setBackgroundColor(Color.WHITE)
             }
@@ -408,6 +413,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             android.R.id.home -> {
                 navigateToTaskDetailFragment()
             }
+
             R.id.save_customer_data -> {
                 checkBeforeSave()
             }
@@ -504,18 +510,23 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             R.id.previous -> {
                 changeCustomer(isNext = false)
             }
+
             R.id.next -> {
                 changeCustomer(isNext = true)
             }
+
             R.id.personal_account, R.id.counter -> {
                 showIconsDialogFragment((v as TextView).text.toString())
             }
+
             R.id.date, R.id.new_date -> {
                 showDatePickerDialog()
             }
+
             R.id.add_photo -> {
                 showAddPhotoDialogFragment()
             }
+
             R.id.save_Btn -> {
                 checkBeforeSave()
             }
@@ -536,6 +547,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 getString(R.string.replace_photo) -> {
                     pickPhoto()
                 }
+
                 getString(R.string.delete_photo) -> {
                     deletePhoto()
                 }
@@ -669,11 +681,14 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             latestTmpUri = Uri.parse(savedData.photo)
             binding.results.addPhoto.setImageURI(latestTmpUri)
         }
-        if(savedData.opr?.isNotEmpty() == true) {
+        if (savedData.newPillar?.isNotEmpty() == true) {
             binding.checkBoxOpr?.isChecked = false
-            binding.opr?.setText(savedData.opr)
-            binding.oprNote?.setText(savedData.oprNote)
+            binding.opr?.setText(savedData.newPillar)
+            binding.oprNote?.setText(savedData.newPillarNote)
         }
+
+        //Добавляем сохраненные лат и лнг в вьюмодель?
+        //viewModel.setPillarCoordinates(savedData.pillarLat, savedData.pillarLng)
 
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
         spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
@@ -713,6 +728,22 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             binding.results.identCodeTv.visibility = VISIBLE
             binding.results.identCode.visibility = VISIBLE
         }
+
+        if (basicInfo.isPillarChecked) {
+            binding.checkBoxOpr?.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.checked_color
+                )
+            )
+        } else {
+            binding.checkBoxOpr?.setBackgroundColor(
+                ContextCompat.getColor(
+                    requireContext(),
+                    R.color.unchecked_color
+                )
+            )
+        }
     }
 
     private fun updateView(tdHash: Map<String, String>) {
@@ -738,6 +769,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 Linkify.addLinks(text, Linkify.PHONE_NUMBERS)
                 text.linksClickable = true
             }
+
             else -> {
                 val text: TextView = row.findViewById(R.id.data)
                 text.text = data
@@ -779,12 +811,32 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 lng = binding.lng.text.toString(),
                 isMainPhone = binding.results.checkBox.isChecked,
                 photoUri = latestTmpUri,
-                opr = binding.opr?.text.toString(),
-                oprNote = binding.oprNote?.text.toString(),
+                pillarCheckedStatus = checkPillarStatus(),
+                newPillar = binding.opr?.text.toString(),
+                newPillarNote = binding.oprNote?.text.toString(),
+                newPillarLat = "",
+                newPillarLng = "",
                 selectCustomer = selectCustomer,
                 isNext = isNext
             )
         )
+    }
+
+    private fun checkPillarStatus(): Int {
+        val backgroundDrawable = binding.checkBoxOpr?.background
+        val checkedColor = ContextCompat.getColor(requireContext(), R.color.checked_color)
+        val backgroundColor = if (backgroundDrawable is ColorDrawable) {
+            backgroundDrawable.color
+        } else {
+            ContextCompat.getColor(requireContext(), R.color.white)
+        }
+
+        return when {
+            binding.checkBoxOpr?.isChecked == true -> if (backgroundColor != checkedColor) 0 else 1
+            binding.opr?.text?.isEmpty() == true -> -2
+            binding.opr?.text.toString() == viewModel.pillar.value -> 1
+            else -> 2
+        }
     }
 
     companion object {

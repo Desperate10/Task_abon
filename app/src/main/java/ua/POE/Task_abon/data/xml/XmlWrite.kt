@@ -358,17 +358,44 @@ class XmlWrite @Inject constructor(
 
         writeLine(
             sb,
-            "<s:AttributeType name='opr' rs:number='39' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+            "<s:AttributeType name='pillar_checked' rs:number='39' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
         )
-        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='opr'>")
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='pillar_checked'>")
+        writeLine(
+            sb,
+            "<s:datatype dt:type='int' dt:maxLength='10' rs:precision='0' rs:fixedlength='true'/>"
+        )
+        writeLine(sb, "</s:AttributeType>")
+
+        writeLine(
+            sb,
+            "<s:AttributeType name='new_pillar_number' rs:number='40' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='new_pillar_number'>")
         writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='10'/>")
         writeLine(sb, "</s:AttributeType>")
 
         writeLine(
             sb,
-            "<s:AttributeType name='opr_note' rs:number='40' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+            "<s:AttributeType name='new_pillar_number_descr' rs:number='41' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
         )
-        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='opr_note'>")
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='new_pillar_number_descr'>")
+        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='100'/>")
+        writeLine(sb, "</s:AttributeType>")
+
+        writeLine(
+            sb,
+            "<s:AttributeType name='new_pillar_lat' rs:number='42' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='new_pillar_lat'>")
+        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='100'/>")
+        writeLine(sb, "</s:AttributeType>")
+
+        writeLine(
+            sb,
+            "<s:AttributeType name='new_pillar_lng' rs:number='43' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='new_pillar_lng'>")
         writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='100'/>")
         writeLine(sb, "</s:AttributeType>")
 
@@ -436,8 +463,11 @@ class XmlWrite @Inject constructor(
                         " counpleas='${results[i].counterPlace}'" +
                         " Ident_code='${results[i].identificationCode}'" +
                         " Physical_PersonId='$physicalPersonId'" +
-                        " opr='${results[i].opr}'" +
-                        " opr_note='${results[i].oprNote}'" +
+                        " pillar_checked='${results[i].pillarChecked}'" +
+                        " new_pillar_number='${results[i].newPillar}'" +
+                        " new_pillar_number_descr='${results[i].newPillarDescription}'" +
+                        " new_pillar_lat='${results[i].pillarLat}'" +
+                        " new_pillar_lng='${results[i].pillarLng}'" +
                         " />"
             )
         }

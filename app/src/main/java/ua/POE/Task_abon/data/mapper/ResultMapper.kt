@@ -48,8 +48,11 @@ object ResultMapper {
             missingData["counpleas"],
             newData.identificationCode,
             missingData["Physical_PersonId"],
-            newData.opr,
-            newData.oprNote
+            newData.pillarCheckedStatus,
+            newData.newPillar,
+            newData.newPillarNote,
+            newData.newPillarLat,
+            newData.newPillarLng
         )
     }
 

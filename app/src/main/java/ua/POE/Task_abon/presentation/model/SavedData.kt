@@ -16,6 +16,9 @@ data class SavedData(
     val phoneNumber: String?,
     val isMainPhone: Boolean?,
     val photo: String?,
-    val opr: String?,
-    val oprNote: String?
+    val pillarStatus: Int?,
+    val newPillar: String?,
+    val newPillarNote: String?,
+    val pillarLat: String?,
+    val pillarLng: String?
 )

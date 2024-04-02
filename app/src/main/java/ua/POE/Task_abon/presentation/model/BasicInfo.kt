@@ -10,5 +10,6 @@ data class BasicInfo(
     val identificationCode: String,
     val counterPlace: String,
     val other: String,
-    val phoneNumber: String
+    val phoneNumber: String,
+    val isPillarChecked: Boolean
 )

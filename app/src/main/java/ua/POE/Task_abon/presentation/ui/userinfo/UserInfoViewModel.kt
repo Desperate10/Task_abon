@@ -52,6 +52,7 @@ class UserInfoViewModel @Inject constructor(
     private var counterValue = ""
     private var identificationCode = ""
     private var counterEmoji = ""
+    private var isPillarChecked = false
     private var sourceList: List<Catalog>? = null
 
     private val dateAndTime = "dd.MM.yyyy HH:mm:ss"
@@ -97,6 +98,9 @@ class UserInfoViewModel @Inject constructor(
     val sources: StateFlow<List<String>> = _sources
 
     private val _isResultSaved = MutableStateFlow(false)
+
+    private var _pillar = MutableStateFlow("")
+    val pillar = _pillar.asStateFlow()
 
     private val timer = Timer()
     private var time = 0
@@ -309,6 +313,7 @@ class UserInfoViewModel @Inject constructor(
                     }
                     "Опора" -> {
                         pillar = "Оп.$value"
+                        _pillar.value = value
                     }
                     "№ ліч." -> {
                         counterValue = value
@@ -327,6 +332,9 @@ class UserInfoViewModel @Inject constructor(
                     "Місце вст.ліч." -> {
                         counterPlace = value
                     }
+                    "pillar_checked" -> {
+                        isPillarChecked = value != "0"
+                    }
                     else -> {
                         if (value.isNotEmpty())
                             otherInfo.append("$value ")
@@ -343,7 +351,8 @@ class UserInfoViewModel @Inject constructor(
             identificationCode = identificationCode,
             counterPlace = counterPlace,
             other = otherInfo.toString(),
-            phoneNumber = phoneNumber
+            phoneNumber = phoneNumber,
+            isPillarChecked = isPillarChecked
         )
     }
 
@@ -567,6 +576,10 @@ class UserInfoViewModel @Inject constructor(
             }
         }
     }
+
+    /*fun setPillarCoordinates(pillarLat: String?, pillarLng: String?) {
+
+    }*/
 
     companion object {
         private const val RESULTS_BLOCK = "Результати"

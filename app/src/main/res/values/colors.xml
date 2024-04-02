@@ -11,4 +11,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="red">#FF0000</color>
     <color name="yellow">#FFFFFF00</color>
+    <color name="checked_color">#90EE90</color>
+    <color name="unchecked_color">@color/white</color>
 </resources>

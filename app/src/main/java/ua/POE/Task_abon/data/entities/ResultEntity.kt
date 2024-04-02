@@ -42,6 +42,9 @@ data class ResultEntity(
     @ColumnInfo(name = "counpleas") var counterPlace: String?,
     @ColumnInfo(name = "Ident_code") var identificationCode: String?,
     @ColumnInfo(name = "Physical_PersonId") var physicalPersonId: String?,
-    @ColumnInfo(name = "opr") var opr: String?,
-    @ColumnInfo(name = "opr_note") var oprNote: String?
+    @ColumnInfo(name = "pillar_checked") var pillarChecked: Int,
+    @ColumnInfo(name = "new_pillar_number") var newPillar: String?,
+    @ColumnInfo(name = "new_pillar_number_descr") var newPillarDescription: String?,
+    @ColumnInfo(name = "new_pillar_lat") var pillarLat: String?,
+    @ColumnInfo(name = "new_pillar_lng") var pillarLng: String?
 )

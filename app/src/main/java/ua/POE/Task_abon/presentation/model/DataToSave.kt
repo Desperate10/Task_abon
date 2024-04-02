@@ -21,8 +21,11 @@ data class DataToSave(
     val lat: String,
     val lng: String,
     val photoUri: Uri?,
-    val opr: String?,
-    val oprNote: String?,
+    val pillarCheckedStatus: Int,
+    val newPillar: String?,
+    val newPillarNote: String?,
+    val newPillarLat: String?,
+    val newPillarLng: String?,
     val selectCustomer: Boolean,
     val isNext: Boolean
 )

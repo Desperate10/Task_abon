@@ -17,6 +17,9 @@ fun mapResultToSavedData(result: ResultEntity?) = SavedData(
     phoneNumber = result?.phoneNumber,
     isMainPhone = result?.isMain != 0,
     photo = result?.photo,
-    opr = result?.opr,
-    oprNote = result?.oprNote
+    pillarStatus = result?.pillarChecked,
+    newPillar = result?.newPillar,
+    newPillarNote = result?.newPillarDescription,
+    pillarLat = result?.pillarLat,
+    pillarLng = result?.pillarLng
 )
