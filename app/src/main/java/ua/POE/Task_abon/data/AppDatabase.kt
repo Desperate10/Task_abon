@@ -112,11 +112,57 @@ abstract class AppDatabase : RoomDatabase() {
 
         private val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE result ADD COLUMN pillar_checked INTEGER")
-                database.execSQL("ALTER TABLE result ADD COLUMN new_pillar_number TEXT")
-                database.execSQL("ALTER TABLE result ADD COLUMN new_pillar_number_descr TEXT")
-                database.execSQL("ALTER TABLE result ADD COLUMN new_pillar_lat TEXT")
-                database.execSQL("ALTER TABLE result ADD COLUMN new_pillar_lng TEXT")
+                database.execSQL("CREATE TABLE IF NOT EXISTS new_result (" +
+                        "Pok_2 TEXT DEFAULT undefined, " +
+                        "Pok_1 TEXT DEFAULT undefined, " +
+                        "numbpers TEXT DEFAULT undefined, " +
+                        "Zonnost TEXT DEFAULT '0', " +
+                        "adress TEXT DEFAULT undefined, " +
+                        "type TEXT DEFAULT undefined, " +
+                        "old_tel TEXT DEFAULT undefined, " +
+                        "Sred_rashod TEXT DEFAULT undefined, " +
+                        "Task_name TEXT DEFAULT undefined, " +
+                        "counpleas TEXT DEFAULT undefined, " +
+                        "Physical_PersonId TEXT DEFAULT undefined, " +
+                        "DT_vpl TEXT DEFAULT undefined, " +
+                        "No_vpln TEXT DEFAULT undefined, " +
+                        "Numb TEXT NOT NULL, " +
+                        "tel TEXT DEFAULT undefined, " +
+                        "pillar_checked INTEGER DEFAULT 0, " +
+                        "TSzdn_id INTEGER NOT NULL, " +
+                        "pok_3 TEXT DEFAULT undefined, " +
+                        "lat TEXT DEFAULT undefined, " +
+                        "AccountID TEXT DEFAULT undefined, " +
+                        "lng TEXT DEFAULT undefined, " +
+                        "Filial TEXT DEFAULT undefined, " +
+                        "new_pillar_number TEXT DEFAULT undefined, " +
+                        "DT_ins TEXT DEFAULT undefined, " +
+                        "photo TEXT DEFAULT undefined, " +
+                        "point_condition TEXT DEFAULT undefined, " +
+                        "Counter_numb TEXT DEFAULT '0', " +
+                        "Istochnik TEXT DEFAULT undefined, " +
+                        "Dt_Crt TEXT DEFAULT undefined, " +
+                        "Ident_code TEXT DEFAULT undefined, " +
+                        "new_pillar_number_descr TEXT DEFAULT undefined, " +
+                        "new_pillar_lng TEXT DEFAULT undefined, " +
+                        "new_pillar_lat TEXT DEFAULT undefined, " +
+                        "Note TEXT DEFAULT undefined, " +
+                        "is_main INTEGER DEFAULT undefined, " +
+                        "Id INTEGER DEFAULT undefined, " +
+                        "family TEXT DEFAULT undefined, " +
+                        "Counter_capacity TEXT DEFAULT '0', " +
+                        "PRIMARY KEY (Numb, TSzdn_id)" +
+                        ")")
+
+                // Переносим данные из старой таблицы в новую
+                database.execSQL("INSERT INTO new_result (Pok_2, Pok_1, numbpers, Zonnost, adress, type, old_tel, Sred_rashod, Task_name, counpleas, Physical_PersonId, DT_vpl, No_vpln, Numb, tel, TSzdn_id, pok_3, lat, AccountID, lng, Filial, DT_ins, photo, point_condition, Counter_numb, Istochnik, Dt_Crt, Ident_code, Note, is_main, Id, family, Counter_capacity) " +
+                        "SELECT Pok_2, Pok_1, numbpers, Zonnost, adress, type, old_tel, Sred_rashod, Task_name, counpleas, Physical_PersonId, DT_vpl, No_vpln, Numb, tel, TSzdn_id, pok_3, lat, AccountID, lng, Filial, DT_ins, photo, point_condition, Counter_numb, Istochnik, Dt_Crt, Ident_code, Note, is_main, Id, family, Counter_capacity FROM result")
+
+                // Удаляем старую таблицу
+                database.execSQL("DROP TABLE result")
+
+                // Переименовываем новую таблицу в старое имя
+                database.execSQL("ALTER TABLE new_result RENAME TO result")
             }
 
         }

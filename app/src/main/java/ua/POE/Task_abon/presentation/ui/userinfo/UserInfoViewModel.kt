@@ -48,6 +48,7 @@ class UserInfoViewModel @Inject constructor(
     private var name = ""
     private var counterKey = ""
     private var counterPlace = ""
+    private var objectProperty = ""
     private var phoneNumber = ""
     private var counterValue = ""
     private var identificationCode = ""
@@ -118,7 +119,7 @@ class UserInfoViewModel @Inject constructor(
     private fun startTimer() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                timer.scheduleAtFixedRate(object : TimerTask() {
+                timer.schedule(object : TimerTask() {
                     override fun run() {
                         time++
                     }
@@ -288,6 +289,7 @@ class UserInfoViewModel @Inject constructor(
         basicInfoFieldsList.add("Ident_code")
         basicInfoFieldsList.add("counpleas")
         basicInfoFieldsList.add("tel")
+        basicInfoFieldsList.add("House_prop")
         val tdHash = customer.getFieldsByBlock(taskId, basicInfoFieldsList, _customerIndex.value)
         var pillar = ""
         val otherInfo = StringBuilder()
@@ -332,6 +334,9 @@ class UserInfoViewModel @Inject constructor(
                     "Місце вст.ліч." -> {
                         counterPlace = value
                     }
+                    "Хар-ка об`єкту" -> {
+                        objectProperty = value
+                    }
                     "pillar_checked" -> {
                         isPillarChecked = value != "0"
                     }
@@ -350,6 +355,7 @@ class UserInfoViewModel @Inject constructor(
             counter = counterEmoji,
             identificationCode = identificationCode,
             counterPlace = counterPlace,
+            objectProperties = objectProperty,
             other = otherInfo.toString(),
             phoneNumber = phoneNumber,
             isPillarChecked = isPillarChecked
@@ -574,6 +580,12 @@ class UserInfoViewModel @Inject constructor(
             withContext(Dispatchers.IO) {
                 result.deletePhoto(taskId, _customerIndex.value)
             }
+        }
+    }
+
+    fun clearNewPillarData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            result.deleteNewPillar(taskId, _customerIndex.value)
         }
     }
 

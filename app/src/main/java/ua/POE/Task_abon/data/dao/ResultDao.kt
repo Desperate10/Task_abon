@@ -29,6 +29,11 @@ interface ResultDao {
     @Query("UPDATE result SET photo = '' WHERE TSzdn_id = :taskId AND Id = :index")
     suspend fun deletePhoto(taskId: Int, index: Int)
 
+    @Query("UPDATE result SET pillar_checked = '', new_pillar_number = '', " +
+            " new_pillar_number_descr = '', new_pillar_lat = '', new_pillar_lng = '' " +
+            "WHERE TSzdn_id = :taskId AND Id = :index")
+    suspend fun deleteNewPillar(taskId: Int, index: Int)
+
     @Query("DELETE FROM result WHERE TSzdn_id = :taskId")
     suspend fun delete(taskId: Int)
 }

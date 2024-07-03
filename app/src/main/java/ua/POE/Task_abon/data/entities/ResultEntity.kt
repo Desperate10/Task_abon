@@ -7,7 +7,7 @@ import androidx.room.Entity
 /**
  * Entity for storing saved results and creating output xml file
  * */
-@Entity(tableName = "result", primaryKeys = ["TSzdn_id", "Numb"])
+@Entity(tableName = "result", primaryKeys = ["Numb", "TSzdn_id"])
 data class ResultEntity(
     @ColumnInfo(name = "Task_name") var taskName: String?,
     @ColumnInfo(name = "Dt_Crt") var createDate: String?,
@@ -42,7 +42,7 @@ data class ResultEntity(
     @ColumnInfo(name = "counpleas") var counterPlace: String?,
     @ColumnInfo(name = "Ident_code") var identificationCode: String?,
     @ColumnInfo(name = "Physical_PersonId") var physicalPersonId: String?,
-    @ColumnInfo(name = "pillar_checked") var pillarChecked: Int,
+    @ColumnInfo(name = "pillar_checked", defaultValue = "0") var pillarChecked: Int?,
     @ColumnInfo(name = "new_pillar_number") var newPillar: String?,
     @ColumnInfo(name = "new_pillar_number_descr") var newPillarDescription: String?,
     @ColumnInfo(name = "new_pillar_lat") var pillarLat: String?,

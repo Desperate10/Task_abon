@@ -1,6 +1,5 @@
 package ua.POE.Task_abon.presentation.model
 
-import org.apache.commons.lang3.StringEscapeUtils
 
 data class BasicInfo(
     val personalAccount: String,
@@ -9,6 +8,7 @@ data class BasicInfo(
     val counter: String,
     val identificationCode: String,
     val counterPlace: String,
+    val objectProperties: String,
     val other: String,
     val phoneNumber: String,
     val isPillarChecked: Boolean

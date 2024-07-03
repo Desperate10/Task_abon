@@ -98,6 +98,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             zone1 = savedInstanceState.getString("zone1") ?: ""
             zone2 = savedInstanceState.getString("zone2") ?: ""
             zone3 = savedInstanceState.getString("zone3") ?: ""
+
         }
 
         checkPermissions()
@@ -236,9 +237,14 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
     private fun onShowOprNoteCheckBoxClicked() {
         binding.checkBoxOpr!!.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
-                binding.newOprRow?.visibility = GONE
+                if (binding.newOprRow?.visibility == VISIBLE) {
+                    showDeleteNewPillarDialog()
+                }
             } else {
+                binding.newOprCoords?.visibility = VISIBLE
                 binding.newOprRow?.visibility = VISIBLE
+                binding.pillarLatitude?.text = binding.lat.text
+                binding.pillarLongitude?.text = binding.lng.text
             }
         }
     }
@@ -440,6 +446,7 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         setupSaveCoordinatesDialogFragmentListener()
         setupSaveIdCodeDialogFragmentListener()
         setupAddPhotoDialogFragment()
+        setupDeleteNewPillarDialogListener()
     }
 
     private fun showConfirmationDialog(isForward: Boolean) {
@@ -474,6 +481,30 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                     }
                 }
             }
+        }
+    }
+
+    private fun showDeleteNewPillarDialog() {
+        DeleteNewPillarDialogFragment.show(parentFragmentManager)
+    }
+
+    private fun setupDeleteNewPillarDialogListener() {
+        DeleteNewPillarDialogFragment.setupListeners(parentFragmentManager, this) { button ->
+            when (button) {
+                DialogInterface.BUTTON_POSITIVE -> {
+                    viewModel.clearNewPillarData()
+                    binding.pillarLatitude?.text = ""
+                    binding.pillarLongitude?.text = ""
+                    binding.opr?.setText("")
+                    binding.oprNote?.setText("")
+                    binding.newOprRow?.visibility = GONE
+                    binding.newOprCoords?.visibility = GONE
+                }
+                DialogInterface.BUTTON_NEGATIVE -> {
+                    binding.checkBoxOpr?.isChecked = false
+                }
+            }
+
         }
     }
 
@@ -648,7 +679,13 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         zone1 = ""
         zone2 = ""
         zone3 = ""
+        binding.opr?.setText("")
+        binding.oprNote?.setText("")
+        binding.pillarLatitude?.text = ""
+        binding.pillarLongitude?.text = ""
         binding.results.checkBox.isChecked = false
+        binding.newOprCoords?.visibility = GONE
+        binding.newOprRow?.visibility = GONE
         binding.checkBoxOpr?.isChecked = true
         binding.results.difference1.text = ""
         binding.results.difference2.text = ""
@@ -681,14 +718,13 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
             latestTmpUri = Uri.parse(savedData.photo)
             binding.results.addPhoto.setImageURI(latestTmpUri)
         }
-        if (savedData.newPillar?.isNotEmpty() == true) {
+        if (savedData.newPillar?.isNotEmpty() == true || savedData.newPillarNote?.isNotEmpty() == true) {
             binding.checkBoxOpr?.isChecked = false
             binding.opr?.setText(savedData.newPillar)
             binding.oprNote?.setText(savedData.newPillarNote)
+            binding.pillarLatitude?.text = savedData.pillarLat
+            binding.pillarLongitude?.text = savedData.pillarLng
         }
-
-        //Добавляем сохраненные лат и лнг в вьюмодель?
-        //viewModel.setPillarCoordinates(savedData.pillarLat, savedData.pillarLng)
 
         val spinnerPosition = sourceAdapter?.getPosition(savedData.source)
         spinnerPosition?.let { binding.results.sourceSpinner.setSelection(it) }
@@ -704,6 +740,10 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         savedInstanceState.putString("zone1", binding.results.newMeters1.text.toString())
         savedInstanceState.putString("zone2", binding.results.newMeters2.text.toString())
         savedInstanceState.putString("zone3", binding.results.newMeters3.text.toString())
+        savedInstanceState.putString("newOpr", binding.opr?.text.toString())
+        savedInstanceState.putString("newOprNote", binding.oprNote?.text.toString())
+        savedInstanceState.putString("newOprLat", binding.pillarLatitude?.text.toString())
+        savedInstanceState.putString("newOprLng", binding.pillarLongitude?.text.toString())
         //declare values before saving the state
         super.onSaveInstanceState(savedInstanceState)
     }
@@ -712,8 +752,8 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
         binding.personalAccount.text = basicInfo.personalAccount
         binding.address.text = basicInfo.address
         binding.name.text = basicInfo.name
-        binding.counter.text = basicInfo.counter
-        binding.counterPlace!!.text = basicInfo.counterPlace
+        binding.counter.text = basicInfo.counter+ "/" + basicInfo.counterPlace
+        binding.objectProperties!!.text = basicInfo.objectProperties
         binding.otherInfo.text = basicInfo.other
         binding.phoneNumber!!.text = basicInfo.phoneNumber
         Linkify.addLinks(binding.phoneNumber!!, Linkify.PHONE_NUMBERS)
@@ -813,9 +853,17 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 photoUri = latestTmpUri,
                 pillarCheckedStatus = checkPillarStatus(),
                 newPillar = binding.opr?.text.toString(),
-                newPillarNote = binding.oprNote?.text.toString(),
-                newPillarLat = "",
-                newPillarLng = "",
+                newPillarNote = binding.oprNote?.text.toString().replace("'", ""),
+                newPillarLat = if (binding.pillarLatitude?.text.toString() == "0.0") {
+                    ""
+                } else {
+                    binding.pillarLatitude?.text.toString()
+                },
+                newPillarLng = if (binding.pillarLongitude?.text.toString() == "0.0") {
+                    ""
+                } else {
+                    binding.pillarLongitude?.text.toString()
+                },
                 selectCustomer = selectCustomer,
                 isNext = isNext
             )
