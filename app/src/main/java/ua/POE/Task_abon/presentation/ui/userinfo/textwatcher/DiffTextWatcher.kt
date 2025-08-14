@@ -14,7 +14,7 @@ object DiffTextWatcher {
     ): TextWatcher? {
         return try {
             newMeter.doAfterTextChanged {
-                if (!it.isNullOrEmpty() && oldMeter.text.toString().isNotEmpty()) {
+                if (!it.isNullOrEmpty() && oldMeter.text.toString().toIntOrNull() != null) {
                     difference.text = (
                             it.toString().toInt() - oldMeter.text.toString()
                                 .toInt()).toString()
@@ -23,7 +23,7 @@ object DiffTextWatcher {
                 }
             }
             oldMeter.doAfterTextChanged {
-                if (!it.isNullOrEmpty() && newMeter.text.toString().isNotEmpty()) {
+                if (it.toString().toIntOrNull() != null && newMeter.text.toString().isNotEmpty()) {
                     difference.text = (
                             newMeter.text.toString().toInt() - it.toString()
                                 .toInt()).toString()

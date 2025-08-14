@@ -259,7 +259,7 @@ class XmlWrite @Inject constructor(
             "<s:AttributeType name='point_condition' rs:number='27' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
         )
         writeLine(sb, "rs:basetable='task_result' rs:basecolumn='adress'>")
-        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='12'/>")
+        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='50'/>")
         writeLine(sb, "</s:AttributeType>")
 
         writeLine(

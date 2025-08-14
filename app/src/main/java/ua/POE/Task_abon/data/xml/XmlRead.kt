@@ -231,7 +231,7 @@ class XmlRead @Inject constructor(
                                 for (i in 0 until parser.attributeCount) {
                                     cv.put(
                                         parser.getAttributeName(i),
-                                        parser.getAttributeValue(i).replace("'", "`")
+                                        parser.getAttributeValue(i).replace("'", "`").replace("&", " ")
                                     )
                                 }
                                 cv.put("IsDone", "Не виконано")
