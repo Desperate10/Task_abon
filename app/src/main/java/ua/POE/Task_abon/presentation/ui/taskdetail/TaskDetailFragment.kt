@@ -131,8 +131,8 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         return binding.root
     }
 
-    override fun onCustomerClick(position: Int) {
-        navigateToUserInfoFragment(position)
+    override fun onCustomerClick(customer: CustomerMainData) {
+        navigateToUserInfoFragment(customer)
     }
 
     private fun navigateToTaskFragment() {
@@ -149,13 +149,13 @@ class TaskDetailFragment : Fragment(), CustomerListAdapter.OnCustomerClickListen
         }
     }
 
-    private fun navigateToUserInfoFragment(position: Int) {
+    private fun navigateToUserInfoFragment(customer: CustomerMainData) {
         if (findNavController().currentDestination?.id == R.id.taskDetailFragment) {
             findNavController().navigate(
                 TaskDetailFragmentDirections.actionTaskDetailFragmentToUserInfoFragment(
                     args.task.id,
                     args.task.filial,
-                    userData[position].id,
+                    customer.id,
                     adapter.itemCount
                 )
             )

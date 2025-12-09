@@ -98,7 +98,8 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_marginEnd="2dp"
-                    android:layout_weight="0.6">
+                    android:layout_weight="0.6"
+                    android:fillViewport="true">
                     <TextView
                         android:id="@+id/address"
                         android:layout_width="match_parent"
@@ -234,7 +235,8 @@
                     <androidx.core.widget.NestedScrollView
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="0.8">
+                        android:layout_weight="0.8"
+                        android:fillViewport="true">
                         <TextView
                             android:id="@+id/other_info"
                             android:layout_width="match_parent"

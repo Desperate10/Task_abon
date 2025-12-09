@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import ua.POE.Task_abon.R
 import ua.POE.Task_abon.presentation.model.CustomerMainData
 import ua.POE.Task_abon.databinding.RowPersonBinding
@@ -63,7 +64,11 @@ class CustomerListAdapter @Inject constructor(
                 }
                 isDone.text = person.done
                 root.setOnClickListener {
-                    onCustomerClickListener?.onCustomerClick(position)
+                    val adapterPosition = holder.adapterPosition
+                    if (adapterPosition != RecyclerView.NO_POSITION) {
+                        val customer = getItem(adapterPosition)
+                        onCustomerClickListener?.onCustomerClick(customer = customer)
+                    }
                 }
             }
         }
@@ -71,7 +76,7 @@ class CustomerListAdapter @Inject constructor(
     }
 
     interface OnCustomerClickListener {
-        fun onCustomerClick(position: Int)
+        fun onCustomerClick(customer: CustomerMainData)
     }
 
 

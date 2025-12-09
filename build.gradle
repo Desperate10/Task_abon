@@ -2,7 +2,7 @@
 buildscript {
     ext {
 
-        agp_version1 = '8.1.2'
+        agp_version1 = '8.4.1'
         agp_version = '8.1.0'
     }
     ext.kotlin_version = "1.8.20"
@@ -17,7 +17,7 @@ buildscript {
         classpath "com.android.tools.build:gradle:$agp_version1"
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath "androidx.navigation:navigation-safe-args-gradle-plugin:2.5.3"
-        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.43.2'
+        classpath 'com.google.dagger:hilt-android-gradle-plugin:2.44'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -25,7 +25,7 @@ buildscript {
 }
 
 plugins {
-    id 'com.google.dagger.hilt.android' version '2.43.2' apply false
+    id 'com.google.dagger.hilt.android' version '2.44' apply false
 }
 
 allprojects {

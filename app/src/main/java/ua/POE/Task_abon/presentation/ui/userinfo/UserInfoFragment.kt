@@ -8,6 +8,7 @@ import android.content.DialogInterface
 import android.content.res.Configuration
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.ColorDrawable
 import android.location.Location
 import android.location.LocationManager
@@ -47,6 +48,7 @@ import ua.POE.Task_abon.presentation.model.Technical
 import ua.POE.Task_abon.presentation.ui.userinfo.dialog.*
 import ua.POE.Task_abon.presentation.ui.userinfo.listener.MyLocationListener
 import ua.POE.Task_abon.presentation.ui.userinfo.textwatcher.DiffTextWatcher
+import ua.POE.Task_abon.utils.UniversalInsetsHelper
 import ua.POE.Task_abon.utils.autoCleaned
 import ua.POE.Task_abon.utils.onItemSelected
 import java.io.File

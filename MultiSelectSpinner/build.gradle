@@ -24,12 +24,10 @@ ext {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdk 34
     defaultConfig {
         minSdkVersion 19
-        targetSdkVersion 33
-        versionCode 2
-        versionName '1.1'
+        targetSdkVersion 34
     }
     buildTypes {
         release {
