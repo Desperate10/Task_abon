@@ -14,8 +14,8 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdk 35
-        versionCode 59
-        versionName '7.1'
+        versionCode 62
+        versionName '7.2.1'
 
         buildConfigField "String", "MY_CLOUD_API", '"http://task.poe.pl.ua:8880/app/"'
         buildConfigField "String", "MY_PHOTO_STORAGE", '"http://10.107.4.132/abon/"'

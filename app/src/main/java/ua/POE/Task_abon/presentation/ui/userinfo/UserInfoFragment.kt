@@ -131,6 +131,10 @@ class UserInfoFragment : Fragment(), View.OnClickListener,
                 viewModel.sourceSpinnerPosition.collectLatest { position ->
                     if (position != 0) {
                         binding.results.sourceSpinner.setSelection(position)
+                        binding.results.note.isEnabled = true
+                    } else {
+                        binding.results.note.text.clear()
+                        binding.results.note.isEnabled = false
                     }
                 }
             }

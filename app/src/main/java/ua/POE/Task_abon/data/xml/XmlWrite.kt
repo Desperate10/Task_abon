@@ -399,6 +399,14 @@ class XmlWrite @Inject constructor(
         writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='100'/>")
         writeLine(sb, "</s:AttributeType>")
 
+        writeLine(
+            sb,
+            "<s:AttributeType name='version' rs:number='44' rs:nullable='true' rs:writeunknown='true' rs:basecatalog='DB_UTILITY'"
+        )
+        writeLine(sb, "rs:basetable='task_result' rs:basecolumn='version'>")
+        writeLine(sb, "<s:datatype dt:type='string' rs:dbtype='str' dt:maxLength='10'/>")
+        writeLine(sb, "</s:AttributeType>")
+
         writeLine(sb, "<s:extends type='rs:rowbase'/>")
         writeLine(sb, "</s:ElementType>")
         writeLine(sb, "</s:Schema>")
@@ -468,6 +476,7 @@ class XmlWrite @Inject constructor(
                         " new_pillar_number_descr='${results[i].newPillarDescription}'" +
                         " new_pillar_lat='${results[i].pillarLat}'" +
                         " new_pillar_lng='${results[i].pillarLng}'" +
+                        " version='${BuildConfig.VERSION_NAME}'" +
                         " />"
             )
         }
