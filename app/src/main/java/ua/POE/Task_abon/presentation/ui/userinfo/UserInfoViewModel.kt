@@ -200,6 +200,10 @@ class UserInfoViewModel @Inject constructor(
         featureList: List<Catalog>
     ): List<KeyPairBoolData> {
         val savedCondition = (condition ?: getCheckedConditions()).split(",").map { it.trim() }
+        //sync saved selection with current customer, otherwise previous customer's features are saved
+        _selectedFeatureList.value = featureList
+            .map { it.code.toString() }
+            .filter { it in savedCondition }
         val conditionArray = mutableListOf<KeyPairBoolData>()
         for (feature in featureList) {
             if (feature.code.toString() in savedCondition) {
